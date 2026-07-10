@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
+import { AtSign, History, PackageCheck, QrCode, Repeat, ShieldCheck, UserCircle2, Users } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { signIn, signUp } from '@/backend/lib/supabase/auth'
 import { supabase } from '@/backend/lib/supabase/client'
 import Button from '@/components/ui/Button'
@@ -10,18 +12,24 @@ type DepartmentOption = {
 	programs: string[]
 }
 
-const features = ['Easy QR Code Tracking', 'Fast Equipment Borrowing', 'Real-time Status Updates', 'Complete Inventory Control', 'Detailed History Tracking']
+const features: { label: string; icon: LucideIcon }[] = [
+	{ label: 'Easy QR Code Tracking', icon: QrCode },
+	{ label: 'Fast Equipment Borrowing', icon: Repeat },
+	{ label: 'Real-time Status Updates', icon: PackageCheck },
+	{ label: 'Complete Inventory Control', icon: ShieldCheck },
+	{ label: 'Detailed History Tracking', icon: History },
+]
 
 const demoAccounts = [
-	{ label: 'Super Administrator', department: 'Institution-wide', username: 'superadmin', password: 'Super123!' },
-	{ label: 'Dept Admin', department: 'Industrial Technology', username: 'eng.dean', password: 'Dean123!' },
-	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.dean', password: 'Dean123!' },
-	{ label: 'Dept Admin', department: 'Computer Science', username: 'cs.chair', password: 'Dean123!' },
-	{ label: 'Dept Admin', department: 'Fisheries', username: 'fish.head', password: 'Dean123!' },
-	{ label: 'Staff', department: 'Industrial Technology', username: 'jcruz', password: 'Staff123!' },
-	{ label: 'Staff', department: 'Computer Science', username: 'mday', password: 'Staff123!' },
-	{ label: 'Staff', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!' },
-	{ label: 'Staff', department: 'Fisheries', username: 'fish.staff', password: 'Staff123!' },
+	{ label: 'Super Admin', department: 'Institution-wide', username: 'superadmin', password: 'Super123!', icon: ShieldCheck },
+	{ label: 'Dept Admin', department: 'Industrial Technology', username: 'eng.dean', password: 'Dean123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.dean', password: 'Dean123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Computer Science', username: 'cs.chair', password: 'Dean123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Fisheries', username: 'fish.head', password: 'Dean123!', icon: Users },
+	{ label: 'Staff', department: 'Industrial Technology', username: 'jcruz', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'Computer Science', username: 'mday', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'Fisheries', username: 'fish.staff', password: 'Staff123!', icon: UserCircle2 },
 ]
 
 const inputClass =
@@ -208,25 +216,28 @@ export default function AuthScreen() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
 			<div className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] shadow-2xl shadow-black/10 lg:grid-cols-2">
-				<section className="flex flex-col justify-center bg-primary px-10 py-12 text-white">
-					<img src="/bisu-logo.png" alt="Bohol Island State University seal" className="h-28 w-28" />
+				<section className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-primary via-primary to-primary-hover px-10 py-12 text-white">
+					<div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+					<div className="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
 
-					<p className="mt-6 text-lg font-extrabold uppercase leading-snug tracking-wide text-accent">Bohol Island State University</p>
-					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-white">Calape Campus</p>
-					<div className="mt-4 h-0.5 w-28 bg-accent" />
+					<div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-white/10 ring-4 ring-white/10">
+						<img src="/bisu-logo.png" alt="Bohol Island State University seal" className="h-24 w-24 drop-shadow-lg" />
+					</div>
 
-					<h1 className="mt-10 font-serif text-2xl font-semibold">Inventory</h1>
-					<p className="mt-2 text-white/80">Smart Equipment Management</p>
+					<p className="relative mt-6 text-lg font-extrabold uppercase leading-snug tracking-wide text-accent">Bohol Island State University</p>
+					<p className="relative text-sm font-semibold uppercase tracking-[0.3em] text-white">Calape Campus</p>
+					<div className="relative mt-4 h-0.5 w-28 bg-accent" />
 
-					<ul className="mt-8 space-y-4">
+					<h1 className="relative mt-10 font-serif text-2xl font-semibold">Inventory</h1>
+					<p className="relative mt-2 text-white/80">Smart Equipment Management</p>
+
+					<ul className="relative mt-8 space-y-4">
 						{features.map((feature) => (
-							<li key={feature} className="flex items-center gap-3">
-								<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-hover text-white">
-									<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5">
-										<path d="M4 10.5l3.5 3.5L16 6" strokeLinecap="round" strokeLinejoin="round" />
-									</svg>
+							<li key={feature.label} className="flex items-center gap-3">
+								<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-accent ring-1 ring-white/10">
+									<feature.icon className="h-4 w-4" />
 								</span>
-								<span className="text-white/90">{feature}</span>
+								<span className="text-white/90">{feature.label}</span>
 							</li>
 						))}
 					</ul>
@@ -250,14 +261,17 @@ export default function AuthScreen() {
 								<label className={labelClass} htmlFor="identifier">
 									Username or Email
 								</label>
-								<input
-									id="identifier"
-									value={identifier}
-									onChange={(event) => setIdentifier(event.target.value)}
-									className={inputClass}
-									placeholder="Enter your username"
-									required
-								/>
+								<div className="relative">
+									<AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+									<input
+										id="identifier"
+										value={identifier}
+										onChange={(event) => setIdentifier(event.target.value)}
+										className={`${inputClass} pl-10`}
+										placeholder="Enter your username"
+										required
+									/>
+								</div>
 							</div>
 
 							<div>
@@ -297,10 +311,13 @@ export default function AuthScreen() {
 											key={account.username}
 											type="button"
 											onClick={() => fillDemoAccount(account)}
-											className="rounded-xl border border-border bg-bg px-3 py-2.5 text-left transition hover:border-primary hover:bg-primary-light"
+											className="group rounded-xl border border-border bg-bg px-3 py-2.5 text-left transition hover:border-primary hover:bg-primary-light"
 										>
-											<p className="text-xs font-semibold text-text-primary">{account.label}</p>
-											<p className="text-[11px] text-text-muted">{account.department}</p>
+											<div className="flex items-center gap-1.5">
+												<account.icon className="h-3.5 w-3.5 shrink-0 text-text-muted transition group-hover:text-primary" />
+												<p className="truncate text-xs font-semibold text-text-primary">{account.label}</p>
+											</div>
+											<p className="mt-1 truncate text-[11px] text-text-muted">{account.department}</p>
 											<p className="mt-0.5 text-[11px] font-medium text-primary">{account.username}</p>
 										</button>
 									))}
