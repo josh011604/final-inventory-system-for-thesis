@@ -35,6 +35,15 @@ export default function MaintenancePage({ user }: { user: SchoolUser }) {
 	const [description, setDescription] = useState('')
 	const [priority, setPriority] = useState('medium')
 	const [error, setError] = useState<string | null>(null)
+	const [actionError, setActionError] = useState<string | null>(null)
+
+	const runStatusChange = (id: number, status: string) => {
+		setActionError(null)
+		updateStatus.mutate(
+			{ id, status },
+			{ onError: (mutationError) => setActionError(mutationError instanceof Error ? mutationError.message : 'Failed to update maintenance request.') },
+		)
+	}
 
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
@@ -59,6 +68,9 @@ export default function MaintenancePage({ user }: { user: SchoolUser }) {
 
 	return (
 		<>
+			{actionError ? (
+				<div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{actionError}</div>
+			) : null}
 			<EntityTablePage<MaintenanceRequestRow>
 				title="Maintenance"
 				subtitle={`${data?.length ?? 0} requests`}
@@ -94,19 +106,19 @@ export default function MaintenancePage({ user }: { user: SchoolUser }) {
 						render: (row) =>
 							canManage && row.status === 'pending' ? (
 								<div className="flex gap-2">
-									<Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ id: row.id, status: 'approved' })}>
+									<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'approved')}>
 										Approve
 									</Button>
-									<Button size="sm" variant="danger" onClick={() => updateStatus.mutate({ id: row.id, status: 'rejected' })}>
+									<Button size="sm" variant="danger" onClick={() => runStatusChange(row.id, 'rejected')}>
 										Reject
 									</Button>
 								</div>
 							) : canManage && row.status === 'approved' ? (
-								<Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ id: row.id, status: 'in_progress' })}>
+								<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'in_progress')}>
 									Start Work
 								</Button>
 							) : canManage && row.status === 'in_progress' ? (
-								<Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ id: row.id, status: 'completed' })}>
+								<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'completed')}>
 									Mark Completed
 								</Button>
 							) : (

@@ -217,8 +217,16 @@ export function useUpdateMaintenanceStatus() {
 	const queryClient = useQueryClient()
 	return useMutation({
 		mutationFn: async ({ id, status }: { id: number; status: string }) => {
-			const { error } = await supabase.from('maintenance_requests').update({ status }).eq('id', id)
-			if (error) throw error
+			// Routed through the maintenance-status edge function rather than a direct
+			// table update: it owns the approve/reject/start/complete state machine,
+			// authorization, and the equipment-status + notification + audit-log cascade.
+			const { error } = await supabase.functions.invoke('maintenance-status', { body: { id, status } })
+			if (error) {
+				// FunctionsHttpError's own .message is just "non-2xx status code" — the
+				// function's actual reason lives in the response body it wraps.
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
 		},
 		onMutate: async ({ id, status }) => {
 			await queryClient.cancelQueries({ queryKey: ['maintenance_requests'] })
