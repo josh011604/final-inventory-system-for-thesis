@@ -152,12 +152,16 @@ export function useCreateBorrowRecord() {
 export function useUpdateBorrowRecordStatus() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: async ({ id, status, approvedBy }: { id: number; status: string; approvedBy?: string }) => {
-			const { error } = await supabase
-				.from('borrow_records')
-				.update({ status, ...(approvedBy ? { approved_by: approvedBy } : {}) })
-				.eq('id', id)
-			if (error) throw error
+		mutationFn: async ({ id, status }: { id: number; status: string }) => {
+			// Routed through the borrow-status edge function rather than a direct
+			// table update: it owns the confirm/reject/return state machine,
+			// authorization, equipment-availability checks, and the equipment-status
+			// + notification + audit-log cascade.
+			const { error } = await supabase.functions.invoke('borrow-status', { body: { id, status } })
+			if (error) {
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
 		},
 		onMutate: async ({ id, status }) => {
 			await queryClient.cancelQueries({ queryKey: ['borrow_records'] })
@@ -172,7 +176,10 @@ export function useUpdateBorrowRecordStatus() {
 				queryClient.setQueryData(['borrow_records'], context.previous)
 			}
 		},
-		onSettled: () => queryClient.invalidateQueries({ queryKey: ['borrow_records'] }),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
+			queryClient.invalidateQueries({ queryKey: ['equipment'] })
+		},
 	})
 }
 
@@ -241,7 +248,10 @@ export function useUpdateMaintenanceStatus() {
 				queryClient.setQueryData(['maintenance_requests'], context.previous)
 			}
 		},
-		onSettled: () => queryClient.invalidateQueries({ queryKey: ['maintenance_requests'] }),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ['maintenance_requests'] })
+			queryClient.invalidateQueries({ queryKey: ['equipment'] })
+		},
 	})
 }
 

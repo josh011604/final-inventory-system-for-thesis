@@ -35,6 +35,15 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const [expectedReturnDate, setExpectedReturnDate] = useState('')
 	const [notes, setNotes] = useState('')
 	const [error, setError] = useState<string | null>(null)
+	const [actionError, setActionError] = useState<string | null>(null)
+
+	const runStatusChange = (id: number, status: string) => {
+		setActionError(null)
+		updateStatus.mutate(
+			{ id, status },
+			{ onError: (mutationError) => setActionError(mutationError instanceof Error ? mutationError.message : 'Failed to update borrow request.') },
+		)
+	}
 
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
@@ -60,6 +69,9 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 
 	return (
 		<>
+			{actionError ? (
+				<div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{actionError}</div>
+			) : null}
 			<EntityTablePage<BorrowRecordRow>
 				title="Borrowing"
 				subtitle={`${data?.length ?? 0} requests`}
@@ -95,15 +107,15 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 						render: (row) =>
 							canApprove && row.status === 'pending' ? (
 								<div className="flex gap-2">
-									<Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ id: row.id, status: 'confirmed', approvedBy: user.id })}>
+									<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'confirmed')}>
 										Approve
 									</Button>
-									<Button size="sm" variant="danger" onClick={() => updateStatus.mutate({ id: row.id, status: 'rejected', approvedBy: user.id })}>
+									<Button size="sm" variant="danger" onClick={() => runStatusChange(row.id, 'rejected')}>
 										Reject
 									</Button>
 								</div>
 							) : canApprove && (row.status === 'confirmed' || row.status === 'borrowed') ? (
-								<Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ id: row.id, status: 'returned' })}>
+								<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'returned')}>
 									Mark Returned
 								</Button>
 							) : (
