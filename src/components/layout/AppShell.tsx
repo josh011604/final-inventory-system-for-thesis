@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bell, LogOut, Search, Sun, Moon } from 'lucide-react'
 import { isRouteAllowed, navItemsForRole } from '@/frontend/config/navigation'
@@ -35,7 +35,32 @@ function Breadcrumbs({ path }: { path: string }) {
 export default function AppShell({ user, theme, onToggleTheme, onLogout, notificationCount = 0 }: AppShellProps) {
 	const location = useLocation()
 	const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+	const profileMenuRef = useRef<HTMLDivElement>(null)
 	const items = navItemsForRole(user.role)
+
+	useEffect(() => {
+		setProfileMenuOpen(false)
+	}, [location.pathname])
+
+	useEffect(() => {
+		if (!profileMenuOpen) return
+
+		const handlePointerDown = (event: PointerEvent) => {
+			if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+				setProfileMenuOpen(false)
+			}
+		}
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setProfileMenuOpen(false)
+		}
+
+		document.addEventListener('pointerdown', handlePointerDown)
+		document.addEventListener('keydown', handleKeyDown)
+		return () => {
+			document.removeEventListener('pointerdown', handlePointerDown)
+			document.removeEventListener('keydown', handleKeyDown)
+		}
+	}, [profileMenuOpen])
 
 	return (
 		<div className="flex min-h-screen bg-bg text-text-primary">
@@ -58,12 +83,14 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout, notific
 							<NavLink
 								key={item.path}
 								to={item.path}
-								className={`flex items-center justify-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium transition md:justify-start ${
-									active ? 'border-accent bg-primary-light text-primary' : 'border-transparent text-text-muted hover:bg-primary-light hover:text-primary'
+								className={`group flex items-center justify-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium transition md:justify-start ${
+									active
+										? 'border-accent bg-gradient-to-r from-primary-light to-transparent text-primary shadow-sm'
+										: 'border-transparent text-text-muted hover:border-accent/40 hover:bg-primary-light hover:text-primary'
 								}`}
 								title={item.label}
 							>
-								<Icon className="h-5 w-5 shrink-0" />
+								<Icon className={`h-5 w-5 shrink-0 transition group-hover:scale-110 ${active ? 'text-accent' : ''}`} />
 								<span className="hidden md:inline">{item.label}</span>
 							</NavLink>
 						)
@@ -97,19 +124,21 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout, notific
 						<button type="button" className="relative rounded-lg border border-border p-2 text-text-muted transition hover:border-primary hover:text-primary" aria-label="Notifications">
 							<Bell className="h-5 w-5" />
 							{notificationCount > 0 ? (
-								<span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
+								<span className="absolute -right-1 -top-1 flex h-4 min-w-4 animate-pulse items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white shadow-sm shadow-danger/40">
 									{notificationCount > 9 ? '9+' : notificationCount}
 								</span>
 							) : null}
 						</button>
 
-						<div className="relative">
+						<div className="relative" ref={profileMenuRef}>
 							<button
 								type="button"
 								onClick={() => setProfileMenuOpen((current) => !current)}
-								className="flex items-center gap-2 rounded-lg border border-border py-1.5 pl-1.5 pr-3 transition hover:border-primary"
+								className="flex items-center gap-2 rounded-lg border border-border py-1.5 pl-1.5 pr-3 transition hover:border-primary hover:shadow-sm"
 							>
-								<span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-semibold text-white">{user.profilePicture}</span>
+								<span className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary-hover text-xs font-semibold text-white shadow-sm">
+									{user.profilePicture}
+								</span>
 								<span className="hidden text-left text-sm sm:block">
 									<span className="block font-semibold leading-tight">{user.fullName}</span>
 									<span className="block text-xs text-text-muted leading-tight">{getRoleLabel(user.role)}</span>
