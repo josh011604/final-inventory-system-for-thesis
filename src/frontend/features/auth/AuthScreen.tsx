@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { AtSign, History, PackageCheck, QrCode, Repeat, ShieldCheck, UserCircle2, Users } from 'lucide-react'
+import { AtSign, History, PackageCheck, Repeat, ShieldCheck, UserCircle2, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { signIn, signUp } from '@/backend/lib/supabase/auth'
 import { supabase } from '@/backend/lib/supabase/client'
@@ -13,7 +13,6 @@ type DepartmentOption = {
 }
 
 const features: { label: string; icon: LucideIcon }[] = [
-	{ label: 'Easy QR Code Tracking', icon: QrCode },
 	{ label: 'Fast Equipment Borrowing', icon: Repeat },
 	{ label: 'Real-time Status Updates', icon: PackageCheck },
 	{ label: 'Complete Inventory Control', icon: ShieldCheck },
