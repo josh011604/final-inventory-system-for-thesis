@@ -21,14 +21,16 @@ const features: { label: string; icon: LucideIcon }[] = [
 
 const demoAccounts = [
 	{ label: 'Super Admin', department: 'Institution-wide', username: 'superadmin', password: 'Super123!', icon: ShieldCheck },
-	{ label: 'Dept Admin', department: 'Industrial Technology', username: 'eng.dean', password: 'Dean123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.dean', password: 'Dean123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Computer Science', username: 'cs.chair', password: 'Dean123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Fisheries', username: 'fish.head', password: 'Dean123!', icon: Users },
-	{ label: 'Staff', department: 'Industrial Technology', username: 'jcruz', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'Computer Science', username: 'mday', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Dept Admin', department: 'BSCS', username: 'bscs.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'BSIT Electricity', username: 'bsit.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Inland Fisheries', username: 'bsf.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Midwifery', username: 'midwifery.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Staff', department: 'BSCS', username: 'bscs.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'BSIT Electricity', username: 'bsit.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'Inland Fisheries', username: 'bsf.staff', password: 'Staff123!', icon: UserCircle2 },
 	{ label: 'Staff', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'Fisheries', username: 'fish.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'Midwifery', username: 'midwifery.staff', password: 'Staff123!', icon: UserCircle2 },
 ]
 
 const inputClass =
