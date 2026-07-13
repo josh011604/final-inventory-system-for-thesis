@@ -4,6 +4,7 @@ import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
+import EquipmentHistoryModal from '@/frontend/features/inventory/EquipmentHistoryModal'
 import { useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
@@ -56,6 +57,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 
 	const canManage = user.role === 'super_admin' || user.role === 'department_admin'
 	const [open, setOpen] = useState(false)
+	const [historyItem, setHistoryItem] = useState<EquipmentRow | null>(null)
 	const [step, setStep] = useState(0)
 	const [equipmentCode, setEquipmentCode] = useState('')
 	const [equipmentName, setEquipmentName] = useState('')
@@ -117,13 +119,14 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 		<>
 			<EntityTablePage<EquipmentRow>
 				title="Inventory"
-				subtitle={`${data?.length ?? 0} items`}
+				subtitle={`${data?.length ?? 0} items · click a row for its history`}
 				rows={data}
 				isLoading={isLoading}
 				searchKeys={['equipment_code', 'equipment_name', 'category', 'status']}
 				emptyMessage="No inventory items recorded yet."
 				emptyAction={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add the first item</Button> : null}
 				action={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add Item</Button> : undefined}
+				onRowClick={(row) => setHistoryItem(row)}
 				columns={[
 					{
 						header: 'Asset',
@@ -138,8 +141,16 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 					{ header: 'Facility', render: (row) => row.facilities?.name ?? '—' },
 					{ header: 'Qty', render: (row) => row.quantity },
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status}</StatusChip> },
+					{
+						header: 'History',
+						render: () => (
+							<span className="text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">View →</span>
+						),
+					},
 				]}
 			/>
+
+			{historyItem ? <EquipmentHistoryModal item={historyItem} onClose={() => setHistoryItem(null)} /> : null}
 
 			<Modal open={open} onClose={closeModal} title="Add Inventory Item">
 				<StepIndicator current={step} />
