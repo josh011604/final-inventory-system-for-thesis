@@ -11,6 +11,7 @@ import InventoryPage from '@/frontend/features/inventory/InventoryPage'
 import BorrowingPage from '@/frontend/features/borrowing/BorrowingPage'
 import MaintenancePage from '@/frontend/features/maintenance/MaintenancePage'
 import UsersPage from '@/frontend/features/users/UsersPage'
+import ReportsPage from '@/frontend/features/reports/ReportsPage'
 import NotificationsPage from '@/frontend/features/notifications/NotificationsPage'
 import AuditLogsPage from '@/frontend/features/audit-logs/AuditLogsPage'
 import { supabase } from '@/backend/lib/supabase/client'
@@ -166,7 +167,7 @@ export default function App() {
 						<Route path="/borrowing" element={<BorrowingPage user={activeUser} />} />
 						<Route path="/maintenance" element={<MaintenancePage user={activeUser} />} />
 						<Route path="/users" element={<UsersPage user={activeUser} />} />
-						<Route path="/reports" element={<ComingSoonPage title="Reports" />} />
+						<Route path="/reports" element={<ReportsPage user={activeUser} />} />
 						<Route path="/notifications" element={<NotificationsPage />} />
 						<Route path="/audit-logs" element={<AuditLogsPage />} />
 						<Route path="/settings" element={<ComingSoonPage title="System Settings" />} />
