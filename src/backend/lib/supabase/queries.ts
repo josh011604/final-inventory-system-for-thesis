@@ -149,6 +149,28 @@ export function useCreateBorrowRecord() {
 	})
 }
 
+export function useRunOverdueCheck() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async () => {
+			// Fires the same institution-wide sweep pg_cron runs hourly. The edge
+			// function re-checks that the caller is a Super Administrator before
+			// invoking flag_overdue_borrow_records() with the service-role key.
+			const { data, error } = await supabase.functions.invoke('overdue-check', { body: {} })
+			if (error) {
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
+			return data as { flagged: number }
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
+			queryClient.invalidateQueries({ queryKey: ['notifications'] })
+			queryClient.invalidateQueries({ queryKey: ['audit_logs'] })
+		},
+	})
+}
+
 export function useUpdateBorrowRecordStatus() {
 	const queryClient = useQueryClient()
 	return useMutation({

@@ -4,7 +4,7 @@ import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
-import { useBorrowRecords, useCreateBorrowRecord, useEquipment, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
+import { useBorrowRecords, useCreateBorrowRecord, useEquipment, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 
@@ -26,6 +26,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const { data: equipment } = useEquipment()
 	const createBorrowRecord = useCreateBorrowRecord()
 	const updateStatus = useUpdateBorrowRecordStatus()
+	const runOverdueCheck = useRunOverdueCheck()
 
 	const canApprove = user.role === 'super_admin' || user.role === 'department_admin'
 	const availableEquipment = equipment?.filter((item) => item.status === 'available') ?? []
@@ -36,6 +37,22 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const [notes, setNotes] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
+	const [overdueMessage, setOverdueMessage] = useState<string | null>(null)
+
+	const handleOverdueCheck = () => {
+		setActionError(null)
+		setOverdueMessage(null)
+		runOverdueCheck.mutate(undefined, {
+			onSuccess: (result) =>
+				setOverdueMessage(
+					result.flagged > 0
+						? `Flagged ${result.flagged} overdue ${result.flagged === 1 ? 'item' : 'items'}. Borrowers have been notified.`
+						: 'No overdue items — every borrowed item is within its return date.',
+				),
+			onError: (mutationError) =>
+				setActionError(mutationError instanceof Error ? mutationError.message : 'Failed to run the overdue check.'),
+		})
+	}
 
 	const runStatusChange = (id: number, status: string) => {
 		setActionError(null)
@@ -72,6 +89,9 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 			{actionError ? (
 				<div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{actionError}</div>
 			) : null}
+			{overdueMessage ? (
+				<div className="mb-4 rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-sm text-info">{overdueMessage}</div>
+			) : null}
 			<EntityTablePage<BorrowRecordRow>
 				title="Borrowing"
 				subtitle={`${data?.length ?? 0} requests`}
@@ -85,9 +105,16 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 					</Button>
 				}
 				action={
-					<Button size="sm" onClick={() => setOpen(true)} disabled={availableEquipment.length === 0}>
-						New Request
-					</Button>
+					<div className="flex flex-wrap gap-2">
+						{user.role === 'super_admin' ? (
+							<Button size="sm" variant="secondary" onClick={handleOverdueCheck} disabled={runOverdueCheck.isPending}>
+								{runOverdueCheck.isPending ? 'Checking…' : 'Check Overdue Now'}
+							</Button>
+						) : null}
+						<Button size="sm" onClick={() => setOpen(true)} disabled={availableEquipment.length === 0}>
+							New Request
+						</Button>
+					</div>
 				}
 				columns={[
 					{
@@ -114,7 +141,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 										Reject
 									</Button>
 								</div>
-							) : canApprove && (row.status === 'confirmed' || row.status === 'borrowed') ? (
+							) : canApprove && (row.status === 'confirmed' || row.status === 'borrowed' || row.status === 'overdue') ? (
 								<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'returned')}>
 									Mark Returned
 								</Button>
