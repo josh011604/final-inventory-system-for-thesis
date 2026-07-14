@@ -428,6 +428,16 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 					</div>
 				)}
 			</Card>
+
+			<Card title="Inventory Reports" subtitle="Printable format">
+				<div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-bg/50 p-8 text-center">
+					<Package className="h-8 w-8 text-text-muted" />
+					<p className="text-sm font-medium text-text-primary">Inventory report format goes here</p>
+					<p className="max-w-md text-xs text-text-muted">
+						Reserved for the printable Excel inventory report format — to be added.
+					</p>
+				</div>
+			</Card>
 		</div>
 	)
 }
