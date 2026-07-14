@@ -131,7 +131,6 @@ export default function AuthScreen() {
 	const [fullName, setFullName] = useState('')
 	const [employeeId, setEmployeeId] = useState('')
 	const [departmentId, setDepartmentId] = useState('')
-	const [position, setPosition] = useState('')
 	const [email, setEmail] = useState('')
 	const [regUsername, setRegUsername] = useState('')
 	const [regPassword, setRegPassword] = useState('')
@@ -160,7 +159,6 @@ export default function AuthScreen() {
 	const resetRegisterForm = () => {
 		setFullName('')
 		setEmployeeId('')
-		setPosition('')
 		setEmail('')
 		setRegUsername('')
 		setRegPassword('')
@@ -197,7 +195,6 @@ export default function AuthScreen() {
 			fullName,
 			username: regUsername,
 			departmentId,
-			position,
 			employeeId,
 		})
 
@@ -354,25 +351,17 @@ export default function AuthScreen() {
 								</div>
 							</div>
 
-							<div className="grid gap-4 sm:grid-cols-2">
-								<div>
-									<label className={labelClass} htmlFor="department">
-										Department
-									</label>
-									<select id="department" value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} className={inputClass}>
-										{departmentOptions.map((dept) => (
-											<option key={dept.id} value={dept.id}>
-												{dept.name} — {dept.programs.join(', ')}
-											</option>
-										))}
-									</select>
-								</div>
-								<div>
-									<label className={labelClass} htmlFor="position">
-										Position
-									</label>
-									<input id="position" value={position} onChange={(event) => setPosition(event.target.value)} className={inputClass} placeholder="Staff" />
-								</div>
+							<div>
+								<label className={labelClass} htmlFor="department">
+									Department
+								</label>
+								<select id="department" value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} className={inputClass}>
+									{departmentOptions.map((dept) => (
+										<option key={dept.id} value={dept.id}>
+											{dept.name} — {dept.programs.join(', ')}
+										</option>
+									))}
+								</select>
 							</div>
 
 							<div>

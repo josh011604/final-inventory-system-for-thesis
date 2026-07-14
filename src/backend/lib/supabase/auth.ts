@@ -34,7 +34,6 @@ export async function signUp(args: {
 	fullName: string
 	username: string
 	departmentId: string
-	position: string
 	employeeId: string
 }) {
 	const { data, error } = await supabase.auth.signUp({
@@ -45,7 +44,6 @@ export async function signUp(args: {
 				full_name: args.fullName,
 				username: args.username,
 				department_id: args.departmentId,
-				position: args.position,
 				employee_id: args.employeeId,
 			},
 		},
