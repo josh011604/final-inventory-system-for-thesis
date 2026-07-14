@@ -118,7 +118,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	return (
 		<>
 			<EntityTablePage<EquipmentRow>
-				title="Inventory Reports"
+				title="Inventory Items"
 				subtitle={`${data?.length ?? 0} items · click a row for its history`}
 				rows={data}
 				isLoading={isLoading}
