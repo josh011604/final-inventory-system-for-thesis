@@ -30,6 +30,8 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 
 	const canApprove = user.role === 'super_admin' || user.role === 'department_admin'
 	const availableEquipment = equipment?.filter((item) => item.status === 'available') ?? []
+	// Local-time YYYY-MM-DD; used as the date input's min and for validation.
+	const today = new Date().toLocaleDateString('en-CA')
 
 	const [open, setOpen] = useState(false)
 	const [equipmentId, setEquipmentId] = useState('')
@@ -65,6 +67,10 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		setError(null)
+		if (expectedReturnDate && expectedReturnDate < today) {
+			setError('The expected return date cannot be in the past. Please choose today or a future date.')
+			return
+		}
 		try {
 			await createBorrowRecord.mutateAsync({
 				equipment_id: Number(equipmentId),
@@ -174,7 +180,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 						<label className={labelClass} htmlFor="borrow-due">
 							Expected Return Date
 						</label>
-						<input id="borrow-due" type="date" value={expectedReturnDate} onChange={(event) => setExpectedReturnDate(event.target.value)} className={inputClass} />
+						<input id="borrow-due" type="date" min={today} value={expectedReturnDate} onChange={(event) => setExpectedReturnDate(event.target.value)} className={inputClass} />
 					</div>
 					<div>
 						<label className={labelClass} htmlFor="borrow-notes">
