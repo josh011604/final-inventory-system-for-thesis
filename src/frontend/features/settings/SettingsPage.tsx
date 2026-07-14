@@ -5,6 +5,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Skeleton from '@/components/ui/Skeleton'
+import BackupPage from '@/frontend/features/backup/BackupPage'
 import {
 	useCategories,
 	useCreateCategory,
@@ -199,33 +200,53 @@ function SuppliersCard() {
 export default function SettingsPage() {
 	const { data: categories } = useCategories()
 	const { data: suppliers } = useSuppliers()
+	const [tab, setTab] = useState<'general' | 'backup'>('general')
+
+	const tabClass = (active: boolean) =>
+		`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+			active ? 'bg-gradient-to-r from-primary to-primary-hover text-white shadow-sm' : 'text-text-muted hover:text-primary'
+		}`
 
 	return (
 		<div className="space-y-6">
 			<Card title="System Settings" subtitle="Administration" action={<Settings className="h-5 w-5 text-primary" />}>
-				<div className="grid gap-3 sm:grid-cols-3">
-					<div className="rounded-xl border border-border bg-bg p-4">
-						<p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Application</p>
-						<p className="mt-1 flex items-center gap-2 font-semibold text-text-primary">
-							<Building2 className="h-4 w-4 text-primary" />
-							{appName}
-						</p>
-					</div>
-					<div className="rounded-xl border border-border bg-bg p-4">
-						<p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Categories</p>
-						<p className="mt-1 text-2xl font-semibold text-primary">{categories?.length ?? 0}</p>
-					</div>
-					<div className="rounded-xl border border-border bg-bg p-4">
-						<p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Suppliers</p>
-						<p className="mt-1 text-2xl font-semibold text-accent">{suppliers?.length ?? 0}</p>
-					</div>
+				<div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-bg p-1">
+					<button type="button" className={tabClass(tab === 'general')} onClick={() => setTab('general')}>
+						General
+					</button>
+					<button type="button" className={tabClass(tab === 'backup')} onClick={() => setTab('backup')}>
+						Backup &amp; Restore
+					</button>
 				</div>
 			</Card>
 
-			<div className="grid gap-6 lg:grid-cols-2">
-				<CategoriesCard />
-				<SuppliersCard />
-			</div>
+			{tab === 'general' ? (
+				<>
+					<div className="grid gap-3 sm:grid-cols-3">
+						<div className="rounded-xl border border-border bg-surface p-4">
+							<p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Application</p>
+							<p className="mt-1 flex items-center gap-2 font-semibold text-text-primary">
+								<Building2 className="h-4 w-4 text-primary" />
+								{appName}
+							</p>
+						</div>
+						<div className="rounded-xl border border-border bg-surface p-4">
+							<p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Categories</p>
+							<p className="mt-1 text-2xl font-semibold text-primary">{categories?.length ?? 0}</p>
+						</div>
+						<div className="rounded-xl border border-border bg-surface p-4">
+							<p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Suppliers</p>
+							<p className="mt-1 text-2xl font-semibold text-accent">{suppliers?.length ?? 0}</p>
+						</div>
+					</div>
+					<div className="grid gap-6 lg:grid-cols-2">
+						<CategoriesCard />
+						<SuppliersCard />
+					</div>
+				</>
+			) : (
+				<BackupPage />
+			)}
 		</div>
 	)
 }

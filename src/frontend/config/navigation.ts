@@ -8,7 +8,6 @@ import {
 	FileBarChart2,
 	ScrollText,
 	Settings,
-	DatabaseBackup,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Role } from '@/backend/types/school'
@@ -31,7 +30,6 @@ export const NAV_ITEMS: NavItem[] = [
 	{ label: 'Reports', icon: FileBarChart2, path: '/reports', roles: ['super_admin', 'department_admin'] },
 	{ label: 'Audit Logs', icon: ScrollText, path: '/audit-logs', roles: ['super_admin'] },
 	{ label: 'System Settings', icon: Settings, path: '/settings', roles: ['super_admin'] },
-	{ label: 'Backup & Restore', icon: DatabaseBackup, path: '/backup', roles: ['super_admin'] },
 ]
 
 export function navItemsForRole(role: Role) {

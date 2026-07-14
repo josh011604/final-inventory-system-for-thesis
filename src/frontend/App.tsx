@@ -14,7 +14,6 @@ import ReportsPage from '@/frontend/features/reports/ReportsPage'
 import NotificationsPage from '@/frontend/features/notifications/NotificationsPage'
 import AuditLogsPage from '@/frontend/features/audit-logs/AuditLogsPage'
 import SettingsPage from '@/frontend/features/settings/SettingsPage'
-import BackupPage from '@/frontend/features/backup/BackupPage'
 import { supabase } from '@/backend/lib/supabase/client'
 import { signOut } from '@/backend/lib/supabase/auth'
 import type { Role, SchoolUser, ThemeMode } from '@/backend/types/school'
@@ -172,7 +171,6 @@ export default function App() {
 						<Route path="/notifications" element={<NotificationsPage />} />
 						<Route path="/audit-logs" element={<AuditLogsPage />} />
 						<Route path="/settings" element={<SettingsPage />} />
-						<Route path="/backup" element={<BackupPage />} />
 						<Route path="*" element={<Navigate to="/dashboard" replace />} />
 					</Route>
 				</Routes>
