@@ -93,10 +93,14 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 	const { data: maintenanceRequests, isLoading: maintenanceLoading } = useMaintenanceRequests()
 	const { data: profiles, isLoading: profilesLoading } = useProfiles()
 
-	const totalEquipment = equipment?.length ?? 0
-	const availableCount = equipment?.filter((item) => item.status === 'available').length ?? 0
-	const borrowedCount = equipment?.filter((item) => item.status === 'borrowed').length ?? 0
-	const underMaintenanceCount = equipment?.filter((item) => item.status === 'maintenance').length ?? 0
+	// Staff and department admins see only their own department's assets; the
+	// super admin sees everything (including Main Supply / Central Inventory).
+	const scopedEquipment = user.role === 'super_admin' ? (equipment ?? []) : (equipment ?? []).filter((item) => item.department_id === user.departmentId)
+
+	const totalEquipment = scopedEquipment.length
+	const availableCount = scopedEquipment.filter((item) => item.status === 'available').length
+	const borrowedCount = scopedEquipment.filter((item) => item.status === 'borrowed').length
+	const underMaintenanceCount = scopedEquipment.filter((item) => item.status === 'maintenance').length
 	const otherCount = Math.max(totalEquipment - availableCount - borrowedCount - underMaintenanceCount, 0)
 	const pendingBorrow = borrowRecords?.filter((row) => row.status === 'pending').length ?? 0
 	const pendingMaintenance = maintenanceRequests?.filter((row) => row.status === 'pending').length ?? 0
@@ -106,7 +110,7 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 			? [
 					{ label: 'Departments', value: departments?.length ?? 0, detail: 'Institution-wide coverage', isLoading: departmentsLoading, icon: Building2, tone: 'primary' },
 					{ label: 'Facilities', value: facilities?.length ?? 0, detail: 'Buildings, rooms, and labs', isLoading: facilitiesLoading, icon: MapPin, tone: 'info' },
-					{ label: 'Inventory Items', value: equipment?.length ?? 0, detail: 'Cataloged assets', isLoading: equipmentLoading, icon: Package, tone: 'accent' },
+					{ label: 'Inventory Items', value: scopedEquipment.length, detail: 'Cataloged assets', isLoading: equipmentLoading, icon: Package, tone: 'accent' },
 					{ label: 'Available Assets', value: availableCount, detail: 'Ready for use', isLoading: equipmentLoading, icon: CheckCircle2, tone: 'success' },
 					{ label: 'Borrowed Assets', value: borrowedCount, detail: 'Currently checked out', isLoading: equipmentLoading, icon: Clock, tone: 'warning' },
 					{ label: 'Pending Approvals', value: pendingBorrow + pendingMaintenance, detail: 'Awaiting action', isLoading: borrowLoading || maintenanceLoading, icon: Wrench, tone: 'danger' },
@@ -114,7 +118,7 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 				]
 			: [
 					{ label: 'Facilities', value: facilities?.length ?? 0, detail: 'Accessible rooms and labs', isLoading: facilitiesLoading, icon: MapPin, tone: 'info' },
-					{ label: 'Inventory Items', value: equipment?.length ?? 0, detail: 'Scoped asset records', isLoading: equipmentLoading, icon: Package, tone: 'accent' },
+					{ label: 'Inventory Items', value: scopedEquipment.length, detail: 'Scoped asset records', isLoading: equipmentLoading, icon: Package, tone: 'accent' },
 					{ label: 'Available Assets', value: availableCount, detail: 'Ready for use', isLoading: equipmentLoading, icon: CheckCircle2, tone: 'success' },
 					{ label: 'Pending Approvals', value: pendingBorrow + pendingMaintenance, detail: 'Borrowing and maintenance', isLoading: borrowLoading || maintenanceLoading, icon: Wrench, tone: 'danger' },
 				]

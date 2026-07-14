@@ -29,7 +29,10 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const runOverdueCheck = useRunOverdueCheck()
 
 	const canApprove = user.role === 'super_admin' || user.role === 'department_admin'
-	const availableEquipment = equipment?.filter((item) => item.status === 'available') ?? []
+	// New Request only offers Main Supply (Central Inventory) items — those owned
+	// by the super admin (no department). Department-owned items are for viewing
+	// and tracking on the Inventory page, not for direct borrowing.
+	const availableEquipment = equipment?.filter((item) => item.department_id === null && item.status === 'available') ?? []
 	// Local-time YYYY-MM-DD; used as the date input's min and for validation.
 	const today = new Date().toLocaleDateString('en-CA')
 
@@ -76,7 +79,9 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				equipment_id: Number(equipmentId),
 				borrower_id: user.id,
 				created_by: user.id,
-				department_id: user.departmentId,
+				// Main Supply items have no department, so the request carries no
+				// department and only the super admin can approve it.
+				department_id: availableEquipment.find((item) => String(item.id) === equipmentId)?.department_id ?? null,
 				expected_return_date: expectedReturnDate || null,
 				notes: notes || null,
 				status: 'pending',
@@ -107,7 +112,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				emptyMessage="No borrow requests yet."
 				emptyAction={
 					<Button size="sm" onClick={() => setOpen(true)} disabled={availableEquipment.length === 0}>
-						{availableEquipment.length === 0 ? 'No available equipment yet' : 'Submit the first request'}
+						{availableEquipment.length === 0 ? 'No Main Supply items available' : 'Submit the first request'}
 					</Button>
 				}
 				action={
@@ -163,11 +168,11 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 					{error ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div> : null}
 					<div>
 						<label className={labelClass} htmlFor="borrow-equipment">
-							Item
+							Main Supply Item
 						</label>
 						<select id="borrow-equipment" value={equipmentId} onChange={(event) => setEquipmentId(event.target.value)} className={inputClass} required>
 							<option value="" disabled>
-								Select an item
+								Select a Main Supply item
 							</option>
 							{availableEquipment.map((item) => (
 								<option key={item.id} value={item.id}>
@@ -175,6 +180,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 								</option>
 							))}
 						</select>
+						<p className="mt-1.5 text-xs text-text-muted">Requests draw only from Main Supply (Central Inventory). Department items are not borrowable here.</p>
 					</div>
 					<div>
 						<label className={labelClass} htmlFor="borrow-due">

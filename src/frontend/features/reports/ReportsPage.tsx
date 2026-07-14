@@ -9,7 +9,7 @@ import {
 	useEquipment,
 	useMaintenanceRequests,
 } from '@/backend/lib/supabase/queries'
-import type { BorrowRecordRow, EquipmentRow, MaintenanceRequestRow } from '@/backend/lib/supabase/queries'
+import type { BorrowRecordRow, MaintenanceRequestRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 
 // ---------- shared visual tokens (reuse the app design system) ----------
@@ -232,8 +232,15 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 	const scopeLabel = isSuperAdmin ? 'All Departments' : user.department || 'Your Department'
 	const generatedAt = useMemo(() => new Date().toLocaleString('en-PH'), [])
 
+	// Non-super-admins report only on their own department's assets; Main Supply
+	// and other departments are excluded.
+	const scopedEquipment = useMemo(
+		() => (isSuperAdmin ? equipment ?? [] : (equipment ?? []).filter((item) => item.department_id === user.departmentId)),
+		[equipment, isSuperAdmin, user.departmentId],
+	)
+
 	const totals = useMemo(() => {
-		const items = equipment ?? []
+		const items = scopedEquipment
 		const totalUnits = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0)
 		const totalValue = items.reduce((sum, item) => sum + (item.value ?? 0) * (item.quantity ?? 1), 0)
 		const available = items.filter((item) => item.status === 'available').length
@@ -243,13 +250,13 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 		const overdue = (borrowRecords ?? []).filter(isOverdue).length
 		const pendingMaintenance = (maintenance ?? []).filter((row) => row.status === 'pending').length
 		return { count: items.length, totalUnits, totalValue, available, activeBorrows, overdue, pendingMaintenance }
-	}, [equipment, borrowRecords, maintenance])
+	}, [scopedEquipment, borrowRecords, maintenance])
 
-	const byStatus = useMemo(() => tallyByStatus(equipment as EquipmentRow[] | undefined, equipmentStatusTone), [equipment])
-	const byCategory = useMemo(() => rankBy(equipment, (item) => item.category?.trim() || 'Uncategorized'), [equipment])
+	const byStatus = useMemo(() => tallyByStatus(scopedEquipment, equipmentStatusTone), [scopedEquipment])
+	const byCategory = useMemo(() => rankBy(scopedEquipment, (item) => item.category?.trim() || 'Uncategorized'), [scopedEquipment])
 	const byDepartment = useMemo(
-		() => rankBy(equipment, (item) => item.departments?.name?.trim() || 'Unassigned'),
-		[equipment],
+		() => rankBy(scopedEquipment, (item) => item.departments?.name?.trim() || 'Main Supply'),
+		[scopedEquipment],
 	)
 	const borrowByStatus = useMemo(
 		() => tallyByStatus(borrowRecords as BorrowRecordRow[] | undefined, borrowStatusTone),
@@ -275,7 +282,7 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 		downloadCsv(
 			`inventory-report-${stamp}.csv`,
 			['Code', 'Name', 'Category', 'Status', 'Department', 'Location', 'Quantity', 'Unit Value', 'Total Value', 'Condition', 'Purchase Date'],
-			(equipment ?? []).map((item) => [
+			scopedEquipment.map((item) => [
 				item.equipment_code,
 				item.equipment_name,
 				item.category ?? '',
@@ -350,7 +357,7 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 				subtitle={`Scope · ${scopeLabel}`}
 				action={
 					<div className="flex flex-wrap gap-2">
-						<Button size="sm" variant="secondary" onClick={handleExportCsv} disabled={anyLoading || (equipment?.length ?? 0) === 0}>
+						<Button size="sm" variant="secondary" onClick={handleExportCsv} disabled={anyLoading || scopedEquipment.length === 0}>
 							<Download className="h-4 w-4" />
 							Export CSV
 						</Button>

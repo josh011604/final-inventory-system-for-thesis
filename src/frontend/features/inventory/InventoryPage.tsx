@@ -21,6 +21,10 @@ const statusTone: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'mu
 	disposed: 'muted',
 }
 
+// Sentinel department-select value meaning "no department" — i.e. the central
+// Main Supply pool owned by the super admin.
+const MAIN_SUPPLY = 'main-supply'
+
 const steps = ['Basic Info', 'Location', 'Condition & Review']
 
 function StepIndicator({ current }: { current: number }) {
@@ -56,6 +60,9 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const createEquipment = useCreateEquipment()
 
 	const canManage = user.role === 'super_admin' || user.role === 'department_admin'
+	// Department Inventory: staff and department admins see only their own
+	// department's items; the super admin sees everything, including Main Supply.
+	const visibleItems = user.role === 'super_admin' ? data : data?.filter((item) => item.department_id === user.departmentId)
 	const [open, setOpen] = useState(false)
 	const [historyItem, setHistoryItem] = useState<EquipmentRow | null>(null)
 	const [step, setStep] = useState(0)
@@ -69,7 +76,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const [error, setError] = useState<string | null>(null)
 
 	const facilityOptions = facilities?.filter((facility) => !departmentId || facility.department_id === departmentId) ?? []
-	const departmentName = departments?.find((dept) => dept.id === departmentId)?.name
+	const departmentName = departmentId === MAIN_SUPPLY ? 'Main Supply (Central Inventory)' : departments?.find((dept) => dept.id === departmentId)?.name
 	const facilityName = facilityOptions.find((facility) => String(facility.id) === facilityId)?.name
 
 	const resetForm = () => {
@@ -103,7 +110,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 				equipment_code: equipmentCode,
 				equipment_name: equipmentName,
 				category,
-				department_id: departmentId || null,
+				department_id: departmentId === MAIN_SUPPLY ? null : departmentId || null,
 				facility_id: facilityId ? Number(facilityId) : null,
 				quantity: Number(quantity) || 1,
 				condition,
@@ -119,8 +126,12 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 		<>
 			<EntityTablePage<EquipmentRow>
 				title="Inventory Items"
-				subtitle={`${data?.length ?? 0} items · click a row for its history`}
-				rows={data}
+				subtitle={
+					user.role === 'super_admin'
+						? `${visibleItems?.length ?? 0} items · click a row for its history`
+						: `Department inventory · ${visibleItems?.length ?? 0} items · click a row for history`
+				}
+				rows={visibleItems}
 				isLoading={isLoading}
 				searchKeys={['equipment_code', 'equipment_name', 'category', 'status']}
 				emptyMessage="No inventory items recorded yet."
@@ -137,7 +148,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 							</div>
 						),
 					},
-					{ header: 'Department', render: (row) => row.departments?.name ?? '—' },
+					{ header: 'Department', render: (row) => row.departments?.name ?? 'Main Supply' },
 					{ header: 'Facility', render: (row) => row.facilities?.name ?? '—' },
 					{ header: 'Qty', render: (row) => row.quantity },
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status}</StatusChip> },
@@ -201,6 +212,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 								<option value="" disabled>
 									Select department
 								</option>
+								{user.role === 'super_admin' ? <option value={MAIN_SUPPLY}>Main Supply (Central Inventory)</option> : null}
 								{departments?.map((dept) => (
 									<option key={dept.id} value={dept.id}>
 										{dept.name}
