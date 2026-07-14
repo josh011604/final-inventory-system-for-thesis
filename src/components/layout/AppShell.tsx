@@ -3,6 +3,7 @@ import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bell, LogOut, Search, Sun, Moon } from 'lucide-react'
 import { isRouteAllowed, navItemsForRole } from '@/frontend/config/navigation'
 import { getRoleLabel } from '@/backend/lib/rbac'
+import { useNotifications } from '@/backend/lib/supabase/queries'
 import type { SchoolUser, ThemeMode } from '@/backend/types/school'
 
 type AppShellProps = {
@@ -10,7 +11,6 @@ type AppShellProps = {
 	theme: ThemeMode
 	onToggleTheme: () => void
 	onLogout: () => void
-	notificationCount?: number
 }
 
 function Breadcrumbs({ path }: { path: string }) {
@@ -32,11 +32,13 @@ function Breadcrumbs({ path }: { path: string }) {
 	)
 }
 
-export default function AppShell({ user, theme, onToggleTheme, onLogout, notificationCount = 0 }: AppShellProps) {
+export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppShellProps) {
 	const location = useLocation()
 	const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 	const profileMenuRef = useRef<HTMLDivElement>(null)
 	const items = navItemsForRole(user.role)
+	const { data: notifications } = useNotifications()
+	const unreadCount = notifications?.filter((note) => !note.is_read).length ?? 0
 
 	useEffect(() => {
 		setProfileMenuOpen(false)
@@ -121,14 +123,22 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout, notific
 							{theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
 						</button>
 
-						<button type="button" className="relative rounded-lg border border-border p-2 text-text-muted transition hover:border-primary hover:text-primary" aria-label="Notifications">
+						<Link
+							to="/notifications"
+							aria-label="Notifications"
+							className={`relative rounded-lg border p-2 transition ${
+								location.pathname.startsWith('/notifications')
+									? 'border-primary text-primary'
+									: 'border-border text-text-muted hover:border-primary hover:text-primary'
+							}`}
+						>
 							<Bell className="h-5 w-5" />
-							{notificationCount > 0 ? (
+							{unreadCount > 0 ? (
 								<span className="absolute -right-1 -top-1 flex h-4 min-w-4 animate-pulse items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white shadow-sm shadow-danger/40">
-									{notificationCount > 9 ? '9+' : notificationCount}
+									{unreadCount > 9 ? '9+' : unreadCount}
 								</span>
 							) : null}
-						</button>
+						</Link>
 
 						<div className="relative" ref={profileMenuRef}>
 							<button
