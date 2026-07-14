@@ -29,10 +29,6 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const runOverdueCheck = useRunOverdueCheck()
 
 	const canApprove = user.role === 'super_admin' || user.role === 'department_admin'
-	// New Request only offers Main Supply (Central Inventory) items — those owned
-	// by the super admin (no department). Department-owned items are for viewing
-	// and tracking on the Inventory page, not for direct borrowing.
-	const availableEquipment = equipment?.filter((item) => item.department_id === null && item.status === 'available') ?? []
 	// Local-time YYYY-MM-DD; used as the date input's min and for validation.
 	const today = new Date().toLocaleDateString('en-CA')
 
@@ -43,6 +39,14 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const [error, setError] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
 	const [overdueMessage, setOverdueMessage] = useState<string | null>(null)
+	// New Request source: the Supply Office (Main Supply / super-admin central
+	// inventory) or the borrower's own assigned department.
+	const [borrowSource, setBorrowSource] = useState<'main-supply' | 'department'>('main-supply')
+
+	const mainSupplyAvailable = equipment?.filter((item) => item.department_id === null && item.status === 'available') ?? []
+	const departmentAvailable = equipment?.filter((item) => item.department_id === user.departmentId && item.status === 'available') ?? []
+	const availableEquipment = borrowSource === 'department' ? departmentAvailable : mainSupplyAvailable
+	const canRequest = mainSupplyAvailable.length > 0 || departmentAvailable.length > 0
 
 	const handleOverdueCheck = () => {
 		setActionError(null)
@@ -111,8 +115,8 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				searchKeys={['status']}
 				emptyMessage="No borrow requests yet."
 				emptyAction={
-					<Button size="sm" onClick={() => setOpen(true)} disabled={availableEquipment.length === 0}>
-						{availableEquipment.length === 0 ? 'No Main Supply items available' : 'Submit the first request'}
+					<Button size="sm" onClick={() => setOpen(true)} disabled={!canRequest}>
+						{canRequest ? 'Submit the first request' : 'No items available to request'}
 					</Button>
 				}
 				action={
@@ -122,7 +126,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 								{runOverdueCheck.isPending ? 'Checking…' : 'Check Overdue Now'}
 							</Button>
 						) : null}
-						<Button size="sm" onClick={() => setOpen(true)} disabled={availableEquipment.length === 0}>
+						<Button size="sm" onClick={() => setOpen(true)} disabled={!canRequest}>
 							New Request
 						</Button>
 					</div>
@@ -167,12 +171,39 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				<form className="space-y-4" onSubmit={handleSubmit}>
 					{error ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div> : null}
 					<div>
+						<label className={labelClass}>Borrow from</label>
+						<div className="flex gap-2">
+							<button
+								type="button"
+								onClick={() => {
+									setBorrowSource('main-supply')
+									setEquipmentId('')
+								}}
+								className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${borrowSource === 'main-supply' ? 'border-primary bg-primary-light text-primary' : 'border-border text-text-muted'}`}
+							>
+								Supply Office
+							</button>
+							{user.departmentId ? (
+								<button
+									type="button"
+									onClick={() => {
+										setBorrowSource('department')
+										setEquipmentId('')
+									}}
+									className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${borrowSource === 'department' ? 'border-primary bg-primary-light text-primary' : 'border-border text-text-muted'}`}
+								>
+									{user.department || 'My Department'}
+								</button>
+							) : null}
+						</div>
+					</div>
+					<div>
 						<label className={labelClass} htmlFor="borrow-equipment">
-							Main Supply Item
+							Item
 						</label>
 						<select id="borrow-equipment" value={equipmentId} onChange={(event) => setEquipmentId(event.target.value)} className={inputClass} required>
 							<option value="" disabled>
-								Select a Main Supply item
+								Select an item
 							</option>
 							{availableEquipment.map((item) => (
 								<option key={item.id} value={item.id}>
@@ -180,7 +211,12 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 								</option>
 							))}
 						</select>
-						<p className="mt-1.5 text-xs text-text-muted">Requests draw only from Main Supply (Central Inventory). Department items are not borrowable here.</p>
+						<p className="mt-1.5 text-xs text-text-muted">
+							{borrowSource === 'main-supply'
+								? 'Items from the Supply Office (Central Inventory), owned by the super admin.'
+								: 'Items from your assigned department.'}
+							{availableEquipment.length === 0 ? ' No available items in this source.' : ''}
+						</p>
 					</div>
 					<div>
 						<label className={labelClass} htmlFor="borrow-due">
