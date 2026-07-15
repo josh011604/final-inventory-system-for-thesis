@@ -5,6 +5,7 @@ import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
 import EquipmentHistoryModal from '@/frontend/features/inventory/EquipmentHistoryModal'
+import EquipmentEditModal from '@/frontend/features/inventory/EquipmentEditModal'
 import { useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
@@ -66,6 +67,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const visibleItems = user.role === 'super_admin' ? data : data?.filter((item) => item.department_id === user.departmentId)
 	const [open, setOpen] = useState(false)
 	const [historyItem, setHistoryItem] = useState<EquipmentRow | null>(null)
+	const [editItem, setEditItem] = useState<EquipmentRow | null>(null)
 	const [step, setStep] = useState(0)
 	const [equipmentCode, setEquipmentCode] = useState('')
 	const [equipmentName, setEquipmentName] = useState('')
@@ -164,10 +166,31 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 							<span className="text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">View →</span>
 						),
 					},
+					...(canManage
+						? [
+								{
+									header: 'Actions',
+									render: (row: EquipmentRow) => (
+										<Button
+											size="sm"
+											variant="secondary"
+											onClick={(event) => {
+												// Keep the row's click-for-history behavior intact.
+												event.stopPropagation()
+												setEditItem(row)
+											}}
+										>
+											Edit
+										</Button>
+									),
+								},
+							]
+						: []),
 				]}
 			/>
 
 			{historyItem ? <EquipmentHistoryModal item={historyItem} onClose={() => setHistoryItem(null)} /> : null}
+			{editItem ? <EquipmentEditModal item={editItem} facilities={facilities} onClose={() => setEditItem(null)} /> : null}
 
 			<Modal open={open} onClose={closeModal} title="Add Inventory Item">
 				<StepIndicator current={step} />

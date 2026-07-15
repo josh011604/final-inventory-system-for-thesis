@@ -113,6 +113,32 @@ export function useCreateEquipment() {
 	})
 }
 
+export function useUpdateEquipment() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ id, updates }: { id: number; updates: Partial<Tables<'equipment'>> }) => {
+			const { error } = await supabase.from('equipment').update(updates).eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['equipment'] }),
+	})
+}
+
+export function useDeleteEquipment() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const { error } = await supabase.from('equipment').delete().eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['equipment'] })
+			queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
+			queryClient.invalidateQueries({ queryKey: ['maintenance_requests'] })
+		},
+	})
+}
+
 // ---------- Borrow records (Borrowing module) ----------
 
 export type BorrowRecordRow = Tables<'borrow_records'> & {
