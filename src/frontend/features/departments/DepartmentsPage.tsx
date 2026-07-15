@@ -5,6 +5,7 @@ import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import { useCreateDepartment, useDepartments } from '@/backend/lib/supabase/queries'
 import type { Tables } from '@/backend/types/supabase'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -35,7 +36,7 @@ export default function DepartmentsPage() {
 			setPrograms('')
 			setOpen(false)
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to create department.')
+			setError(getErrorMessage(mutationError, 'Failed to create department.'))
 		}
 	}
 

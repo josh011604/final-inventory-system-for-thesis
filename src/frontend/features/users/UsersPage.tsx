@@ -35,6 +35,25 @@ export default function UsersPage({ user }: { user: SchoolUser }) {
 				},
 				{ header: 'Department', render: (row) => row.departments?.name ?? '—' },
 				{
+					header: 'Position',
+					render: (row) =>
+						canEditRoleAndDept ? (
+							<input
+								defaultValue={row.position ?? ''}
+								onBlur={(event) => {
+									const value = event.target.value.trim()
+									if (value !== (row.position ?? '')) {
+										updateProfile.mutate({ id: row.id, updates: { position: value || null } })
+									}
+								}}
+								placeholder="Set position"
+								className={`${selectClass} w-32`}
+							/>
+						) : (
+							row.position ?? '—'
+						),
+				},
+				{
 					header: 'Role',
 					render: (row) =>
 						canEditRoleAndDept ? (
@@ -67,7 +86,16 @@ export default function UsersPage({ user }: { user: SchoolUser }) {
 						),
 				},
 			]}
-			action={canEditRoleAndDept ? <span className="text-xs text-text-muted">{departments?.length ?? 0} departments</span> : undefined}
+			action={
+				<div className="flex items-center gap-3">
+					{(data?.filter((row) => row.status === 'inactive').length ?? 0) > 0 ? (
+						<StatusChip tone="warning">
+							{data!.filter((row) => row.status === 'inactive').length} pending activation
+						</StatusChip>
+					) : null}
+					{canEditRoleAndDept ? <span className="text-xs text-text-muted">{departments?.length ?? 0} departments</span> : null}
+				</div>
+			}
 		/>
 	)
 }

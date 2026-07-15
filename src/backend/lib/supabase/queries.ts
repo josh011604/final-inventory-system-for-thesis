@@ -113,6 +113,56 @@ export function useCreateEquipment() {
 	})
 }
 
+// Slim shape returned by the main-supply edge function — just what the New
+// Request form needs.
+export type MainSupplyItem = Pick<
+	Tables<'equipment'>,
+	'id' | 'equipment_code' | 'equipment_name' | 'department_id' | 'status' | 'quantity'
+> & { available_units: number }
+
+export function useMainSupplyEquipment() {
+	return useQuery({
+		queryKey: ['main_supply_equipment'],
+		queryFn: async () => {
+			// Served by an edge function (service role internally) so signed-in
+			// users can request Supply Office items even where the equipment RLS
+			// policy hides null-department rows from them.
+			const { data, error } = await supabase.functions.invoke('main-supply', { body: {} })
+			if (error) {
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
+			return (data as { data: MainSupplyItem[] }).data
+		},
+	})
+}
+
+export function useUpdateEquipment() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ id, updates }: { id: number; updates: Partial<Tables<'equipment'>> }) => {
+			const { error } = await supabase.from('equipment').update(updates).eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['equipment'] }),
+	})
+}
+
+export function useDeleteEquipment() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const { error } = await supabase.from('equipment').delete().eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['equipment'] })
+			queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
+			queryClient.invalidateQueries({ queryKey: ['maintenance_requests'] })
+		},
+	})
+}
+
 // ---------- Borrow records (Borrowing module) ----------
 
 export type BorrowRecordRow = Tables<'borrow_records'> & {
@@ -141,23 +191,73 @@ export function useBorrowRecords() {
 export function useCreateBorrowRecord() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: async (input: TablesInsert<'borrow_records'>) => {
-			const { error } = await supabase.from('borrow_records').insert(input)
-			if (error) throw error
+		mutationFn: async (input: { equipment_id: number; expected_return_date: string | null; notes: string | null }) => {
+			// Routed through the borrow-status edge function so every request rule
+			// is enforced server-side: date window, per-unit availability,
+			// duplicate guard, per-user borrow cap, and approver notifications.
+			const { error } = await supabase.functions.invoke('borrow-status', { body: { action: 'create', ...input } })
+			if (error) {
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
+			queryClient.invalidateQueries({ queryKey: ['notifications'] })
+		},
+	})
+}
+
+export function useCancelBorrowRecord() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (id: number) => {
+			// The function verifies the caller is the borrower and the request is
+			// still pending before removing it (and writes an audit entry).
+			const { error } = await supabase.functions.invoke('borrow-status', { body: { action: 'cancel', id } })
+			if (error) {
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
 		},
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['borrow_records'] }),
+	})
+}
+
+export function useRunOverdueCheck() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async () => {
+			// Fires the same institution-wide sweep pg_cron runs hourly. The edge
+			// function re-checks that the caller is a Super Administrator before
+			// invoking flag_overdue_borrow_records() with the service-role key.
+			const { data, error } = await supabase.functions.invoke('overdue-check', { body: {} })
+			if (error) {
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
+			return data as { flagged: number }
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
+			queryClient.invalidateQueries({ queryKey: ['notifications'] })
+			queryClient.invalidateQueries({ queryKey: ['audit_logs'] })
+		},
 	})
 }
 
 export function useUpdateBorrowRecordStatus() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: async ({ id, status }: { id: number; status: string }) => {
+		mutationFn: async ({ id, status, condition }: { id: number; status: string; condition?: string }) => {
 			// Routed through the borrow-status edge function rather than a direct
 			// table update: it owns the confirm/reject/return state machine,
-			// authorization, equipment-availability checks, and the equipment-status
-			// + notification + audit-log cascade.
-			const { error } = await supabase.functions.invoke('borrow-status', { body: { id, status } })
+			// authorization, per-unit availability checks, and the equipment-status
+			// + notification + audit-log cascade. A damaged return also opens a
+			// maintenance request automatically.
+			const { error } = await supabase.functions.invoke('borrow-status', {
+				body: { id, status, ...(condition ? { condition_after: condition } : {}) },
+			})
 			if (error) {
 				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
 				throw new Error(body?.error ?? error.message)
@@ -179,6 +279,9 @@ export function useUpdateBorrowRecordStatus() {
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
 			queryClient.invalidateQueries({ queryKey: ['equipment'] })
+			queryClient.invalidateQueries({ queryKey: ['main_supply_equipment'] })
+			// A damaged return opens a maintenance request automatically.
+			queryClient.invalidateQueries({ queryKey: ['maintenance_requests'] })
 		},
 	})
 }
@@ -295,5 +398,75 @@ export function useAuditLogs() {
 			if (error) throw error
 			return data as unknown as AuditLogRow[]
 		},
+	})
+}
+
+// ---------- Categories (System Settings) ----------
+
+export function useCategories() {
+	return useQuery({
+		queryKey: ['categories'],
+		queryFn: async () => {
+			const { data, error } = await supabase.from('categories').select('*').order('name')
+			if (error) throw error
+			return data
+		},
+	})
+}
+
+export function useCreateCategory() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (name: string) => {
+			const { error } = await supabase.from('categories').insert({ name })
+			if (error) throw error
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+	})
+}
+
+export function useDeleteCategory() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const { error } = await supabase.from('categories').delete().eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+	})
+}
+
+// ---------- Suppliers (System Settings) ----------
+
+export function useSuppliers() {
+	return useQuery({
+		queryKey: ['suppliers'],
+		queryFn: async () => {
+			const { data, error } = await supabase.from('suppliers').select('*').order('name')
+			if (error) throw error
+			return data
+		},
+	})
+}
+
+export function useCreateSupplier() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (input: TablesInsert<'suppliers'>) => {
+			const { error } = await supabase.from('suppliers').insert(input)
+			if (error) throw error
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
+	})
+}
+
+export function useDeleteSupplier() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const { error } = await supabase.from('suppliers').delete().eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
 	})
 }

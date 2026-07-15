@@ -44,15 +44,18 @@ Use that migration after linking your Supabase project with the CLI.
 
 ## Demo Accounts
 
+These are real Supabase auth users (not UI mockups). Create or repair them with `npm run seed:demo` (requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`), then confirm they work end to end with `npm run verify:demo`.
+
 - `superadmin` / `Super123!`
-- `eng.dean` / `Dean123!` (College of Industrial Technology)
-- `cte.dean` / `Dean123!` (College of Teacher Education)
-- `cs.chair` / `Dean123!` (Department of Computer Science)
-- `fish.head` / `Dean123!` (College of Fisheries)
-- `jcruz` / `Staff123!` (College of Industrial Technology)
-- `mday` / `Staff123!` (Department of Computer Science)
-- `cte.staff` / `Staff123!` (College of Teacher Education)
-- `fish.staff` / `Staff123!` (College of Fisheries)
+- `bscs.admin` / `Admin123!` · `bscs.staff` / `Staff123!` (BS Computer Science)
+- `bsit.admin` / `Admin123!` · `bsit.staff` / `Staff123!` (BS Industrial Technology, major in Electricity)
+- `bsf.admin` / `Admin123!` · `bsf.staff` / `Staff123!` (BS Fisheries, major in Inland Fisheries)
+- `cte.admin` / `Admin123!` · `cte.staff` / `Staff123!` (College of Teacher Education)
+- `midwifery.admin` / `Admin123!` · `midwifery.staff` / `Staff123!` (Midwifery)
+
+Rebuild the account set from scratch with `node scripts/prune-accounts.mjs` (deletes every non–super-admin account) followed by `npm run seed:demo`. Department names must match the `20260713130000_reconfigure_departments` migration.
+
+The Demo Accounts panel on the login screen is intentionally kept so evaluators can sign in with one click. These are shared, publicly listed credentials — when you switch this instance over to real production data, rotate the passwords (or deactivate the accounts) and consider hiding the panel in `src/frontend/features/auth/AuthScreen.tsx`.
 
 ## Scripts
 
@@ -60,3 +63,13 @@ Use that migration after linking your Supabase project with the CLI.
 - `npm run build` creates a production build
 - `npm run preview` previews the build locally
 - `npm run lint` checks the codebase with ESLint
+- `npm run seed:demo` creates/repairs the demo accounts in Supabase (service role key required)
+- `npm run seed:data` seeds sample categories, suppliers, facilities, equipment, and borrow/maintenance records per department (idempotent)
+- `npm run verify:demo` signs in as every demo account and checks role permissions, RLS scoping, and edge functions
+
+## Deployment
+
+1. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_APP_NAME` in the host's environment (never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend build).
+2. Apply migrations with `supabase db push` and deploy the edge functions: `supabase functions deploy borrow-status maintenance-status overdue-check main-supply`.
+3. `npm run build`, then serve `dist/`.
+4. The app uses `BrowserRouter`, so the host must rewrite all paths to `index.html` (Vercel/Netlify SPA fallback, or `try_files $uri /index.html` on nginx). Without it, refreshing any route other than `/` returns a 404.

@@ -21,14 +21,16 @@ const features: { label: string; icon: LucideIcon }[] = [
 
 const demoAccounts = [
 	{ label: 'Super Admin', department: 'Institution-wide', username: 'superadmin', password: 'Super123!', icon: ShieldCheck },
-	{ label: 'Dept Admin', department: 'Industrial Technology', username: 'eng.dean', password: 'Dean123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.dean', password: 'Dean123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Computer Science', username: 'cs.chair', password: 'Dean123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Fisheries', username: 'fish.head', password: 'Dean123!', icon: Users },
-	{ label: 'Staff', department: 'Industrial Technology', username: 'jcruz', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'Computer Science', username: 'mday', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Dept Admin', department: 'BSCS', username: 'bscs.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'BSIT Electricity', username: 'bsit.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Inland Fisheries', username: 'bsf.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Dept Admin', department: 'Midwifery', username: 'midwifery.admin', password: 'Admin123!', icon: Users },
+	{ label: 'Staff', department: 'BSCS', username: 'bscs.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'BSIT Electricity', username: 'bsit.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'Inland Fisheries', username: 'bsf.staff', password: 'Staff123!', icon: UserCircle2 },
 	{ label: 'Staff', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'Fisheries', username: 'fish.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Staff', department: 'Midwifery', username: 'midwifery.staff', password: 'Staff123!', icon: UserCircle2 },
 ]
 
 const inputClass =
@@ -129,7 +131,6 @@ export default function AuthScreen() {
 	const [fullName, setFullName] = useState('')
 	const [employeeId, setEmployeeId] = useState('')
 	const [departmentId, setDepartmentId] = useState('')
-	const [position, setPosition] = useState('')
 	const [email, setEmail] = useState('')
 	const [regUsername, setRegUsername] = useState('')
 	const [regPassword, setRegPassword] = useState('')
@@ -158,7 +159,6 @@ export default function AuthScreen() {
 	const resetRegisterForm = () => {
 		setFullName('')
 		setEmployeeId('')
-		setPosition('')
 		setEmail('')
 		setRegUsername('')
 		setRegPassword('')
@@ -195,7 +195,6 @@ export default function AuthScreen() {
 			fullName,
 			username: regUsername,
 			departmentId,
-			position,
 			employeeId,
 		})
 
@@ -352,25 +351,17 @@ export default function AuthScreen() {
 								</div>
 							</div>
 
-							<div className="grid gap-4 sm:grid-cols-2">
-								<div>
-									<label className={labelClass} htmlFor="department">
-										Department
-									</label>
-									<select id="department" value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} className={inputClass}>
-										{departmentOptions.map((dept) => (
-											<option key={dept.id} value={dept.id}>
-												{dept.name} — {dept.programs.join(', ')}
-											</option>
-										))}
-									</select>
-								</div>
-								<div>
-									<label className={labelClass} htmlFor="position">
-										Position
-									</label>
-									<input id="position" value={position} onChange={(event) => setPosition(event.target.value)} className={inputClass} placeholder="Staff" />
-								</div>
+							<div>
+								<label className={labelClass} htmlFor="department">
+									Department
+								</label>
+								<select id="department" value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} className={inputClass}>
+									{departmentOptions.map((dept) => (
+										<option key={dept.id} value={dept.id}>
+											{dept.name} — {dept.programs.join(', ')}
+										</option>
+									))}
+								</select>
 							</div>
 
 							<div>

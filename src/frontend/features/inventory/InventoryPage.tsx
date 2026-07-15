@@ -4,9 +4,12 @@ import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
+import EquipmentHistoryModal from '@/frontend/features/inventory/EquipmentHistoryModal'
+import EquipmentEditModal from '@/frontend/features/inventory/EquipmentEditModal'
 import { useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -19,6 +22,10 @@ const statusTone: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'mu
 	lost: 'danger',
 	disposed: 'muted',
 }
+
+// Sentinel department-select value meaning "no department" — i.e. the central
+// Main Supply pool owned by the super admin.
+const MAIN_SUPPLY = 'main-supply'
 
 const steps = ['Basic Info', 'Location', 'Condition & Review']
 
@@ -55,7 +62,12 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const createEquipment = useCreateEquipment()
 
 	const canManage = user.role === 'super_admin' || user.role === 'department_admin'
+	// Department Inventory: staff and department admins see only their own
+	// department's items; the super admin sees everything, including Main Supply.
+	const visibleItems = user.role === 'super_admin' ? data : data?.filter((item) => item.department_id === user.departmentId)
 	const [open, setOpen] = useState(false)
+	const [historyItem, setHistoryItem] = useState<EquipmentRow | null>(null)
+	const [editItem, setEditItem] = useState<EquipmentRow | null>(null)
 	const [step, setStep] = useState(0)
 	const [equipmentCode, setEquipmentCode] = useState('')
 	const [equipmentName, setEquipmentName] = useState('')
@@ -66,8 +78,13 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const [condition, setCondition] = useState('Excellent')
 	const [error, setError] = useState<string | null>(null)
 
-	const facilityOptions = facilities?.filter((facility) => !departmentId || facility.department_id === departmentId) ?? []
-	const departmentName = departments?.find((dept) => dept.id === departmentId)?.name
+	// Main Supply items live in central (department-less) facilities like the
+	// Supply Office; department items pick from their department's facilities.
+	const facilityOptions =
+		facilities?.filter((facility) =>
+			departmentId === MAIN_SUPPLY ? facility.department_id === null : !departmentId || facility.department_id === departmentId,
+		) ?? []
+	const departmentName = departmentId === MAIN_SUPPLY ? 'Main Supply (Central Inventory)' : departments?.find((dept) => dept.id === departmentId)?.name
 	const facilityName = facilityOptions.find((facility) => String(facility.id) === facilityId)?.name
 
 	const resetForm = () => {
@@ -101,7 +118,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 				equipment_code: equipmentCode,
 				equipment_name: equipmentName,
 				category,
-				department_id: departmentId || null,
+				department_id: departmentId === MAIN_SUPPLY ? null : departmentId || null,
 				facility_id: facilityId ? Number(facilityId) : null,
 				quantity: Number(quantity) || 1,
 				condition,
@@ -109,21 +126,26 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 			})
 			closeModal()
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to create equipment.')
+			setError(getErrorMessage(mutationError, 'Failed to create equipment.'))
 		}
 	}
 
 	return (
 		<>
 			<EntityTablePage<EquipmentRow>
-				title="Inventory"
-				subtitle={`${data?.length ?? 0} items`}
-				rows={data}
+				title="Inventory Items"
+				subtitle={
+					user.role === 'super_admin'
+						? `${visibleItems?.length ?? 0} items · click a row for its history`
+						: `Department inventory · ${visibleItems?.length ?? 0} items · click a row for history`
+				}
+				rows={visibleItems}
 				isLoading={isLoading}
 				searchKeys={['equipment_code', 'equipment_name', 'category', 'status']}
 				emptyMessage="No inventory items recorded yet."
 				emptyAction={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add the first item</Button> : null}
 				action={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add Item</Button> : undefined}
+				onRowClick={(row) => setHistoryItem(row)}
 				columns={[
 					{
 						header: 'Asset',
@@ -134,12 +156,41 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 							</div>
 						),
 					},
-					{ header: 'Department', render: (row) => row.departments?.name ?? '—' },
+					{ header: 'Department', render: (row) => row.departments?.name ?? 'Main Supply' },
 					{ header: 'Facility', render: (row) => row.facilities?.name ?? '—' },
 					{ header: 'Qty', render: (row) => row.quantity },
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status}</StatusChip> },
+					{
+						header: 'History',
+						render: () => (
+							<span className="text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">View →</span>
+						),
+					},
+					...(canManage
+						? [
+								{
+									header: 'Actions',
+									render: (row: EquipmentRow) => (
+										<Button
+											size="sm"
+											variant="secondary"
+											onClick={(event) => {
+												// Keep the row's click-for-history behavior intact.
+												event.stopPropagation()
+												setEditItem(row)
+											}}
+										>
+											Edit
+										</Button>
+									),
+								},
+							]
+						: []),
 				]}
 			/>
+
+			{historyItem ? <EquipmentHistoryModal item={historyItem} onClose={() => setHistoryItem(null)} /> : null}
+			{editItem ? <EquipmentEditModal item={editItem} facilities={facilities} onClose={() => setEditItem(null)} /> : null}
 
 			<Modal open={open} onClose={closeModal} title="Add Inventory Item">
 				<StepIndicator current={step} />
@@ -152,7 +203,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 							<label className={labelClass} htmlFor="eq-code">
 								Asset Code
 							</label>
-							<input id="eq-code" value={equipmentCode} onChange={(event) => setEquipmentCode(event.target.value)} className={inputClass} placeholder="ASSET-CS-004" required />
+							<input id="eq-code" value={equipmentCode} onChange={(event) => setEquipmentCode(event.target.value)} className={inputClass} placeholder="Unique code, e.g. ASSET-MS-001" required />
 						</div>
 						<div>
 							<label className={labelClass} htmlFor="eq-name">
@@ -190,6 +241,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 								<option value="" disabled>
 									Select department
 								</option>
+								{user.role === 'super_admin' ? <option value={MAIN_SUPPLY}>Main Supply (Central Inventory)</option> : null}
 								{departments?.map((dept) => (
 									<option key={dept.id} value={dept.id}>
 										{dept.name}

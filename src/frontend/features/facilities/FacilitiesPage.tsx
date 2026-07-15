@@ -7,6 +7,7 @@ import StatusChip from '@/components/ui/StatusChip'
 import { useCreateFacility, useDepartments, useFacilities } from '@/backend/lib/supabase/queries'
 import type { FacilityRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -46,7 +47,7 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 			setCapacity('0')
 			setOpen(false)
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to create facility.')
+			setError(getErrorMessage(mutationError, 'Failed to create facility.'))
 		}
 	}
 

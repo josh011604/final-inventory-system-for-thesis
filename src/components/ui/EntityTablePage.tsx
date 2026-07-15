@@ -20,6 +20,7 @@ type EntityTablePageProps<T> = {
 	emptyMessage?: string
 	emptyAction?: ReactNode
 	pageSize?: number
+	onRowClick?: (row: T) => void
 }
 
 export default function EntityTablePage<T extends object>({
@@ -33,6 +34,7 @@ export default function EntityTablePage<T extends object>({
 	emptyMessage = 'No records found yet.',
 	emptyAction,
 	pageSize = 8,
+	onRowClick,
 }: EntityTablePageProps<T>) {
 	const [query, setQuery] = useState('')
 	const [page, setPage] = useState(1)
@@ -103,7 +105,25 @@ export default function EntityTablePage<T extends object>({
 									))
 								) : pageRows.length > 0 ? (
 									pageRows.map((row, rowIndex) => (
-										<tr key={rowIndex} className="group border-l-2 border-l-transparent transition hover:border-l-accent hover:bg-primary-light/40">
+										<tr
+											key={rowIndex}
+											onClick={onRowClick ? () => onRowClick(row) : undefined}
+											onKeyDown={
+												onRowClick
+													? (event) => {
+															if (event.key === 'Enter' || event.key === ' ') {
+																event.preventDefault()
+																onRowClick(row)
+															}
+														}
+													: undefined
+											}
+											tabIndex={onRowClick ? 0 : undefined}
+											role={onRowClick ? 'button' : undefined}
+											className={`group border-l-2 border-l-transparent transition hover:border-l-accent hover:bg-primary-light/40 ${
+												onRowClick ? 'cursor-pointer focus:bg-primary-light/40 focus:outline-none' : ''
+											}`}
+										>
 											{columns.map((column) => (
 												<td key={column.header} className="px-4 py-3 text-sm text-text-primary">
 													{column.render(row)}

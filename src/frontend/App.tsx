@@ -4,15 +4,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AuthScreen from '@/frontend/features/auth/AuthScreen'
 import DashboardScreen from '@/frontend/features/dashboard/DashboardScreen'
 import AppShell from '@/components/layout/AppShell'
-import ComingSoonPage from '@/components/ui/ComingSoonPage'
 import DepartmentsPage from '@/frontend/features/departments/DepartmentsPage'
 import FacilitiesPage from '@/frontend/features/facilities/FacilitiesPage'
 import InventoryPage from '@/frontend/features/inventory/InventoryPage'
 import BorrowingPage from '@/frontend/features/borrowing/BorrowingPage'
 import MaintenancePage from '@/frontend/features/maintenance/MaintenancePage'
 import UsersPage from '@/frontend/features/users/UsersPage'
+import ReportsPage from '@/frontend/features/reports/ReportsPage'
 import NotificationsPage from '@/frontend/features/notifications/NotificationsPage'
 import AuditLogsPage from '@/frontend/features/audit-logs/AuditLogsPage'
+import SettingsPage from '@/frontend/features/settings/SettingsPage'
 import { supabase } from '@/backend/lib/supabase/client'
 import { signOut } from '@/backend/lib/supabase/auth'
 import type { Role, SchoolUser, ThemeMode } from '@/backend/types/school'
@@ -166,11 +167,10 @@ export default function App() {
 						<Route path="/borrowing" element={<BorrowingPage user={activeUser} />} />
 						<Route path="/maintenance" element={<MaintenancePage user={activeUser} />} />
 						<Route path="/users" element={<UsersPage user={activeUser} />} />
-						<Route path="/reports" element={<ComingSoonPage title="Reports" />} />
+						<Route path="/reports" element={<ReportsPage user={activeUser} />} />
 						<Route path="/notifications" element={<NotificationsPage />} />
 						<Route path="/audit-logs" element={<AuditLogsPage />} />
-						<Route path="/settings" element={<ComingSoonPage title="System Settings" />} />
-						<Route path="/backup" element={<ComingSoonPage title="Backup & Restore" />} />
+						<Route path="/settings" element={<SettingsPage />} />
 						<Route path="*" element={<Navigate to="/dashboard" replace />} />
 					</Route>
 				</Routes>
