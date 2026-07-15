@@ -4,7 +4,7 @@ import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
-import { useBorrowRecords, useCreateBorrowRecord, useEquipment, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
+import { useBorrowRecords, useCreateBorrowRecord, useEquipment, useMainSupplyEquipment, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
@@ -42,13 +42,18 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const [overdueMessage, setOverdueMessage] = useState<string | null>(null)
 
 	// New Request draws from both sources at once: the Supply Office (Main
-	// Supply / super-admin central inventory) and the borrower's own department.
-	const mainSupplyAvailable = equipment?.filter((item) => item.department_id === null && item.status === 'available') ?? []
+	// Supply / super-admin central inventory, served by an edge function so it
+	// works for every role regardless of RLS) and the borrower's own department.
+	const { data: mainSupply } = useMainSupplyEquipment()
+	const mainSupplyAvailable = mainSupply?.filter((item) => item.status === 'available') ?? []
 	const departmentAvailable = user.departmentId
 		? equipment?.filter((item) => item.department_id === user.departmentId && item.status === 'available') ?? []
 		: []
 	const availableEquipment = [...mainSupplyAvailable, ...departmentAvailable]
 	const canRequest = availableEquipment.length > 0
+	// Staff can't read Supply Office equipment rows directly, so the joined
+	// equipment name on their own requests may be RLS-hidden — recover it here.
+	const mainSupplyNameById = new Map((mainSupply ?? []).map((item) => [item.id, item.equipment_name]))
 
 	const handleOverdueCheck = () => {
 		setActionError(null)
@@ -138,12 +143,12 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 						header: 'Item',
 						render: (row) => (
 							<div>
-								<p className="font-medium text-text-primary">{row.equipment?.equipment_name ?? '—'}</p>
+								<p className="font-medium text-text-primary">{row.equipment?.equipment_name ?? mainSupplyNameById.get(row.equipment_id) ?? '—'}</p>
 								<p className="text-xs text-text-muted">{row.borrower?.full_name ?? '—'}</p>
 							</div>
 						),
 					},
-					{ header: 'Department', render: (row) => row.departments?.name ?? '—' },
+					{ header: 'Department', render: (row) => row.departments?.name ?? 'Supply Office' },
 					{ header: 'Due', render: (row) => (row.expected_return_date ? new Date(row.expected_return_date).toLocaleDateString() : '—') },
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
 					{

@@ -113,6 +113,30 @@ export function useCreateEquipment() {
 	})
 }
 
+// Slim shape returned by the main-supply edge function — just what the New
+// Request form needs.
+export type MainSupplyItem = Pick<
+	Tables<'equipment'>,
+	'id' | 'equipment_code' | 'equipment_name' | 'department_id' | 'status' | 'quantity'
+>
+
+export function useMainSupplyEquipment() {
+	return useQuery({
+		queryKey: ['main_supply_equipment'],
+		queryFn: async () => {
+			// Served by an edge function (service role internally) so signed-in
+			// users can request Supply Office items even where the equipment RLS
+			// policy hides null-department rows from them.
+			const { data, error } = await supabase.functions.invoke('main-supply', { body: {} })
+			if (error) {
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
+			return (data as { data: MainSupplyItem[] }).data
+		},
+	})
+}
+
 export function useUpdateEquipment() {
 	const queryClient = useQueryClient()
 	return useMutation({

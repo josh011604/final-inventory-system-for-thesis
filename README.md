@@ -70,6 +70,6 @@ The Demo Accounts panel on the login screen is intentionally kept so evaluators 
 ## Deployment
 
 1. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_APP_NAME` in the host's environment (never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend build).
-2. Apply migrations with `supabase db push` and deploy the edge functions: `supabase functions deploy borrow-status maintenance-status overdue-check`.
+2. Apply migrations with `supabase db push` and deploy the edge functions: `supabase functions deploy borrow-status maintenance-status overdue-check main-supply`.
 3. `npm run build`, then serve `dist/`.
 4. The app uses `BrowserRouter`, so the host must rewrite all paths to `index.html` (Vercel/Netlify SPA fallback, or `try_files $uri /index.html` on nginx). Without it, refreshing any route other than `/` returns a 404.
