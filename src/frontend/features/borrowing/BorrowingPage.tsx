@@ -7,6 +7,7 @@ import StatusChip from '@/components/ui/StatusChip'
 import { useBorrowRecords, useCreateBorrowRecord, useEquipment, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -59,7 +60,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 						: 'No overdue items — every borrowed item is within its return date.',
 				),
 			onError: (mutationError) =>
-				setActionError(mutationError instanceof Error ? mutationError.message : 'Failed to run the overdue check.'),
+				setActionError(getErrorMessage(mutationError, 'Failed to run the overdue check.')),
 		})
 	}
 
@@ -67,7 +68,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 		setActionError(null)
 		updateStatus.mutate(
 			{ id, status },
-			{ onError: (mutationError) => setActionError(mutationError instanceof Error ? mutationError.message : 'Failed to update borrow request.') },
+			{ onError: (mutationError) => setActionError(getErrorMessage(mutationError, 'Failed to update borrow request.')) },
 		)
 	}
 
@@ -95,7 +96,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 			setNotes('')
 			setOpen(false)
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to submit borrow request.')
+			setError(getErrorMessage(mutationError, 'Failed to submit borrow request.'))
 		}
 	}
 

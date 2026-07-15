@@ -134,6 +134,18 @@ const DEPARTMENTS = {
 	},
 }
 
+// Main Supply (Central Inventory): owned by the super admin, no department.
+// These are the items staff request through New Request -> Supply Office.
+const MAIN_SUPPLY = {
+	facilities: [{ name: 'Supply Office', facility_type: 'Storage', capacity: 0 }],
+	equipment: [
+		{ code: 'ASSET-MS-001', name: 'HDMI Projector (Pool)', category: 'Audio Visual', status: 'available', quantity: 6, condition: 'Good', value: 25000, unit: 'unit', supplier: 'CDO Tech Supplies', facility: 'Supply Office' },
+		{ code: 'ASSET-MS-002', name: 'Portable PA System', category: 'Audio Visual', status: 'available', quantity: 3, condition: 'Excellent', value: 18000, unit: 'set', supplier: 'EduLab Philippines', facility: 'Supply Office' },
+		{ code: 'ASSET-MS-003', name: 'Folding Tables', category: 'Furniture', status: 'available', quantity: 20, condition: 'Good', value: 2500, unit: 'unit', supplier: 'Campus Hardware Depot', facility: 'Supply Office' },
+		{ code: 'ASSET-MS-004', name: 'Laptop (Loaner Pool)', category: 'Computing', status: 'available', quantity: 5, condition: 'Good', value: 38000, unit: 'unit', supplier: 'CDO Tech Supplies', facility: 'Supply Office' },
+	],
+}
+
 // Borrow / maintenance rows reference equipment by code and an actor by
 // username; both are resolved to ids at runtime. The actor's department must
 // match the equipment's for the app's RLS scoping to display them naturally.
@@ -207,6 +219,28 @@ async function main() {
 		for (const [name, id] of existingByName) facilityIdByKey.set(`${deptId}::${name}`, id)
 	}
 
+	// --- Main Supply facilities (no department) ------------------------------
+	{
+		const { data: existing, error: exError } = await withRetry(() =>
+			admin.from('facilities').select('id, name').is('department_id', null),
+		)
+		if (exError) throw new Error(`Load Main Supply facilities failed: ${exError.message}`)
+		const existingByName = new Map((existing ?? []).map((f) => [f.name, f.id]))
+
+		const toInsert = MAIN_SUPPLY.facilities.filter((f) => !existingByName.has(f.name))
+		if (toInsert.length > 0) {
+			const { data: inserted, error: insError } = await withRetry(() =>
+				admin
+					.from('facilities')
+					.insert(toInsert.map((f) => ({ ...f, department_id: null, current_availability: 'available' })))
+					.select('id, name'),
+			)
+			if (insError) throw new Error(`Main Supply facilities insert failed: ${insError.message}`)
+			for (const f of inserted) existingByName.set(f.name, f.id)
+		}
+		for (const [name, id] of existingByName) facilityIdByKey.set(`null::${name}`, id)
+	}
+
 	// --- Equipment (upsert on unique equipment_code) ------------------------
 	const equipmentRows = []
 	for (const [deptName, config] of Object.entries(DEPARTMENTS)) {
@@ -229,6 +263,23 @@ async function main() {
 				purchase_date: '2024-06-15',
 			})
 		}
+	}
+	for (const item of MAIN_SUPPLY.equipment) {
+		equipmentRows.push({
+			equipment_code: item.code,
+			equipment_name: item.name,
+			category: item.category,
+			status: item.status,
+			department_id: null,
+			facility_id: facilityIdByKey.get(`null::${item.facility}`) ?? null,
+			quantity: item.quantity,
+			condition: item.condition,
+			value: item.value,
+			unit: item.unit,
+			supplier: item.supplier,
+			location: item.facility,
+			purchase_date: '2024-06-15',
+		})
 	}
 	const { error: eqError } = await withRetry(() =>
 		admin.from('equipment').upsert(equipmentRows, { onConflict: 'equipment_code' }),

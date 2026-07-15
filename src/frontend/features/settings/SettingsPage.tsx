@@ -14,6 +14,7 @@ import {
 	useDeleteSupplier,
 	useSuppliers,
 } from '@/backend/lib/supabase/queries'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -36,7 +37,7 @@ function CategoriesCard() {
 			await createCategory.mutateAsync(trimmed)
 			setName('')
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to add category.')
+			setError(getErrorMessage(mutationError, 'Failed to add category.'))
 		}
 	}
 
@@ -108,7 +109,7 @@ function SuppliersCard() {
 			reset()
 			setOpen(false)
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to add supplier.')
+			setError(getErrorMessage(mutationError, 'Failed to add supplier.'))
 		}
 	}
 

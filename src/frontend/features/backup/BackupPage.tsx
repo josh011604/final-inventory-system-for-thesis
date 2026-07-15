@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
 import { supabase } from '@/backend/lib/supabase/client'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const appName = (import.meta.env.VITE_APP_NAME as string | undefined) ?? 'BISU FIMS'
 
@@ -85,7 +86,7 @@ export default function BackupPage() {
 			const payload = { app: appName, generatedAt: new Date().toISOString(), tables }
 			downloadBlob(`bisu-fims-backup-${stamp()}.json`, JSON.stringify(payload, null, 2), 'application/json')
 		} catch (backupError) {
-			setError(backupError instanceof Error ? backupError.message : 'Backup failed.')
+			setError(getErrorMessage(backupError, 'Backup failed.'))
 		} finally {
 			setBusy(false)
 		}
@@ -101,7 +102,7 @@ export default function BackupPage() {
 				downloadBlob(`${table}-${stamp()}.csv`, '﻿' + toCsv(rows), 'text/csv;charset=utf-8;')
 			}
 		} catch (downloadError) {
-			setError(downloadError instanceof Error ? downloadError.message : 'Download failed.')
+			setError(getErrorMessage(downloadError, 'Download failed.'))
 		}
 	}
 
@@ -163,7 +164,7 @@ export default function BackupPage() {
 			queryClient.invalidateQueries({ queryKey: ['suppliers'] })
 			queryClient.invalidateQueries({ queryKey: ['backup-counts'] })
 		} catch (mutationError) {
-			setRestoreError(mutationError instanceof Error ? mutationError.message : 'Restore failed.')
+			setRestoreError(getErrorMessage(mutationError, 'Restore failed.'))
 		} finally {
 			setRestoring(false)
 		}

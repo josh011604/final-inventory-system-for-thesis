@@ -7,6 +7,7 @@ import StatusChip from '@/components/ui/StatusChip'
 import { useCreateMaintenanceRequest, useEquipment, useFacilities, useMaintenanceRequests, useUpdateMaintenanceStatus } from '@/backend/lib/supabase/queries'
 import type { MaintenanceRequestRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -41,7 +42,7 @@ export default function MaintenancePage({ user }: { user: SchoolUser }) {
 		setActionError(null)
 		updateStatus.mutate(
 			{ id, status },
-			{ onError: (mutationError) => setActionError(mutationError instanceof Error ? mutationError.message : 'Failed to update maintenance request.') },
+			{ onError: (mutationError) => setActionError(getErrorMessage(mutationError, 'Failed to update maintenance request.')) },
 		)
 	}
 
@@ -62,7 +63,7 @@ export default function MaintenancePage({ user }: { user: SchoolUser }) {
 			setDescription('')
 			setOpen(false)
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to submit maintenance request.')
+			setError(getErrorMessage(mutationError, 'Failed to submit maintenance request.'))
 		}
 	}
 

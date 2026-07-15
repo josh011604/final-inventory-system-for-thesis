@@ -8,6 +8,7 @@ import EquipmentHistoryModal from '@/frontend/features/inventory/EquipmentHistor
 import { useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -75,7 +76,12 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const [condition, setCondition] = useState('Excellent')
 	const [error, setError] = useState<string | null>(null)
 
-	const facilityOptions = facilities?.filter((facility) => !departmentId || facility.department_id === departmentId) ?? []
+	// Main Supply items live in central (department-less) facilities like the
+	// Supply Office; department items pick from their department's facilities.
+	const facilityOptions =
+		facilities?.filter((facility) =>
+			departmentId === MAIN_SUPPLY ? facility.department_id === null : !departmentId || facility.department_id === departmentId,
+		) ?? []
 	const departmentName = departmentId === MAIN_SUPPLY ? 'Main Supply (Central Inventory)' : departments?.find((dept) => dept.id === departmentId)?.name
 	const facilityName = facilityOptions.find((facility) => String(facility.id) === facilityId)?.name
 
@@ -118,7 +124,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 			})
 			closeModal()
 		} catch (mutationError) {
-			setError(mutationError instanceof Error ? mutationError.message : 'Failed to create equipment.')
+			setError(getErrorMessage(mutationError, 'Failed to create equipment.'))
 		}
 	}
 
@@ -174,7 +180,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 							<label className={labelClass} htmlFor="eq-code">
 								Asset Code
 							</label>
-							<input id="eq-code" value={equipmentCode} onChange={(event) => setEquipmentCode(event.target.value)} className={inputClass} placeholder="ASSET-CS-004" required />
+							<input id="eq-code" value={equipmentCode} onChange={(event) => setEquipmentCode(event.target.value)} className={inputClass} placeholder="Unique code, e.g. ASSET-MS-001" required />
 						</div>
 						<div>
 							<label className={labelClass} htmlFor="eq-name">
