@@ -73,3 +73,5 @@ The Demo Accounts panel on the login screen is intentionally kept so evaluators 
 2. Apply migrations with `supabase db push` and deploy the edge functions: `supabase functions deploy borrow-status maintenance-status overdue-check main-supply`.
 3. `npm run build`, then serve `dist/`.
 4. The app uses `BrowserRouter`, so the host must rewrite all paths to `index.html` (Vercel/Netlify SPA fallback, or `try_files $uri /index.html` on nginx). Without it, refreshing any route other than `/` returns a 404.
+
+<!-- test: verifying git push to fork -->
