@@ -40,14 +40,15 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const [error, setError] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
 	const [overdueMessage, setOverdueMessage] = useState<string | null>(null)
-	// New Request source: the Supply Office (Main Supply / super-admin central
-	// inventory) or the borrower's own assigned department.
-	const [borrowSource, setBorrowSource] = useState<'main-supply' | 'department'>('main-supply')
 
+	// New Request draws from both sources at once: the Supply Office (Main
+	// Supply / super-admin central inventory) and the borrower's own department.
 	const mainSupplyAvailable = equipment?.filter((item) => item.department_id === null && item.status === 'available') ?? []
-	const departmentAvailable = equipment?.filter((item) => item.department_id === user.departmentId && item.status === 'available') ?? []
-	const availableEquipment = borrowSource === 'department' ? departmentAvailable : mainSupplyAvailable
-	const canRequest = mainSupplyAvailable.length > 0 || departmentAvailable.length > 0
+	const departmentAvailable = user.departmentId
+		? equipment?.filter((item) => item.department_id === user.departmentId && item.status === 'available') ?? []
+		: []
+	const availableEquipment = [...mainSupplyAvailable, ...departmentAvailable]
+	const canRequest = availableEquipment.length > 0
 
 	const handleOverdueCheck = () => {
 		setActionError(null)
@@ -172,33 +173,6 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				<form className="space-y-4" onSubmit={handleSubmit}>
 					{error ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div> : null}
 					<div>
-						<label className={labelClass}>Borrow from</label>
-						<div className="flex gap-2">
-							<button
-								type="button"
-								onClick={() => {
-									setBorrowSource('main-supply')
-									setEquipmentId('')
-								}}
-								className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${borrowSource === 'main-supply' ? 'border-primary bg-primary-light text-primary' : 'border-border text-text-muted'}`}
-							>
-								Supply Office
-							</button>
-							{user.departmentId ? (
-								<button
-									type="button"
-									onClick={() => {
-										setBorrowSource('department')
-										setEquipmentId('')
-									}}
-									className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${borrowSource === 'department' ? 'border-primary bg-primary-light text-primary' : 'border-border text-text-muted'}`}
-								>
-									{user.department || 'My Department'}
-								</button>
-							) : null}
-						</div>
-					</div>
-					<div>
 						<label className={labelClass} htmlFor="borrow-equipment">
 							Item
 						</label>
@@ -206,17 +180,27 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 							<option value="" disabled>
 								Select an item
 							</option>
-							{availableEquipment.map((item) => (
-								<option key={item.id} value={item.id}>
-									{item.equipment_name} ({item.equipment_code})
-								</option>
-							))}
+							{mainSupplyAvailable.length > 0 ? (
+								<optgroup label={`Supply Office · ${mainSupplyAvailable.length} available`}>
+									{mainSupplyAvailable.map((item) => (
+										<option key={item.id} value={item.id}>
+											{item.equipment_name} ({item.equipment_code})
+										</option>
+									))}
+								</optgroup>
+							) : null}
+							{departmentAvailable.length > 0 ? (
+								<optgroup label={`${user.department || 'My Department'} · ${departmentAvailable.length} available`}>
+									{departmentAvailable.map((item) => (
+										<option key={item.id} value={item.id}>
+											{item.equipment_name} ({item.equipment_code})
+										</option>
+									))}
+								</optgroup>
+							) : null}
 						</select>
 						<p className="mt-1.5 text-xs text-text-muted">
-							{borrowSource === 'main-supply'
-								? 'Items from the Supply Office (Central Inventory), owned by the super admin.'
-								: 'Items from your assigned department.'}
-							{availableEquipment.length === 0 ? ' No available items in this source.' : ''}
+							Supply Office requests are approved by the Super Admin; department items by your department admin.
 						</p>
 					</div>
 					<div>
