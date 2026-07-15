@@ -4,7 +4,7 @@ import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
-import { useBorrowRecords, useCreateBorrowRecord, useEquipment, useMainSupplyEquipment, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
+import { useBorrowRecords, useCancelBorrowRecord, useCreateBorrowRecord, useEquipment, useMainSupplyEquipment, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
@@ -40,14 +40,27 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const [error, setError] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
 	const [overdueMessage, setOverdueMessage] = useState<string | null>(null)
+	// Return flow: which record is being returned, and in what condition.
+	const [returnTarget, setReturnTarget] = useState<BorrowRecordRow | null>(null)
+	const [returnCondition, setReturnCondition] = useState('Good')
 
 	// New Request draws from both sources at once: the Supply Office (Main
 	// Supply / super-admin central inventory, served by an edge function so it
 	// works for every role regardless of RLS) and the borrower's own department.
 	const { data: mainSupply } = useMainSupplyEquipment()
-	const mainSupplyAvailable = mainSupply?.filter((item) => item.status === 'available') ?? []
+	const mainSupplyAvailable = mainSupply?.filter((item) => item.status === 'available' && item.available_units > 0) ?? []
+	// Units out per department item, counted from the borrow records this user
+	// can see (department scoping already covers the whole department).
+	const activeStatuses = new Set(['confirmed', 'borrowed', 'return_requested', 'overdue'])
+	const unitsOutById = new Map<number, number>()
+	for (const record of data ?? []) {
+		if (activeStatuses.has(record.status)) {
+			unitsOutById.set(record.equipment_id, (unitsOutById.get(record.equipment_id) ?? 0) + 1)
+		}
+	}
+	const freeUnits = (item: { id: number; quantity: number }) => Math.max((item.quantity ?? 1) - (unitsOutById.get(item.id) ?? 0), 0)
 	const departmentAvailable = user.departmentId
-		? equipment?.filter((item) => item.department_id === user.departmentId && item.status === 'available') ?? []
+		? equipment?.filter((item) => item.department_id === user.departmentId && item.status === 'available' && freeUnits(item) > 0) ?? []
 		: []
 	const availableEquipment = [...mainSupplyAvailable, ...departmentAvailable]
 	const canRequest = availableEquipment.length > 0
@@ -70,12 +83,27 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 		})
 	}
 
-	const runStatusChange = (id: number, status: string) => {
+	const runStatusChange = (id: number, status: string, condition?: string) => {
 		setActionError(null)
 		updateStatus.mutate(
-			{ id, status },
+			{ id, status, condition },
 			{ onError: (mutationError) => setActionError(getErrorMessage(mutationError, 'Failed to update borrow request.')) },
 		)
+	}
+
+	const cancelRequest = useCancelBorrowRecord()
+	const runCancel = (id: number) => {
+		setActionError(null)
+		cancelRequest.mutate(id, {
+			onError: (mutationError) => setActionError(getErrorMessage(mutationError, 'Failed to cancel the request.')),
+		})
+	}
+
+	const confirmReturn = () => {
+		if (!returnTarget) return
+		runStatusChange(returnTarget.id, 'returned', returnCondition)
+		setReturnTarget(null)
+		setReturnCondition('Good')
 	}
 
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -86,16 +114,13 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 			return
 		}
 		try {
+			// The borrow-status function enforces the full rule set server-side
+			// (date window, unit availability, duplicate guard, borrow cap) and
+			// notifies the right approvers.
 			await createBorrowRecord.mutateAsync({
 				equipment_id: Number(equipmentId),
-				borrower_id: user.id,
-				created_by: user.id,
-				// Main Supply items have no department, so the request carries no
-				// department and only the super admin can approve it.
-				department_id: availableEquipment.find((item) => String(item.id) === equipmentId)?.department_id ?? null,
 				expected_return_date: expectedReturnDate || null,
 				notes: notes || null,
-				status: 'pending',
 			})
 			setEquipmentId('')
 			setExpectedReturnDate('')
@@ -164,8 +189,12 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 									</Button>
 								</div>
 							) : canApprove && (row.status === 'confirmed' || row.status === 'borrowed' || row.status === 'overdue') ? (
-								<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'returned')}>
+								<Button size="sm" variant="secondary" onClick={() => { setReturnCondition('Good'); setReturnTarget(row) }}>
 									Mark Returned
+								</Button>
+							) : row.status === 'pending' && row.borrower_id === user.id ? (
+								<Button size="sm" variant="danger" onClick={() => runCancel(row.id)} disabled={cancelRequest.isPending}>
+									{cancelRequest.isPending ? 'Cancelling…' : 'Cancel'}
 								</Button>
 							) : (
 								'—'
@@ -189,7 +218,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 								<optgroup label={`Supply Office · ${mainSupplyAvailable.length} available`}>
 									{mainSupplyAvailable.map((item) => (
 										<option key={item.id} value={item.id}>
-											{item.equipment_name} ({item.equipment_code})
+											{item.equipment_name} ({item.equipment_code}) · {item.available_units} of {item.quantity} free
 										</option>
 									))}
 								</optgroup>
@@ -198,7 +227,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 								<optgroup label={`${user.department || 'My Department'} · ${departmentAvailable.length} available`}>
 									{departmentAvailable.map((item) => (
 										<option key={item.id} value={item.id}>
-											{item.equipment_name} ({item.equipment_code})
+											{item.equipment_name} ({item.equipment_code}) · {freeUnits(item)} of {item.quantity} free
 										</option>
 									))}
 								</optgroup>
@@ -225,6 +254,42 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 					</Button>
 				</form>
 			</Modal>
+
+			{returnTarget ? (
+				<Modal open onClose={() => setReturnTarget(null)} title="Mark as Returned">
+					<div className="space-y-4">
+						<p className="text-sm text-text-muted">
+							Returning <span className="font-medium text-text-primary">{returnTarget.equipment?.equipment_name ?? mainSupplyNameById.get(returnTarget.equipment_id) ?? `request #${returnTarget.id}`}</span>. What
+							condition is the item in?
+						</p>
+						<div>
+							<label className={labelClass} htmlFor="return-condition">
+								Condition on return
+							</label>
+							<select id="return-condition" value={returnCondition} onChange={(event) => setReturnCondition(event.target.value)} className={inputClass}>
+								{['Excellent', 'Good', 'Fair', 'Damaged'].map((option) => (
+									<option key={option} value={option}>
+										{option}
+									</option>
+								))}
+							</select>
+							{returnCondition === 'Damaged' ? (
+								<p className="mt-1.5 text-xs text-danger">
+									A damaged return flags the item and automatically opens a high-priority maintenance request.
+								</p>
+							) : null}
+						</div>
+						<div className="flex gap-2">
+							<Button type="button" variant="secondary" className="flex-1" onClick={() => setReturnTarget(null)}>
+								Back
+							</Button>
+							<Button type="button" className="flex-1" onClick={confirmReturn} disabled={updateStatus.isPending}>
+								{updateStatus.isPending ? 'Saving…' : 'Confirm Return'}
+							</Button>
+						</div>
+					</div>
+				</Modal>
+			) : null}
 		</>
 	)
 }

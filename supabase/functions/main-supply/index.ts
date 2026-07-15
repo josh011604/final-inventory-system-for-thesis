@@ -59,5 +59,27 @@ Deno.serve(async (req) => {
 		return json({ error: error.message }, 400)
 	}
 
-	return json({ data: data ?? [] }, 200)
+	const items = data ?? []
+
+	// Per-unit availability: quantity minus units currently out on active borrows.
+	const { data: activeBorrows } = await adminClient
+		.from('borrow_records')
+		.select('equipment_id')
+		.in('status', ['confirmed', 'borrowed', 'return_requested', 'overdue'])
+		.in('equipment_id', items.map((item) => item.id))
+
+	const unitsOut = new Map<number, number>()
+	for (const row of activeBorrows ?? []) {
+		unitsOut.set(row.equipment_id, (unitsOut.get(row.equipment_id) ?? 0) + 1)
+	}
+
+	return json(
+		{
+			data: items.map((item) => ({
+				...item,
+				available_units: Math.max((item.quantity ?? 1) - (unitsOut.get(item.id) ?? 0), 0),
+			})),
+		},
+		200,
+	)
 })

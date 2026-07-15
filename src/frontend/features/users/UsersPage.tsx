@@ -86,7 +86,16 @@ export default function UsersPage({ user }: { user: SchoolUser }) {
 						),
 				},
 			]}
-			action={canEditRoleAndDept ? <span className="text-xs text-text-muted">{departments?.length ?? 0} departments</span> : undefined}
+			action={
+				<div className="flex items-center gap-3">
+					{(data?.filter((row) => row.status === 'inactive').length ?? 0) > 0 ? (
+						<StatusChip tone="warning">
+							{data!.filter((row) => row.status === 'inactive').length} pending activation
+						</StatusChip>
+					) : null}
+					{canEditRoleAndDept ? <span className="text-xs text-text-muted">{departments?.length ?? 0} departments</span> : null}
+				</div>
+			}
 		/>
 	)
 }
