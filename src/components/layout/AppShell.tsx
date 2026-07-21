@@ -146,8 +146,13 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 								onClick={() => setProfileMenuOpen((current) => !current)}
 								className="flex items-center gap-2 rounded-lg border border-border py-1.5 pl-1.5 pr-3 transition hover:border-primary hover:shadow-sm"
 							>
-								<span className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary-hover text-xs font-semibold text-white shadow-sm">
+								<span className="relative flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary-hover text-xs font-semibold text-white shadow-sm">
 									{user.profilePicture}
+									{user.status === 'Active' ? (
+										<span className="absolute -right-0.5 -bottom-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-surface">
+											<span className="h-1.5 w-1.5 rounded-full bg-success ring-1 ring-surface" />
+										</span>
+									) : null}
 								</span>
 								<span className="hidden text-left text-sm sm:block">
 									<span className="block font-semibold leading-tight">{user.fullName}</span>

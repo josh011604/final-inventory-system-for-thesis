@@ -526,6 +526,7 @@ export type Database = {
           profile_picture_url: string | null
           role: string
           status: string
+          student_id: string | null
           updated_at: string
           username: string
         }
@@ -543,6 +544,7 @@ export type Database = {
           profile_picture_url?: string | null
           role: string
           status?: string
+          student_id?: string | null
           updated_at?: string
           username: string
         }
@@ -560,6 +562,7 @@ export type Database = {
           profile_picture_url?: string | null
           role?: string
           status?: string
+          student_id?: string | null
           updated_at?: string
           username?: string
         }

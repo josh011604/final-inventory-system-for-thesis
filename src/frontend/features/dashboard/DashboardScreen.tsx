@@ -1,6 +1,6 @@
 import { Building2, CheckCircle2, Clock, MapPin, Package, ShieldCheck, Sparkles, Users, Wrench } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getRoleLabel, rolePermissions } from '@/backend/lib/rbac'
+import { getRoleLabel } from '@/backend/lib/rbac'
 import Card from '@/components/ui/Card'
 import StatusChip from '@/components/ui/StatusChip'
 import Skeleton from '@/components/ui/Skeleton'
@@ -84,8 +84,6 @@ function StatusBreakdown({ label, value, total, tone }: { label: string; value: 
 }
 
 export default function DashboardScreen({ user }: DashboardScreenProps) {
-	const permissions = rolePermissions[user.role]
-
 	const { data: departments, isLoading: departmentsLoading } = useDepartments()
 	const { data: facilities, isLoading: facilitiesLoading } = useFacilities()
 	const { data: equipment, isLoading: equipmentLoading } = useEquipment()
@@ -124,9 +122,8 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 				]
 
 	return (
-		<div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
-			<div className="space-y-6">
-				<div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary via-primary to-primary-hover p-6 text-white shadow-sm">
+		<div className="space-y-6">
+			<div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary via-primary to-primary-hover p-6 text-white shadow-sm">
 					<div
 						className="pointer-events-none absolute inset-0 opacity-[0.08]"
 						style={{
@@ -216,46 +213,6 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 						<p className="text-sm text-text-muted">No maintenance requests yet.</p>
 					)}
 				</Card>
-			</div>
-
-			<aside className="space-y-6">
-				<Card title="Quick Profile" subtitle="User profile section">
-					<div className="flex items-center gap-4 rounded-xl border border-border bg-bg p-4">
-						<div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-base font-semibold text-white shadow-sm ring-2 ring-accent/40">
-							{user.profilePicture}
-							{user.status === 'Active' ? (
-								<span className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full bg-surface">
-									<span className="h-2.5 w-2.5 rounded-full bg-success ring-2 ring-surface" />
-								</span>
-							) : null}
-						</div>
-						<div className="min-w-0">
-							<p className="truncate font-semibold text-text-primary">{user.fullName}</p>
-							<p className="truncate text-sm text-text-muted">{user.position ?? getRoleLabel(user.role)}</p>
-							<div className="mt-1">
-								<StatusChip tone={user.status === 'Active' ? 'success' : 'muted'}>{user.status}</StatusChip>
-							</div>
-						</div>
-					</div>
-				</Card>
-
-				<Card title="Permissions" subtitle={`${permissions.length} granted`}>
-					<ul className="space-y-2 text-sm">
-						{permissions.map((permission, index) => (
-							<li
-								key={permission}
-								className="group flex items-start gap-2.5 rounded-xl border border-border bg-bg px-4 py-3 text-text-muted transition hover:border-success/30 hover:bg-success/5"
-							>
-								<span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/10 text-[10px] font-bold text-success transition group-hover:scale-110">
-									{index + 1}
-								</span>
-								<span>{permission}</span>
-								<CheckCircle2 className="ml-auto mt-0.5 h-4 w-4 shrink-0 text-success opacity-0 transition group-hover:opacity-100" />
-							</li>
-						))}
-					</ul>
-				</Card>
-			</aside>
 		</div>
 	)
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { AtSign, History, PackageCheck, Repeat, ShieldCheck, UserCircle2, Users } from 'lucide-react'
+import { AtSign, GraduationCap, History, PackageCheck, Repeat, ShieldCheck, UserCircle2, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { signIn, signUp } from '@/backend/lib/supabase/auth'
 import { supabase } from '@/backend/lib/supabase/client'
@@ -31,6 +31,7 @@ const demoAccounts = [
 	{ label: 'Staff', department: 'Inland Fisheries', username: 'bsf.staff', password: 'Staff123!', icon: UserCircle2 },
 	{ label: 'Staff', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!', icon: UserCircle2 },
 	{ label: 'Staff', department: 'Midwifery', username: 'midwifery.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Student', department: 'BSCS', username: 'bscs.student', password: 'Student123!', icon: GraduationCap },
 ]
 
 const inputClass =

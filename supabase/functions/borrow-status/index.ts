@@ -119,8 +119,13 @@ Deno.serve(async (req) => {
 		if (!equipment) return json({ error: 'Equipment not found' }, 404)
 
 		// Rule: only Supply Office (no department) items or the borrower's own
-		// department's items may be requested.
-		if (equipment.department_id !== null && equipment.department_id !== actor.department_id) {
+		// department's items may be requested — except students, who may never
+		// touch Supply Office / Super Admin inventory, department-scoped only.
+		if (equipment.department_id === null) {
+			if (actor.role === 'student') {
+				return json({ error: 'Students can only request items from their own department' }, 403)
+			}
+		} else if (equipment.department_id !== actor.department_id) {
 			return json({ error: 'You can only request Supply Office items or items from your own department' }, 403)
 		}
 

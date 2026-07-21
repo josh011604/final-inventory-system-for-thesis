@@ -20,11 +20,11 @@ export type NavItem = {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-	{ label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['super_admin', 'department_admin', 'staff'] },
+	{ label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
 	{ label: 'Departments', icon: Building2, path: '/departments', roles: ['super_admin'] },
 	{ label: 'Facilities', icon: Building2, path: '/facilities', roles: ['super_admin', 'department_admin', 'staff'] },
-	{ label: 'Inventory Items', icon: Package, path: '/inventory', roles: ['super_admin', 'department_admin', 'staff'] },
-	{ label: 'Borrowing', icon: ArrowRightLeft, path: '/borrowing', roles: ['super_admin', 'department_admin', 'staff'] },
+	{ label: 'Inventory Items', icon: Package, path: '/inventory', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
+	{ label: 'Borrowing', icon: ArrowRightLeft, path: '/borrowing', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
 	{ label: 'Maintenance', icon: Wrench, path: '/maintenance', roles: ['super_admin', 'department_admin', 'staff'] },
 	{ label: 'Users', icon: Users, path: '/users', roles: ['super_admin', 'department_admin'] },
 	{ label: 'Reports', icon: FileBarChart2, path: '/reports', roles: ['super_admin', 'department_admin'] },

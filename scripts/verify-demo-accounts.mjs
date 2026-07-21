@@ -46,6 +46,7 @@ const demoAccounts = [
 	{ username: 'cte.staff', password: 'Staff123!', role: 'staff' },
 	{ username: 'midwifery.admin', password: 'Admin123!', role: 'department_admin' },
 	{ username: 'midwifery.staff', password: 'Staff123!', role: 'staff' },
+	{ username: 'bscs.student', password: 'Student123!', role: 'student' },
 ]
 
 const TRANSIENT = /fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket|network/i
@@ -142,7 +143,7 @@ async function verifyAccount(account) {
 			else fail('profile visibility', `sees ${foreign.length} profiles outside own department`)
 		} else {
 			if (visibleProfiles.length === 1 && visibleProfiles[0].id === userId) pass('profile visibility')
-			else fail('profile visibility', `staff sees ${visibleProfiles.length} profiles`)
+			else fail('profile visibility', `${account.role} sees ${visibleProfiles.length} profiles`)
 		}
 
 		// 6. Audit logs are super-admin only (RLS returns zero rows for others).

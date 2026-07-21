@@ -1,4 +1,4 @@
-export type Role = 'super_admin' | 'department_admin' | 'staff'
+export type Role = 'super_admin' | 'department_admin' | 'staff' | 'student'
 
 export type ThemeMode = 'light' | 'dark'
 

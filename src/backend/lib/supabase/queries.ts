@@ -55,6 +55,21 @@ export function useUpdateProfile() {
 	})
 }
 
+// Admin-only: creates a student account (role='student', department_id
+// required). Routed through an edge function because it needs the
+// service-role key to call auth.admin.createUser — never exposed to the client.
+export function useCreateStudent() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (input: { full_name: string; email: string; password: string; department_id: string; student_id?: string }) => {
+			const { data, error } = await supabase.functions.invoke('create-student', { body: input })
+			if (error) throw error
+			return data
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+	})
+}
+
 // ---------- Facilities ----------
 
 export type FacilityRow = Tables<'facilities'> & { departments: { name: string } | null }

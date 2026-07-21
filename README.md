@@ -52,6 +52,7 @@ These are real Supabase auth users (not UI mockups). Create or repair them with 
 - `bsf.admin` / `Admin123!` · `bsf.staff` / `Staff123!` (BS Fisheries, major in Inland Fisheries)
 - `cte.admin` / `Admin123!` · `cte.staff` / `Staff123!` (College of Teacher Education)
 - `midwifery.admin` / `Admin123!` · `midwifery.staff` / `Staff123!` (Midwifery)
+- `bscs.student` / `Student123!` (BS Computer Science)
 
 Rebuild the account set from scratch with `node scripts/prune-accounts.mjs` (deletes every non–super-admin account) followed by `npm run seed:demo`. Department names must match the `20260713130000_reconfigure_departments` migration.
 

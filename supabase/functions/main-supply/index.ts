@@ -49,6 +49,14 @@ Deno.serve(async (req) => {
 
 	const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
+	// Students may never see Super Admin / Supply Office inventory — only their
+	// own department's items. Everyone else (staff, department_admin,
+	// super_admin) may still browse and request Supply Office items.
+	const { data: caller } = await adminClient.from('profiles').select('role').eq('id', userData.user.id).maybeSingle()
+	if (caller?.role === 'student') {
+		return json({ data: [] }, 200)
+	}
+
 	const { data, error } = await adminClient
 		.from('equipment')
 		.select('id, equipment_code, equipment_name, department_id, status, quantity')

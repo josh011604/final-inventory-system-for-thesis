@@ -137,7 +137,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 				subtitle={
 					user.role === 'super_admin'
 						? `${visibleItems?.length ?? 0} items · click a row for its history`
-						: `Department inventory · ${visibleItems?.length ?? 0} items · click a row for history`
+						: `${user.department || 'Department'} inventory · ${visibleItems?.length ?? 0} items · click a row for history`
 				}
 				rows={visibleItems}
 				isLoading={isLoading}

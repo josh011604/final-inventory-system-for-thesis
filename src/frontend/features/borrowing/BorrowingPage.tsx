@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
@@ -35,6 +35,9 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 
 	const [open, setOpen] = useState(false)
 	const [equipmentId, setEquipmentId] = useState('')
+	const [itemSearch, setItemSearch] = useState('')
+	const [itemDropdownOpen, setItemDropdownOpen] = useState(false)
+	const itemPickerRef = useRef<HTMLDivElement>(null)
 	const [expectedReturnDate, setExpectedReturnDate] = useState('')
 	const [notes, setNotes] = useState('')
 	const [error, setError] = useState<string | null>(null)
@@ -67,6 +70,42 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	// Staff can't read Supply Office equipment rows directly, so the joined
 	// equipment name on their own requests may be RLS-hidden — recover it here.
 	const mainSupplyNameById = new Map((mainSupply ?? []).map((item) => [item.id, item.equipment_name]))
+
+	// New Request search: filters the item picker by name or asset code so
+	// dean/admin users (and everyone else) can find an item instantly instead
+	// of scrolling a long dropdown.
+	const searchTerm = itemSearch.trim().toLowerCase()
+	const matchesSearch = (item: { equipment_name: string; equipment_code: string }) =>
+		!searchTerm || item.equipment_name.toLowerCase().includes(searchTerm) || item.equipment_code.toLowerCase().includes(searchTerm)
+	const filteredMainSupply = mainSupplyAvailable.filter(matchesSearch)
+	const filteredDepartmentAvailable = departmentAvailable.filter(matchesSearch)
+	const hasSearchResults = filteredMainSupply.length + filteredDepartmentAvailable.length > 0
+
+	const selectItem = (id: number, label: string) => {
+		setEquipmentId(String(id))
+		setItemSearch(label)
+		setItemDropdownOpen(false)
+	}
+
+	useEffect(() => {
+		if (!itemDropdownOpen) return
+
+		const handlePointerDown = (event: PointerEvent) => {
+			if (itemPickerRef.current && !itemPickerRef.current.contains(event.target as Node)) {
+				setItemDropdownOpen(false)
+			}
+		}
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setItemDropdownOpen(false)
+		}
+
+		document.addEventListener('pointerdown', handlePointerDown)
+		document.addEventListener('keydown', handleKeyDown)
+		return () => {
+			document.removeEventListener('pointerdown', handlePointerDown)
+			document.removeEventListener('keydown', handleKeyDown)
+		}
+	}, [itemDropdownOpen])
 
 	const handleOverdueCheck = () => {
 		setActionError(null)
@@ -109,6 +148,10 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		setError(null)
+		if (!equipmentId) {
+			setError('Please select an item to borrow.')
+			return
+		}
 		if (expectedReturnDate && expectedReturnDate < today) {
 			setError('The expected return date cannot be in the past. Please choose today or a future date.')
 			return
@@ -123,12 +166,20 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				notes: notes || null,
 			})
 			setEquipmentId('')
+			setItemSearch('')
+			setItemDropdownOpen(false)
 			setExpectedReturnDate('')
 			setNotes('')
 			setOpen(false)
 		} catch (mutationError) {
 			setError(getErrorMessage(mutationError, 'Failed to submit borrow request.'))
 		}
+	}
+
+	const closeRequestModal = () => {
+		setOpen(false)
+		setItemSearch('')
+		setItemDropdownOpen(false)
 	}
 
 	return (
@@ -203,38 +254,75 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				]}
 			/>
 
-			<Modal open={open} onClose={() => setOpen(false)} title="New Borrow Request">
+			<Modal open={open} onClose={closeRequestModal} title="New Borrow Request">
 				<form className="space-y-4" onSubmit={handleSubmit}>
 					{error ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div> : null}
-					<div>
-						<label className={labelClass} htmlFor="borrow-equipment">
+					<div className="relative" ref={itemPickerRef}>
+						<label className={labelClass} htmlFor="borrow-item-search">
 							Item
 						</label>
-						<select id="borrow-equipment" value={equipmentId} onChange={(event) => setEquipmentId(event.target.value)} className={inputClass} required>
-							<option value="" disabled>
-								Select an item
-							</option>
-							{mainSupplyAvailable.length > 0 ? (
-								<optgroup label={`Supply Office · ${mainSupplyAvailable.length} available`}>
-									{mainSupplyAvailable.map((item) => (
-										<option key={item.id} value={item.id}>
-											{item.equipment_name} ({item.equipment_code}) · {item.available_units} of {item.quantity} free
-										</option>
-									))}
-								</optgroup>
-							) : null}
-							{departmentAvailable.length > 0 ? (
-								<optgroup label={`${user.department || 'My Department'} · ${departmentAvailable.length} available`}>
-									{departmentAvailable.map((item) => (
-										<option key={item.id} value={item.id}>
-											{item.equipment_name} ({item.equipment_code}) · {freeUnits(item)} of {item.quantity} free
-										</option>
-									))}
-								</optgroup>
-							) : null}
-						</select>
+						<input
+							id="borrow-item-search"
+							type="text"
+							autoComplete="off"
+							value={itemSearch}
+							onChange={(event) => {
+								setItemSearch(event.target.value)
+								setEquipmentId('')
+								setItemDropdownOpen(true)
+							}}
+							onFocus={() => setItemDropdownOpen(true)}
+							className={inputClass}
+							placeholder="Search by item name or asset code…"
+						/>
+						{itemDropdownOpen ? (
+							<div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
+								{!hasSearchResults ? (
+									<p className="px-3 py-2 text-sm text-text-muted">No items match your search</p>
+								) : (
+									<>
+										{filteredMainSupply.length > 0 ? (
+											<div>
+												<p className="bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+													Supply Office · {filteredMainSupply.length} available
+												</p>
+												{filteredMainSupply.map((item) => (
+													<button
+														key={item.id}
+														type="button"
+														onClick={() => selectItem(item.id, `${item.equipment_name} (${item.equipment_code})`)}
+														className="block w-full px-3 py-2 text-left text-sm text-text-primary transition hover:bg-primary-light"
+													>
+														{item.equipment_name} ({item.equipment_code}) · {item.available_units} of {item.quantity} free
+													</button>
+												))}
+											</div>
+										) : null}
+										{filteredDepartmentAvailable.length > 0 ? (
+											<div>
+												<p className="bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+													{user.department || 'My Department'} · {filteredDepartmentAvailable.length} available
+												</p>
+												{filteredDepartmentAvailable.map((item) => (
+													<button
+														key={item.id}
+														type="button"
+														onClick={() => selectItem(item.id, `${item.equipment_name} (${item.equipment_code})`)}
+														className="block w-full px-3 py-2 text-left text-sm text-text-primary transition hover:bg-primary-light"
+													>
+														{item.equipment_name} ({item.equipment_code}) · {freeUnits(item)} of {item.quantity} free
+													</button>
+												))}
+											</div>
+										) : null}
+									</>
+								)}
+							</div>
+						) : null}
 						<p className="mt-1.5 text-xs text-text-muted">
-							Supply Office requests are approved by the Super Admin; department items by your department admin.
+							{mainSupplyAvailable.length > 0
+								? 'Supply Office requests are approved by the Super Admin; department items by your department admin.'
+								: 'Requests are approved by your department admin.'}
 						</p>
 					</div>
 					<div>

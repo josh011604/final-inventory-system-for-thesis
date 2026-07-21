@@ -60,6 +60,7 @@ const demoAccounts = [
 	{ username: 'cte.staff', password: 'Staff123!', role: 'staff', department: CTE, fullName: 'Teacher Education Staff', position: 'Staff', employeeId: 'ST-2004' },
 	{ username: 'midwifery.admin', password: 'Admin123!', role: 'department_admin', department: MIDWIFERY, fullName: 'Midwifery Program Head', position: 'Program Head', employeeId: 'DA-2005' },
 	{ username: 'midwifery.staff', password: 'Staff123!', role: 'staff', department: MIDWIFERY, fullName: 'Midwifery Staff', position: 'Staff', employeeId: 'ST-2005' },
+	{ username: 'bscs.student', password: 'Student123!', role: 'student', department: BSCS, fullName: 'BSCS Student', position: 'Student', studentId: 'STU-4001' },
 ]
 
 const emailFor = (username) => `${username.replace(/[^a-z0-9]/gi, '.')}@example.com`
@@ -139,6 +140,7 @@ async function main() {
 							department_id: departmentId ?? '',
 							position: account.position,
 							employee_id: account.employeeId,
+							student_id: account.studentId,
 						},
 					}),
 				)
@@ -173,7 +175,8 @@ async function main() {
 						status: 'active',
 						department_id: departmentId,
 						position: account.position,
-						employee_id: account.employeeId,
+						employee_id: account.employeeId ?? null,
+						student_id: account.studentId ?? null,
 					})
 					.eq('id', userId),
 			)
