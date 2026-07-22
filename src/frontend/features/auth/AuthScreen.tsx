@@ -26,11 +26,11 @@ const demoAccounts = [
 	{ label: 'Dept Admin', department: 'Inland Fisheries', username: 'bsf.admin', password: 'Admin123!', icon: Users },
 	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.admin', password: 'Admin123!', icon: Users },
 	{ label: 'Dept Admin', department: 'Midwifery', username: 'midwifery.admin', password: 'Admin123!', icon: Users },
-	{ label: 'Staff', department: 'BSCS', username: 'bscs.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'BSIT Electricity', username: 'bsit.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'Inland Fisheries', username: 'bsf.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Staff', department: 'Midwifery', username: 'midwifery.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Faculty', department: 'BSCS', username: 'bscs.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Faculty', department: 'BSIT Electricity', username: 'bsit.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Faculty', department: 'Inland Fisheries', username: 'bsf.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Faculty', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!', icon: UserCircle2 },
+	{ label: 'Faculty', department: 'Midwifery', username: 'midwifery.staff', password: 'Staff123!', icon: UserCircle2 },
 	{ label: 'Student', department: 'BSCS', username: 'bscs.student', password: 'Student123!', icon: GraduationCap },
 ]
 

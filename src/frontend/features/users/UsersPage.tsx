@@ -111,7 +111,7 @@ export default function UsersPage({ user }: { user: SchoolUser }) {
 								>
 									<option value="super_admin">Super Administrator</option>
 									<option value="department_admin">Department Administrator</option>
-									<option value="staff">Staff</option>
+									<option value="staff">Faculty</option>
 									<option value="student">Student</option>
 								</select>
 							) : (

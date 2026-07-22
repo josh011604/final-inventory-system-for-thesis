@@ -5,7 +5,7 @@ Modern React + Vite + Tailwind CSS workspace for a school facilities and invento
 The current app is a polished frontend prototype that demonstrates:
 
 - secure login, logout, remember me, and password reset flows
-- role-based dashboards for Super Administrator, Department Administrator, and Staff
+- role-based dashboards for Super Administrator, Department Administrator, and Faculty
 - department-level data isolation
 - inventory, facility, borrowing, maintenance, reporting, notifications, and user-management screens
 - responsive layout with a blue, white, and gray visual system
