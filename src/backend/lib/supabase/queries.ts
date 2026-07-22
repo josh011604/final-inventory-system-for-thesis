@@ -133,9 +133,17 @@ export function useCreateFacilityReservation() {
 			start_time: string
 			end_time: string
 			purpose: string
+			// Set only when the requester is the facility's own approver (a
+			// department admin booking their own department, or a super admin
+			// booking anything) — the insert RLS policy accepts a self-approved
+			// row only from those roles and only with approved_by = requester_id.
+			// Everyone else must omit these and the row lands as 'pending'.
+			status?: 'approved'
+			approved_by?: string
 		}) => {
-			// RLS enforces requester_id = auth.uid(), non-student role, and
-			// status = 'pending'; the status-guard trigger owns transitions after.
+			// RLS enforces requester_id = auth.uid(), non-student role, and either
+			// status = 'pending' or the approver auto-approve case above; the
+			// status-guard trigger owns every transition after that.
 			const { error } = await supabase.from('facility_reservations').insert(input)
 			if (error) throw error
 		},

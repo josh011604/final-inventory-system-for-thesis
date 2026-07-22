@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Search } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
+import { getErrorMessage } from '@/backend/lib/errors'
 
 type Column<T> = {
 	header: string
@@ -14,6 +15,9 @@ type EntityTablePageProps<T> = {
 	subtitle: string
 	rows: T[] | undefined
 	isLoading: boolean
+	// A failed load must not render as "nothing here yet" — pass the query's
+	// error and the table shows why it is empty instead.
+	error?: unknown
 	columns: Column<T>[]
 	searchKeys: (keyof T)[]
 	action?: ReactNode
@@ -28,6 +32,7 @@ export default function EntityTablePage<T extends object>({
 	subtitle,
 	rows,
 	isLoading,
+	error,
 	columns,
 	searchKeys,
 	action,
@@ -50,7 +55,7 @@ export default function EntityTablePage<T extends object>({
 
 	const totalPages = Math.max(Math.ceil(filteredRows.length / pageSize), 1)
 	const pageRows = filteredRows.slice((page - 1) * pageSize, page * pageSize)
-	const isEmpty = !isLoading && filteredRows.length === 0 && !query
+	const isEmpty = !isLoading && !error && filteredRows.length === 0 && !query
 
 	return (
 		<Card
@@ -74,7 +79,12 @@ export default function EntityTablePage<T extends object>({
 				</div>
 			}
 		>
-			{isEmpty ? (
+			{error ? (
+				<div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-6 text-center">
+					<p className="text-sm font-medium text-danger">This list could not be loaded.</p>
+					<p className="mt-1 text-xs text-danger/80">{getErrorMessage(error, 'Unknown error.')}</p>
+				</div>
+			) : isEmpty ? (
 				<div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-bg/50 py-12 text-center">
 					<p className="text-sm text-text-muted">{emptyMessage}</p>
 					{emptyAction}

@@ -12,40 +12,20 @@ import {
 	useFacilityReservations,
 	useUpdateFacilityReservationStatus,
 } from '@/backend/lib/supabase/queries'
+import FacilityReservationDetailsModal from '@/frontend/features/facilities/FacilityReservationDetailsModal'
 import type { FacilityReservationRow, FacilityRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
+import { activeBooking, facilityBookingsOn, facilityReserveBlockedReason, reservationAutoApproves, validateReservation } from '@/backend/lib/reservations'
+import { availabilityTone, formatTime, reservationTone } from '@/frontend/features/facilities/facilityDisplay'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
 
-const availabilityTone: Record<string, 'success' | 'warning' | 'info' | 'muted'> = {
-	available: 'success',
-	reserved: 'warning',
-	in_use: 'info',
-	under_maintenance: 'muted',
-}
-
-const reservationTone: Record<string, 'success' | 'warning' | 'danger' | 'muted'> = {
-	pending: 'warning',
-	approved: 'success',
-	rejected: 'danger',
-	cancelled: 'muted',
-}
-
-// 'HH:MM:SS' (or 'HH:MM') → '1:00 PM'
-function formatTime(value: string) {
-	const [hourText, minute] = value.split(':')
-	const hour = Number(hourText)
-	const period = hour >= 12 ? 'PM' : 'AM'
-	const twelve = hour % 12 === 0 ? 12 : hour % 12
-	return `${twelve}:${minute} ${period}`
-}
-
 export default function FacilitiesPage({ user }: { user: SchoolUser }) {
-	const { data, isLoading } = useFacilities()
+	const { data, isLoading, error: facilitiesError } = useFacilities()
 	const { data: departments } = useDepartments()
-	const { data: reservations, isLoading: reservationsLoading } = useFacilityReservations()
+	const { data: reservations, isLoading: reservationsLoading, error: reservationsError } = useFacilityReservations()
 	const createFacility = useCreateFacility()
 	const createReservation = useCreateFacilityReservation()
 	const updateReservation = useUpdateFacilityReservationStatus()
@@ -54,7 +34,9 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	const canApprove = canManage
 	// Staff, deans, and admins may reserve; students borrow items but not rooms.
 	const canReserve = user.role === 'super_admin' || user.role === 'department_admin' || user.role === 'staff'
-	const today = new Date().toLocaleDateString('en-CA')
+	const now = new Date()
+	const today = now.toLocaleDateString('en-CA')
+	const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
 	// --- Add Facility modal ---
 	const [open, setOpen] = useState(false)
@@ -73,9 +55,29 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	const [purpose, setPurpose] = useState('')
 	const [reserveError, setReserveError] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
+	const [detailsReservation, setDetailsReservation] = useState<FacilityReservationRow | null>(null)
 
-	const availableFacilities = data?.filter((facility) => facility.current_availability === 'available') ?? []
+	// One rule drives both the picker and the per-row Reserve button, so the
+	// table can never offer a room the modal would refuse (or vice versa).
+	const availableFacilities = data?.filter((facility) => facilityReserveBlockedReason(facility, user) === null) ?? []
 	const canOpenReserve = canReserve && availableFacilities.length > 0
+
+	// The clash guard below can only see reservations this user is allowed to
+	// read. For a central facility that is nobody's department, a non-super-admin
+	// sees none of them — so the database exclusion constraint is the real
+	// authority and its rejection is surfaced verbatim on submit.
+	const visibleReservations = reservations ?? []
+
+	const reserveFacility = availableFacilities.find((row) => String(row.id) === reserveFacilityId)
+	// Existing bookings for the chosen facility and date, shown in the modal so
+	// the user can see what time is actually still open before picking a slot.
+	const dayBookings = reserveFacility ? facilityBookingsOn(visibleReservations, reserveFacility.id, reservedDate) : []
+	// A non-super-admin cannot see every booking on a central facility (the
+	// select policy scopes those to the requester and super admins), so the
+	// list above may be incomplete for one. The database exclusion constraint
+	// is still the real authority and catches what this list cannot show.
+	const dayBookingsMayBeIncomplete = Boolean(reserveFacility) && reserveFacility?.department_id === null && user.role !== 'super_admin'
+	const willAutoApprove = reserveFacility ? reservationAutoApproves(reserveFacility, user) : false
 
 	const openReserveFor = (facilityId?: number) => {
 		setReserveError(null)
@@ -111,41 +113,18 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 		setReserveError(null)
 
 		const facility = availableFacilities.find((row) => String(row.id) === reserveFacilityId)
-		if (!facility) {
-			setReserveError('Please choose an available facility.')
-			return
-		}
-		// Every field is required — no partially filled requests.
-		if (!reservedDate || !startTime || !endTime || !purpose.trim()) {
-			setReserveError('Please complete all fields before submitting.')
-			return
-		}
-		if (reservedDate < today) {
-			setReserveError('The reservation date cannot be in the past.')
-			return
-		}
-		if (endTime <= startTime) {
-			setReserveError('The end time must be later than the start time.')
-			return
-		}
-		// Purpose must describe the use in words — reject any digits.
-		if (/\d/.test(purpose)) {
-			setReserveError('The purpose cannot contain numbers.')
-			return
-		}
-
-		// Soft overlap guard: block a window that collides with an existing
-		// pending/approved reservation for the same facility on the same day.
-		const clash = (reservations ?? []).some(
-			(row) =>
-				row.facility_id === facility.id &&
-				row.reserved_date === reservedDate &&
-				(row.status === 'pending' || row.status === 'approved') &&
-				startTime < row.end_time.slice(0, 5) &&
-				endTime > row.start_time.slice(0, 5),
+		const message = validateReservation(
+			{
+				facilityId: facility?.id ?? null,
+				reservedDate,
+				startTime,
+				endTime,
+				purpose,
+			},
+			{ today, existing: visibleReservations },
 		)
-		if (clash) {
-			setReserveError('That time window overlaps an existing reservation for this facility. Please pick another slot.')
+		if (message || !facility) {
+			setReserveError(message ?? 'Please choose an available facility.')
 			return
 		}
 
@@ -158,7 +137,17 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 				start_time: startTime,
 				end_time: endTime,
 				purpose: purpose.trim(),
+				// An admin reserving a facility they themselves would approve is
+				// approved on arrival — see reservationAutoApproves.
+				...(reservationAutoApproves(facility, user) ? { status: 'approved' as const, approved_by: user.id } : {}),
 			})
+			// Clear the draft so the next open starts clean even if it is reopened
+			// through a path that does not reset (e.g. the browser restoring state).
+			setReserveFacilityId('')
+			setReservedDate('')
+			setStartTime('')
+			setEndTime('')
+			setPurpose('')
 			setReserveOpen(false)
 		} catch (mutationError) {
 			setReserveError(getErrorMessage(mutationError, 'Failed to submit reservation request.'))
@@ -182,6 +171,7 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 				subtitle={`${data?.length ?? 0} facilities`}
 				rows={data}
 				isLoading={isLoading}
+				error={facilitiesError}
 				searchKeys={['name', 'facility_type']}
 				emptyMessage="No facilities recorded yet."
 				emptyAction={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add the first facility</Button> : null}
@@ -202,20 +192,57 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 					{ header: 'Capacity', render: (row) => row.capacity },
 					{
 						header: 'Availability',
-						render: (row) => <StatusChip tone={availabilityTone[row.current_availability] ?? 'muted'}>{row.current_availability.replace('_', ' ')}</StatusChip>,
+						render: (row) => {
+							// An administrator's explicit state always wins — a reservation
+							// never overrides "under maintenance" or "in use".
+							if (row.current_availability !== 'available') {
+								return <StatusChip tone={availabilityTone[row.current_availability] ?? 'muted'}>{row.current_availability.replace('_', ' ')}</StatusChip>
+							}
+
+							const todaysBookings = facilityBookingsOn(visibleReservations, row.id, today)
+							const current = activeBooking(todaysBookings, nowMinutes)
+							if (current) {
+								return (
+									<div>
+										<StatusChip tone="warning">Reserved</StatusChip>
+										<p className="mt-1 text-xs text-text-muted">Until {formatTime(current.end_time)}</p>
+									</div>
+								)
+							}
+
+							// Available right now — but say so specifically, listing any
+							// other booked windows today rather than a blanket "reserved"
+							// for the whole day when only a slice of it is actually taken.
+							return (
+								<div>
+									<StatusChip tone="success">Available</StatusChip>
+									{todaysBookings.length > 0 ? (
+										<p className="mt-1 text-xs text-text-muted">
+											Booked today: {todaysBookings.map((booking) => `${formatTime(booking.start_time)}–${formatTime(booking.end_time)}`).join(', ')}
+										</p>
+									) : null}
+								</div>
+							)
+						},
 					},
 					...(canReserve
 						? [
 								{
 									header: 'Reserve',
-									render: (row: FacilityRow) =>
-										row.current_availability === 'available' ? (
-											<Button size="sm" variant="secondary" onClick={() => openReserveFor(row.id)}>
+									render: (row: FacilityRow) => {
+										const blocked = facilityReserveBlockedReason(row, user)
+										return (
+											<Button
+												size="sm"
+												variant="secondary"
+												disabled={Boolean(blocked)}
+												title={blocked ?? 'Reserve this facility'}
+												onClick={() => openReserveFor(row.id)}
+											>
 												Reserve
 											</Button>
-										) : (
-											<span className="text-text-muted">—</span>
-										),
+										)
+									},
 								},
 							]
 						: []),
@@ -227,8 +254,10 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 				subtitle={`${reservations?.length ?? 0} requests`}
 				rows={reservations}
 				isLoading={reservationsLoading}
+				error={reservationsError}
 				searchKeys={['status', 'purpose']}
 				emptyMessage={canReserve ? 'No reservation requests yet.' : 'No reservation requests to review.'}
+				onRowClick={(row) => setDetailsReservation(row)}
 				columns={[
 					{
 						header: 'Facility',
@@ -247,17 +276,45 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 					{
 						header: 'Actions',
 						render: (row) =>
-							canApprove && row.status === 'pending' ? (
+							// Own requests offer Cancel, never Approve — an admin must not
+							// rubber-stamp their own booking just because they hold the role.
+							// Every button here stops propagation so it doesn't also open
+							// the row's details modal.
+							canApprove && row.status === 'pending' && row.requester_id !== user.id ? (
 								<div className="flex gap-2">
-									<Button size="sm" variant="secondary" onClick={() => runReservationStatus(row.id, 'approved', true)}>
+									<Button
+										size="sm"
+										variant="secondary"
+										onClick={(event) => {
+											event.stopPropagation()
+											runReservationStatus(row.id, 'approved', true)
+										}}
+										disabled={updateReservation.isPending}
+									>
 										Approve
 									</Button>
-									<Button size="sm" variant="danger" onClick={() => runReservationStatus(row.id, 'rejected', true)}>
+									<Button
+										size="sm"
+										variant="danger"
+										onClick={(event) => {
+											event.stopPropagation()
+											runReservationStatus(row.id, 'rejected', true)
+										}}
+										disabled={updateReservation.isPending}
+									>
 										Reject
 									</Button>
 								</div>
 							) : row.status === 'pending' && row.requester_id === user.id ? (
-								<Button size="sm" variant="danger" onClick={() => runReservationStatus(row.id, 'cancelled', false)} disabled={updateReservation.isPending}>
+								<Button
+									size="sm"
+									variant="danger"
+									onClick={(event) => {
+										event.stopPropagation()
+										runReservationStatus(row.id, 'cancelled', false)
+									}}
+									disabled={updateReservation.isPending}
+								>
 									Cancel
 								</Button>
 							) : (
@@ -340,6 +397,32 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 						</label>
 						<input id="reserve-date" type="date" min={today} value={reservedDate} onChange={(event) => setReservedDate(event.target.value)} className={inputClass} required />
 					</div>
+
+					{reserveFacility && reservedDate ? (
+						<div className="rounded-lg border border-border bg-bg p-3">
+							<p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Existing bookings on this date</p>
+							{dayBookings.length === 0 ? (
+								<p className="text-sm text-text-muted">No bookings yet — the whole day is open.</p>
+							) : (
+								<ul className="space-y-1.5">
+									{dayBookings.map((booking) => (
+										<li key={booking.id} className="flex items-center justify-between gap-3 text-sm">
+											<span className="text-text-primary">
+												{formatTime(booking.start_time)} – {formatTime(booking.end_time)}
+											</span>
+											<StatusChip tone={reservationTone[booking.status] ?? 'muted'}>{booking.status}</StatusChip>
+										</li>
+									))}
+								</ul>
+							)}
+							{dayBookingsMayBeIncomplete ? (
+								<p className="mt-2 text-xs text-text-muted">
+									You may not see every booking on this shared facility — a conflicting time is still blocked automatically when you submit.
+								</p>
+							) : null}
+						</div>
+					) : null}
+
 					<div className="grid gap-4 sm:grid-cols-2">
 						<div>
 							<label className={labelClass} htmlFor="reserve-start">
@@ -368,12 +451,20 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 						/>
 						<p className="mt-1.5 text-xs text-text-muted">Letters only — numbers are not allowed.</p>
 					</div>
-					<p className="text-xs text-text-muted">Your request starts as pending and must be approved by the facility's department admin or a super admin.</p>
+					{willAutoApprove ? (
+						<p className="text-xs text-success">
+							You approve reservations for this facility, so this one is confirmed as soon as you submit — no separate review step.
+						</p>
+					) : (
+						<p className="text-xs text-text-muted">Your request starts as pending and must be approved by the facility's department admin or a super admin.</p>
+					)}
 					<Button type="submit" className="w-full" disabled={createReservation.isPending}>
-						{createReservation.isPending ? 'Submitting…' : 'Submit Reservation'}
+						{createReservation.isPending ? 'Submitting…' : willAutoApprove ? 'Confirm Reservation' : 'Submit Reservation'}
 					</Button>
 				</form>
 			</Modal>
+
+			{detailsReservation ? <FacilityReservationDetailsModal reservation={detailsReservation} onClose={() => setDetailsReservation(null)} /> : null}
 		</div>
 	)
 }

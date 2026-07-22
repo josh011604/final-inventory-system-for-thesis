@@ -64,9 +64,74 @@ The Demo Accounts panel on the login screen is intentionally kept so evaluators 
 - `npm run build` creates a production build
 - `npm run preview` previews the build locally
 - `npm run lint` checks the codebase with ESLint
+- `npm test` runs the Vitest unit suite (reservation and borrow-availability rules)
 - `npm run seed:demo` creates/repairs the demo accounts in Supabase (service role key required)
 - `npm run seed:data` seeds sample categories, suppliers, facilities, equipment, and borrow/maintenance records per department (idempotent)
 - `npm run verify:demo` signs in as every demo account and checks role permissions, RLS scoping, and edge functions
+- `npm run verify:reservations` exercises the facility-reservation and borrow-request flows end to end against the live project
+
+## Facility reservations and borrowing
+
+Staff, department admins, and super admins reserve facilities from the Facilities
+screen; students borrow items but not rooms. A request starts `pending` and is
+approved by the facility's department admin (or a super admin for the central,
+department-less rooms).
+
+Overlap protection lives in two places. The Facilities screen blocks a window
+that collides with a reservation it can see, and the
+`facility_reservations_no_overlap` exclusion constraint
+([20260722140000](supabase/migrations/20260722140000_facility_reservation_conflicts.sql))
+is the authority — necessary because RLS hides other departments' reservations
+from the requester, so the client check alone cannot see every conflict.
+Intervals are half-open: a booking ending at 10:00 does not clash with one
+starting at 10:00.
+
+`facilities.current_availability` reflects only an administrator's explicit
+choice (`under_maintenance` / `in_use`) or the schema default (`available`) —
+a reservation never touches it
+([20260723100000](supabase/migrations/20260723100000_facility_availability_per_slot.sql)).
+An earlier version flipped a facility to `reserved` for the rest of the day
+(with no upper bound — see the now-reverted
+[20260722160000](supabase/migrations/20260722160000_facility_availability_sync.sql))
+the moment any approved booking existed against it, which made a single booked
+hour hide that the room was free every other hour, and even blocked a second,
+non-overlapping booking later the same day. Instead, whether a facility is
+occupied **right now**, and what else it has booked for a given day, is
+computed live from `facility_reservations` — `facilityBookingsOn()` and
+`activeBooking()` in
+[src/backend/lib/reservations.ts](src/backend/lib/reservations.ts) — so it's
+always exact to the minute, not just as fresh as the last write or cron tick.
+The Facilities table's Availability column shows this directly: "Available"
+plus the day's other booked windows, or "Reserved · Until 9:00 AM" only while
+a booking's window actually contains the current time.
+
+Clicking a row in the reservations table opens its full details (requester,
+department, date/time, purpose, reviewer, timestamps). The Reserve modal shows
+the chosen facility's existing bookings for the selected date, so the user can
+see what's actually open before picking a time.
+
+**Approval:** a department admin reserving their **own** department's facility
+— or a super admin reserving anything — is approved on arrival; no separate
+review step. A department admin reserving a *central* (department-less)
+facility is not that facility's approver (a super admin is), so that request
+still starts `pending`, as does every staff request
+([20260722180000](supabase/migrations/20260722180000_facility_reservation_auto_approve.sql)).
+This logic is mirrored client-side by `reservationAutoApproves()` in
+[src/backend/lib/reservations.ts](src/backend/lib/reservations.ts) and enforced
+authoritatively by the `facility_reservations` insert RLS policy.
+
+Central facilities (e.g. the Supply Office) are visible to every authenticated
+user, not just the super admin
+([20260722200000](supabase/migrations/20260722200000_facilities_central_visibility.sql))
+— fixing an earlier RLS gap where `department_id = current_user_department_id()`
+was never true for a `NULL` department, silently hiding them from staff and
+department admins.
+
+Items can be requested two ways, both routed through the same
+`BorrowRequestModal` and the `borrow-status` edge function: the **New Request**
+button on the Borrowing screen, and the per-row **Borrow** button on the
+Inventory screen (enabled only when the item is `available` and at least one
+unit is free).
 
 ## Deployment
 

@@ -6,8 +6,10 @@ import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
 import EquipmentHistoryModal from '@/frontend/features/inventory/EquipmentHistoryModal'
 import EquipmentEditModal from '@/frontend/features/inventory/EquipmentEditModal'
-import { useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
+import BorrowRequestModal from '@/frontend/features/borrowing/BorrowRequestModal'
+import { useBorrowRecords, useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
+import { borrowBlockedReason, borrowScopeReason, freeUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
 
@@ -56,15 +58,23 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 export default function InventoryPage({ user }: { user: SchoolUser }) {
-	const { data, isLoading } = useEquipment()
+	const { data, isLoading, error: loadError } = useEquipment()
 	const { data: departments } = useDepartments()
 	const { data: facilities } = useFacilities()
+	const { data: borrowRecords } = useBorrowRecords()
 	const createEquipment = useCreateEquipment()
 
 	const canManage = user.role === 'super_admin' || user.role === 'department_admin'
 	// Department Inventory: staff and department admins see only their own
 	// department's items; the super admin sees everything, including Main Supply.
 	const visibleItems = user.role === 'super_admin' ? data : data?.filter((item) => item.department_id === user.departmentId)
+
+	// Per-item Borrow: how many units of each item are already out on an active
+	// loan, so a row only offers Borrow when a unit is genuinely free. The
+	// borrow-status edge function re-checks all of this server-side.
+	const unitsOut = unitsOutByEquipmentId(borrowRecords ?? [])
+	const [borrowItem, setBorrowItem] = useState<EquipmentRow | null>(null)
+
 	const [open, setOpen] = useState(false)
 	const [historyItem, setHistoryItem] = useState<EquipmentRow | null>(null)
 	const [editItem, setEditItem] = useState<EquipmentRow | null>(null)
@@ -141,6 +151,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 				}
 				rows={visibleItems}
 				isLoading={isLoading}
+				error={loadError}
 				searchKeys={['equipment_code', 'equipment_name', 'category', 'status']}
 				emptyMessage="No inventory items recorded yet."
 				emptyAction={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add the first item</Button> : null}
@@ -158,8 +169,38 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 					},
 					{ header: 'Department', render: (row) => row.departments?.name ?? 'Main Supply' },
 					{ header: 'Facility', render: (row) => row.facilities?.name ?? '—' },
-					{ header: 'Qty', render: (row) => row.quantity },
+					{
+						header: 'Available',
+						render: (row) => (
+							<span className={freeUnits(row, unitsOut) === 0 ? 'text-text-muted' : 'text-text-primary'}>
+								{freeUnits(row, unitsOut)} / {row.quantity ?? 1}
+							</span>
+						),
+					},
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status}</StatusChip> },
+					{
+						header: 'Borrow',
+						render: (row) => {
+							// Scope first: "not your department" is the more useful reason
+							// to show when an item is both out of scope and fully out.
+							const blocked = borrowScopeReason(row, user) ?? borrowBlockedReason(row, unitsOut)
+							return (
+								<Button
+									size="sm"
+									variant={blocked ? 'secondary' : 'primary'}
+									disabled={Boolean(blocked)}
+									title={blocked ?? 'Request this item'}
+									onClick={(event) => {
+										// Keep the row's click-for-history behavior intact.
+										event.stopPropagation()
+										setBorrowItem(row)
+									}}
+								>
+									Borrow
+								</Button>
+							)
+						},
+					},
 					{
 						header: 'History',
 						render: () => (
@@ -191,6 +232,23 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 
 			{historyItem ? <EquipmentHistoryModal item={historyItem} onClose={() => setHistoryItem(null)} /> : null}
 			{editItem ? <EquipmentEditModal item={editItem} facilities={facilities} onClose={() => setEditItem(null)} /> : null}
+			<BorrowRequestModal
+				open={borrowItem !== null}
+				onClose={() => setBorrowItem(null)}
+				user={user}
+				presetItem={
+					borrowItem
+						? {
+								id: borrowItem.id,
+								equipment_code: borrowItem.equipment_code,
+								equipment_name: borrowItem.equipment_name,
+								quantity: borrowItem.quantity ?? 1,
+								freeUnits: freeUnits(borrowItem, unitsOut),
+								source: borrowItem.department_id === null ? 'supply' : 'department',
+							}
+						: null
+				}
+			/>
 
 			<Modal open={open} onClose={closeModal} title="Add Inventory Item">
 				<StepIndicator current={step} />
