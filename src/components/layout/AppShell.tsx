@@ -66,6 +66,8 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 
 	return (
 		<div className="flex min-h-screen bg-bg text-text-primary">
+			<div className="app-backdrop" aria-hidden="true" />
+
 			<aside className="fixed inset-y-0 left-0 z-30 flex w-16 flex-col border-r border-border bg-surface md:w-64">
 				<div className="flex h-16 items-center justify-center gap-3 border-b border-border px-2 md:justify-start md:px-5">
 					<img src="/bisu-logo.png" alt="BISU seal" className="h-9 w-9 shrink-0 md:h-10 md:w-10" />
@@ -101,7 +103,7 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 			</aside>
 
 			<div className="flex min-h-screen flex-1 flex-col pl-16 md:pl-64">
-				<header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-border bg-surface/90 px-4 backdrop-blur-xl sm:px-6">
+				<header className="glass-panel-strong sticky top-0 z-20 flex h-16 items-center gap-4 border-b px-4 sm:px-6">
 					<Breadcrumbs path={location.pathname} />
 
 					<div className="ml-auto flex items-center gap-2 sm:gap-3">
@@ -180,7 +182,7 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 					</div>
 				</header>
 
-				<main className="flex-1 p-4 sm:p-6">
+				<main className="relative z-10 flex-1 p-4 sm:p-6">
 					{isRouteAllowed(location.pathname, user.role) ? <Outlet /> : <Navigate to="/dashboard" replace />}
 				</main>
 			</div>

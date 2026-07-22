@@ -96,6 +96,74 @@ export function useCreateFacility() {
 	})
 }
 
+// ---------- Facility reservations ----------
+
+export type FacilityReservationRow = Tables<'facility_reservations'> & {
+	facilities: { name: string; facility_type: string } | null
+	departments: { name: string } | null
+	requester: { full_name: string } | null
+	approver: { full_name: string } | null
+}
+
+export function useFacilityReservations() {
+	return useQuery({
+		queryKey: ['facility_reservations'],
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.from('facility_reservations')
+				.select(
+					'*, facilities(name, facility_type), departments(name), requester:profiles!facility_reservations_requester_id_fkey(full_name), approver:profiles!facility_reservations_approved_by_fkey(full_name)',
+				)
+				.order('reserved_date', { ascending: false })
+				.order('start_time', { ascending: true })
+			if (error) throw error
+			return data as unknown as FacilityReservationRow[]
+		},
+	})
+}
+
+export function useCreateFacilityReservation() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (input: {
+			facility_id: number
+			requester_id: string
+			department_id: string | null
+			reserved_date: string
+			start_time: string
+			end_time: string
+			purpose: string
+		}) => {
+			// RLS enforces requester_id = auth.uid(), non-student role, and
+			// status = 'pending'; the status-guard trigger owns transitions after.
+			const { error } = await supabase.from('facility_reservations').insert(input)
+			if (error) throw error
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['facility_reservations'] })
+			queryClient.invalidateQueries({ queryKey: ['notifications'] })
+		},
+	})
+}
+
+// Approve / reject (admins) and cancel (requester). The guard trigger blocks a
+// requester from anything but cancelling their own still-pending request.
+export function useUpdateFacilityReservationStatus() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ id, status, approverId }: { id: number; status: string; approverId?: string | null }) => {
+			const updates: Partial<Tables<'facility_reservations'>> =
+				approverId === undefined ? { status } : { status, approved_by: approverId }
+			const { error } = await supabase.from('facility_reservations').update(updates).eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['facility_reservations'] })
+			queryClient.invalidateQueries({ queryKey: ['notifications'] })
+		},
+	})
+}
+
 // ---------- Equipment (Inventory module) ----------
 
 export type EquipmentRow = Tables<'equipment'> & {

@@ -10,7 +10,7 @@ type CardProps = PropsWithChildren<{
 export default function Card({ title, subtitle, action, className = '', children }: CardProps) {
 	return (
 		<section
-			className={`relative overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm transition before:absolute before:inset-x-0 before:top-0 before:h-1 before:bg-gradient-to-r before:from-primary before:via-accent before:to-primary before:opacity-0 before:transition-opacity hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 hover:before:opacity-100 ${className}`}
+			className={`glass-panel relative overflow-hidden rounded-2xl border p-5 shadow-sm transition before:absolute before:inset-x-0 before:top-0 before:h-1 before:bg-gradient-to-r before:from-primary before:via-accent before:to-primary before:opacity-0 before:transition-opacity hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 hover:before:opacity-100 ${className}`}
 		>
 			{title || subtitle || action ? (
 				<div className="mb-4 flex flex-wrap items-start justify-between gap-3">

@@ -129,6 +129,7 @@ export default function AuthScreen() {
 	const [loginError, setLoginError] = useState<string | null>(null)
 
 	const [departmentOptions, setDepartmentOptions] = useState<DepartmentOption[]>([])
+	const [accountType, setAccountType] = useState<'employee' | 'student'>('employee')
 	const [fullName, setFullName] = useState('')
 	const [employeeId, setEmployeeId] = useState('')
 	const [departmentId, setDepartmentId] = useState('')
@@ -158,6 +159,7 @@ export default function AuthScreen() {
 	}
 
 	const resetRegisterForm = () => {
+		setAccountType('employee')
 		setFullName('')
 		setEmployeeId('')
 		setEmail('')
@@ -337,6 +339,36 @@ export default function AuthScreen() {
 								</div>
 							) : null}
 
+							<div>
+								<span className={labelClass}>Account Type</span>
+								<div className="flex rounded-xl bg-bg p-1">
+									<button
+										type="button"
+										onClick={() => setAccountType('employee')}
+										className={
+											accountType === 'employee'
+												? 'flex flex-1 items-center justify-center gap-2 rounded-lg bg-surface py-2.5 text-sm font-semibold text-text-primary shadow-sm transition'
+												: 'flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-text-muted transition hover:text-text-primary'
+										}
+									>
+										<UserCircle2 className="h-4 w-4" />
+										Employee
+									</button>
+									<button
+										type="button"
+										onClick={() => setAccountType('student')}
+										className={
+											accountType === 'student'
+												? 'flex flex-1 items-center justify-center gap-2 rounded-lg bg-surface py-2.5 text-sm font-semibold text-text-primary shadow-sm transition'
+												: 'flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-text-muted transition hover:text-text-primary'
+										}
+									>
+										<GraduationCap className="h-4 w-4" />
+										Student
+									</button>
+								</div>
+							</div>
+
 							<div className="grid gap-4 sm:grid-cols-2">
 								<div>
 									<label className={labelClass} htmlFor="fullName">
@@ -346,9 +378,15 @@ export default function AuthScreen() {
 								</div>
 								<div>
 									<label className={labelClass} htmlFor="employeeId">
-										Employee ID
+										{accountType === 'student' ? 'Student ID' : 'Employee ID'}
 									</label>
-									<input id="employeeId" value={employeeId} onChange={(event) => setEmployeeId(event.target.value)} className={inputClass} placeholder="ST-1003" />
+									<input
+										id="employeeId"
+										value={employeeId}
+										onChange={(event) => setEmployeeId(event.target.value)}
+										className={inputClass}
+										placeholder={accountType === 'student' ? '2023-00123' : 'ST-1003'}
+									/>
 								</div>
 							</div>
 

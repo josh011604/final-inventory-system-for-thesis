@@ -48,7 +48,7 @@ function MetricCard({
 	const palette = metricToneClass[tone]
 	return (
 		<article
-			className={`group relative overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${palette.glow}`}
+			className={`glass-panel group relative overflow-hidden rounded-2xl border p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${palette.glow}`}
 		>
 			<span className={`absolute inset-x-0 top-0 h-1 ${palette.bar} opacity-70 transition group-hover:opacity-100`} />
 			<div className="flex items-start justify-between gap-3">
@@ -194,7 +194,7 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 								return (
 									<div
 										key={request.id}
-										className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-border bg-bg p-4 pl-5 transition hover:-translate-y-0.5 hover:border-primary-light hover:shadow-sm"
+										className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-border bg-bg/60 p-4 pl-5 transition hover:-translate-y-0.5 hover:border-primary-light hover:shadow-sm"
 									>
 										<span className={`absolute inset-y-0 left-0 w-1 ${barClass}`} />
 										<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning transition group-hover:scale-110">

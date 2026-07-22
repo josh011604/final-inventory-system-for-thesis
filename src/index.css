@@ -43,6 +43,17 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Frosted-glass surfaces layered over the campus backdrop. */
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg-strong: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-blur: 16px;
+  /* Wash applied over the photo so body text keeps AA contrast. The top is
+     lighter (campus visible behind the hero), the bottom denser for tables. */
+  --backdrop-veil-top: rgba(246, 245, 248, 0.46);
+  --backdrop-veil: rgba(246, 245, 248, 0.64);
+  --backdrop-veil-bottom: rgba(246, 245, 248, 0.78);
 }
 
 :root[data-theme='dark'] {
@@ -60,6 +71,13 @@
   --color-warning: #d99b3d;
   --color-danger: #d97463;
   --color-info: #5fc2bf;
+
+  --glass-bg: rgba(30, 26, 41, 0.78);
+  --glass-bg-strong: rgba(30, 26, 41, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --backdrop-veil-top: rgba(20, 17, 28, 0.68);
+  --backdrop-veil: rgba(20, 17, 28, 0.82);
+  --backdrop-veil-bottom: rgba(20, 17, 28, 0.9);
 
   color: var(--color-text-primary);
   background: var(--color-bg);
@@ -91,6 +109,60 @@ body[data-theme='dark'] ::selection {
 
 * {
   box-sizing: border-box;
+}
+
+@layer components {
+  /* Fixed campus photo sitting behind the main content. The sidebar and header
+     paint over it with their own translucent surfaces. */
+  .app-backdrop {
+    position: fixed;
+    /* Bleed past the edges so the blur below never reveals a transparent halo. */
+    inset: -24px;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url('/bisucal.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Softens the low-res source and unifies it with the frosted panels. */
+    filter: blur(3px);
+    transform: scale(1.05);
+  }
+
+  /* Gradient veil painted over the photo: lighter at the top so the campus
+     shows through behind the hero, denser lower down to protect body text.
+     Kept as its own layer so it isn't blurred with the photo. */
+  .app-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 80% at 70% 0%, rgba(75, 42, 123, 0.12), transparent 60%),
+      linear-gradient(to bottom, var(--backdrop-veil-top), var(--backdrop-veil) 55%, var(--backdrop-veil-bottom));
+  }
+
+  .glass-panel {
+    background-color: var(--glass-bg);
+    border-color: var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  }
+
+  .glass-panel-strong {
+    background-color: var(--glass-bg-strong);
+    border-color: var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  }
+
+  /* Browsers without backdrop-filter fall back to a near-opaque surface so
+     text never sits directly on the photo. */
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass-panel,
+    .glass-panel-strong {
+      background-color: var(--color-surface);
+    }
+  }
 }
 
 ::-webkit-scrollbar {

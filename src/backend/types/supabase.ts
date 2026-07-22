@@ -303,6 +303,80 @@ export type Database = {
           },
         ]
       }
+      facility_reservations: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          department_id: string | null
+          end_time: string
+          facility_id: number
+          id: number
+          purpose: string
+          requester_id: string
+          reserved_date: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          department_id?: string | null
+          end_time: string
+          facility_id: number
+          id?: number
+          purpose: string
+          requester_id: string
+          reserved_date: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          department_id?: string | null
+          end_time?: string
+          facility_id?: number
+          id?: number
+          purpose?: string
+          requester_id?: string
+          reserved_date?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_reservations_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_reservations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_reservations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_reservations_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facilities: {
         Row: {
           assigned_equipment_count: number

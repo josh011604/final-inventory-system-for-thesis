@@ -83,7 +83,7 @@ export default function EntityTablePage<T extends object>({
 				<>
 					<div className="overflow-x-auto rounded-xl border border-border">
 						<table className="min-w-full divide-y divide-border">
-							<thead className="bg-gradient-to-r from-primary-light via-primary-light/60 to-transparent">
+							<thead className="bg-gradient-to-r from-primary-light/80 via-primary-light/50 to-transparent">
 								<tr>
 									{columns.map((column) => (
 										<th key={column.header} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary">
