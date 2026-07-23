@@ -16,6 +16,7 @@ import FacilityReservationDetailsModal from '@/frontend/features/facilities/Faci
 import type { FacilityReservationRow, FacilityRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
+import { useNow } from '@/backend/hooks/useNow'
 import { activeBooking, facilityBookingsOn, facilityReserveBlockedReason, reservationAutoApproves, validateReservation } from '@/backend/lib/reservations'
 import { availabilityTone, formatTime, reservationTone } from '@/frontend/features/facilities/facilityDisplay'
 
@@ -34,7 +35,9 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	const canApprove = canManage
 	// Staff, deans, and admins may reserve; students borrow items but not rooms.
 	const canReserve = user.role === 'super_admin' || user.role === 'department_admin' || user.role === 'staff'
-	const now = new Date()
+	// Ticks every minute so a facility flips to "Occupied" (and back) as its
+	// booking window opens and closes, with no manual refresh.
+	const now = useNow()
 	const today = now.toLocaleDateString('en-CA')
 	const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
@@ -60,7 +63,6 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	// One rule drives both the picker and the per-row Reserve button, so the
 	// table can never offer a room the modal would refuse (or vice versa).
 	const availableFacilities = data?.filter((facility) => facilityReserveBlockedReason(facility, user) === null) ?? []
-	const canOpenReserve = canReserve && availableFacilities.length > 0
 
 	// The clash guard below can only see reservations this user is allowed to
 	// read. For a central facility that is nobody's department, a non-super-admin
@@ -176,14 +178,7 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 				emptyMessage="No facilities recorded yet."
 				emptyAction={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add the first facility</Button> : null}
 				action={
-					<div className="flex flex-wrap gap-2">
-						{canReserve ? (
-							<Button size="sm" variant="secondary" onClick={() => openReserveFor()} disabled={!canOpenReserve}>
-								{canOpenReserve ? 'Reserve Facility' : 'None available'}
-							</Button>
-						) : null}
-						{canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add Facility</Button> : null}
-					</div>
+					canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add Facility</Button> : undefined
 				}
 				columns={[
 					{ header: 'Name', render: (row) => <span className="font-medium text-text-primary">{row.name}</span> },
@@ -200,12 +195,17 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 							}
 
 							const todaysBookings = facilityBookingsOn(visibleReservations, row.id, today)
+							// A booking is running right now — the room is physically taken,
+							// so say "Occupied" rather than the forward-looking "Reserved".
 							const current = activeBooking(todaysBookings, nowMinutes)
 							if (current) {
 								return (
 									<div>
-										<StatusChip tone="warning">Reserved</StatusChip>
-										<p className="mt-1 text-xs text-text-muted">Until {formatTime(current.end_time)}</p>
+										<StatusChip tone="warning">Occupied</StatusChip>
+										<p className="mt-1 text-xs text-text-muted">
+											Until {formatTime(current.end_time)}
+											{current.requester?.full_name ? ` · ${current.requester.full_name}` : ''}
+										</p>
 									</div>
 								)
 							}
