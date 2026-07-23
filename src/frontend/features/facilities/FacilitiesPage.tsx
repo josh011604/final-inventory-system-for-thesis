@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
@@ -16,11 +16,18 @@ import FacilityReservationDetailsModal from '@/frontend/features/facilities/Faci
 import type { FacilityReservationRow, FacilityRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
-import { activeBooking, facilityBookingsOn, facilityReserveBlockedReason, reservationAutoApproves, validateReservation } from '@/backend/lib/reservations'
+import { activeBooking, facilityBookingsOn, facilityReserveBlockedReason, reservationAutoApproves, toMinutes, validateReservation } from '@/backend/lib/reservations'
 import { availabilityTone, formatTime, reservationTone } from '@/frontend/features/facilities/facilityDisplay'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
+
+// Sentinel for the department <select>: distinct from '' (the disabled
+// placeholder) so a real, non-empty value can still mean "no department".
+// "facilities admin write" RLS only lets a super_admin insert with
+// department_id null — see 20260722200000/20260722180000 — so a department
+// admin, locked to their own department below, never sees this option.
+const CENTRAL_FACILITY = '__central__'
 
 export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	const { data, isLoading, error: facilitiesError } = useFacilities()
@@ -34,7 +41,17 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	const canApprove = canManage
 	// Staff, deans, and admins may reserve; students borrow items but not rooms.
 	const canReserve = user.role === 'super_admin' || user.role === 'department_admin' || user.role === 'staff'
-	const now = new Date()
+
+	// A reservation's "Booked"/"Available" state is computed live (see
+	// facilityBookingsOn/activeBooking) rather than stored, so it must be
+	// re-evaluated as the clock moves — not just when something else causes a
+	// re-render — or a room reserved e.g. 8-9am keeps reading "Booked" all day
+	// to anyone who leaves this page open past 9am.
+	const [now, setNow] = useState(() => new Date())
+	useEffect(() => {
+		const interval = setInterval(() => setNow(new Date()), 30_000)
+		return () => clearInterval(interval)
+	}, [])
 	const today = now.toLocaleDateString('en-CA')
 	const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
@@ -96,7 +113,7 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 			await createFacility.mutateAsync({
 				name,
 				facility_type: facilityType,
-				department_id: departmentId || null,
+				department_id: departmentId === CENTRAL_FACILITY ? null : departmentId || null,
 				capacity: Number(capacity) || 0,
 			})
 			setName('')
@@ -213,12 +230,16 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 							// Available right now — but say so specifically, listing any
 							// other booked windows today rather than a blanket "reserved"
 							// for the whole day when only a slice of it is actually taken.
+							// Already-ended windows (e.g. an 8-10am booking once it's 1pm)
+							// are dropped here — they're history, not a reason to expect the
+							// room to be booked "today" from this point on.
+							const upcomingBookings = todaysBookings.filter((booking) => toMinutes(booking.end_time) > nowMinutes)
 							return (
 								<div>
 									<StatusChip tone="success">Available</StatusChip>
-									{todaysBookings.length > 0 ? (
+									{upcomingBookings.length > 0 ? (
 										<p className="mt-1 text-xs text-text-muted">
-											Booked today: {todaysBookings.map((booking) => `${formatTime(booking.start_time)}–${formatTime(booking.end_time)}`).join(', ')}
+											Booked today: {upcomingBookings.map((booking) => `${formatTime(booking.start_time)}–${formatTime(booking.end_time)}`).join(', ')}
 										</p>
 									) : null}
 								</div>
@@ -354,6 +375,9 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 							<option value="" disabled>
 								Select department
 							</option>
+							{user.role === 'super_admin' ? (
+								<option value={CENTRAL_FACILITY}>Central (no department — you approve its reservations)</option>
+							) : null}
 							{departments?.map((dept) => (
 								<option key={dept.id} value={dept.id}>
 									{dept.name}
