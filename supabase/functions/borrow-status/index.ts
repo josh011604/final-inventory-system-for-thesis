@@ -160,7 +160,12 @@ Deno.serve(async (req) => {
 			return json({ error: `You already have ${MAX_ACTIVE_BORROWS_PER_USER} pending or active borrows — return an item first` }, 400)
 		}
 
-		const { data: record, error: insertError } = await adminClient
+		// Inserted through callerClient (the requester's own JWT), not adminClient:
+		// the request is always for the caller themselves, so "borrow insert
+		// scoped" RLS already permits it, and doing it this way lets auth.uid()
+		// resolve inside audit_row_change() so the audit trail records who
+		// actually submitted the request instead of logging it as 'System'.
+		const { data: record, error: insertError } = await callerClient
 			.from('borrow_records')
 			.insert({
 				equipment_id: equipmentId,
