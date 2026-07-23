@@ -24,4 +24,5 @@ export interface SchoolUser {
 	role: Role
 	status: UserStatus
 	profilePicture: string
+	avatarUrl: string | null
 }

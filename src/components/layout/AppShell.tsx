@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, LogOut, Search, Sun, Moon } from 'lucide-react'
+import { Bell, LogOut, Search, Sun, Moon, UserRoundPen } from 'lucide-react'
 import { isRouteAllowed, navItemsForRole } from '@/frontend/config/navigation'
 import { getRoleLabel } from '@/backend/lib/rbac'
 import { useNotifications } from '@/backend/lib/supabase/queries'
@@ -148,8 +148,12 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 								onClick={() => setProfileMenuOpen((current) => !current)}
 								className="flex items-center gap-2 rounded-lg border border-border py-1.5 pl-1.5 pr-3 transition hover:border-primary hover:shadow-sm"
 							>
-								<span className="relative flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary-hover text-xs font-semibold text-white shadow-sm">
-									{user.profilePicture}
+								<span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-primary to-primary-hover text-xs font-semibold text-white shadow-sm">
+									{user.avatarUrl ? (
+										<img src={user.avatarUrl} alt={user.fullName} className="h-full w-full object-cover" />
+									) : (
+										user.profilePicture
+									)}
 									{user.status === 'Active' ? (
 										<span className="absolute -right-0.5 -bottom-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-surface">
 											<span className="h-1.5 w-1.5 rounded-full bg-success ring-1 ring-surface" />
@@ -168,6 +172,13 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 										<p className="text-sm font-semibold">{user.fullName}</p>
 										<p className="text-xs text-text-muted">{user.department}</p>
 									</div>
+									<Link
+										to="/settings"
+										className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-text-primary transition hover:bg-primary-light hover:text-primary"
+									>
+										<UserRoundPen className="h-4 w-4" />
+										Edit Profile
+									</Link>
 									<button
 										type="button"
 										onClick={onLogout}
