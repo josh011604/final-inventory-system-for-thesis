@@ -10,6 +10,7 @@ import { useBorrowRecords, useCancelBorrowRecord, useRunOverdueCheck, useUpdateB
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
+import { isSelfBorrowRequest } from '@/backend/lib/borrowing'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -120,7 +121,14 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 					{
 						header: 'Actions',
 						render: (row) =>
-							canApprove && row.status === 'pending' ? (
+							// Own pending request always takes priority, even for an approver —
+							// otherwise a department/super admin would see Approve/Reject on
+							// their own row and could rubber-stamp themselves.
+							row.status === 'pending' && isSelfBorrowRequest(row, user.id) ? (
+								<Button size="sm" variant="danger" onClick={() => runCancel(row.id)} disabled={cancelRequest.isPending}>
+									{cancelRequest.isPending ? 'Cancelling…' : 'Cancel'}
+								</Button>
+							) : canApprove && row.status === 'pending' ? (
 								<div className="flex gap-2">
 									<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'confirmed')}>
 										Approve
@@ -132,10 +140,6 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 							) : canApprove && (row.status === 'confirmed' || row.status === 'borrowed' || row.status === 'overdue') ? (
 								<Button size="sm" variant="secondary" onClick={() => { setReturnCondition('Good'); setReturnTarget(row) }}>
 									Mark Returned
-								</Button>
-							) : row.status === 'pending' && row.borrower_id === user.id ? (
-								<Button size="sm" variant="danger" onClick={() => runCancel(row.id)} disabled={cancelRequest.isPending}>
-									{cancelRequest.isPending ? 'Cancelling…' : 'Cancel'}
 								</Button>
 							) : (
 								'—'

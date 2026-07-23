@@ -41,6 +41,16 @@ export function borrowBlockedReason(item: BorrowableItem, unitsOut: ReadonlyMap<
 export type ScopedItem = { department_id: string | null }
 export type Borrower = { role: string; departmentId: string | null }
 
+export type ApprovableRecord = { borrower_id: string | null }
+
+// An approver (department admin or super admin) must never be the same person
+// as the borrower — otherwise they could rubber-stamp their own request,
+// defeating the entire point of requiring approval. Mirrors a matching guard
+// in the transition_borrow_record SQL function.
+export function isSelfBorrowRequest(record: ApprovableRecord, actorId: string): boolean {
+	return record.borrower_id === actorId
+}
+
 // Mirrors the enforce_borrow_department_scope database trigger
 // (20260719130000) so the UI never offers a request the server will reject.
 // A department-less item is the central Supply Office pool, open to everyone

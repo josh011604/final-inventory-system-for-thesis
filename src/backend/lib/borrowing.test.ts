@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { borrowBlockedReason, borrowScopeReason, freeUnits, isBorrowable, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowBlockedReason, borrowScopeReason, freeUnits, isBorrowable, isSelfBorrowRequest, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 
 const item = (overrides: Partial<{ id: number; quantity: number | null; status: string }> = {}) => ({
 	id: 1,
@@ -103,5 +103,24 @@ describe('borrowScopeReason', () => {
 		// The super admin's department is null, so the trigger's
 		// "distinct from" comparison rejects every department-owned item.
 		expect(borrowScopeReason({ department_id: DEPT_A }, { role: 'super_admin', departmentId: null })).toMatch(/your own department/i)
+	})
+})
+
+// Mirrors the self-approval guard added to transition_borrow_record; if these
+// drift, the UI offers an approve/reject action the database will reject.
+describe('isSelfBorrowRequest', () => {
+	const ADMIN_ID = 'admin-0000-0000-0000-000000000000'
+	const OTHER_ID = 'other-0000-0000-0000-000000000000'
+
+	it('flags a request where the approver is also the borrower', () => {
+		expect(isSelfBorrowRequest({ borrower_id: ADMIN_ID }, ADMIN_ID)).toBe(true)
+	})
+
+	it('allows a request from someone else', () => {
+		expect(isSelfBorrowRequest({ borrower_id: OTHER_ID }, ADMIN_ID)).toBe(false)
+	})
+
+	it('allows a request with no recorded borrower', () => {
+		expect(isSelfBorrowRequest({ borrower_id: null }, ADMIN_ID)).toBe(false)
 	})
 })
