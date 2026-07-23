@@ -41,6 +41,11 @@ export function navItemsForRole(role: Role) {
 }
 
 export function isRouteAllowed(path: string, role: Role) {
+	// /settings also hosts each signed-in user's own Profile tab (avatar, name),
+	// so every role must be able to reach it even though the "System Settings"
+	// sidebar entry above stays super_admin-only. SettingsPage itself hides the
+	// admin-only General/Backup tabs for non-super_admins.
+	if (path === '/settings') return true
 	const item = NAV_ITEMS.find((entry) => entry.path === path)
 	return item ? item.roles.includes(role) : true
 }

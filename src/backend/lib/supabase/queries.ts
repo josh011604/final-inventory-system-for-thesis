@@ -55,6 +55,38 @@ export function useUpdateProfile() {
 	})
 }
 
+// Uploads to the "avatars" bucket under a uid-prefixed path — storage RLS only
+// allows a user to write inside their own folder (see
+// 20260723110000_add_avatar_storage.sql) — then stores the resulting public URL
+// on the profile. A cache-busting query param is appended so the header avatar
+// updates immediately even though the storage path itself is stable (upsert).
+export function useUploadAvatar() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ userId, file }: { userId: string; file: File }) => {
+			const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+			const path = `${userId}/avatar.${ext}`
+
+			const { error: uploadError } = await supabase.storage
+				.from('avatars')
+				.upload(path, file, { upsert: true, cacheControl: '3600' })
+			if (uploadError) throw uploadError
+
+			const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(path)
+			const avatarUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`
+
+			const { error: updateError } = await supabase
+				.from('profiles')
+				.update({ profile_picture_url: avatarUrl })
+				.eq('id', userId)
+			if (updateError) throw updateError
+
+			return avatarUrl
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+	})
+}
+
 // Admin-only: creates a student account (role='student', department_id
 // required). Routed through an edge function because it needs the
 // service-role key to call auth.admin.createUser — never exposed to the client.

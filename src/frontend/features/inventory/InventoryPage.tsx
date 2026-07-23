@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Eye } from 'lucide-react'
 import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -204,7 +205,13 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 					{
 						header: 'History',
 						render: () => (
-							<span className="text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">View →</span>
+							<span
+								className="inline-flex items-center justify-center text-primary opacity-0 transition group-hover:opacity-100"
+								title="View history"
+								aria-label="View history"
+							>
+								<Eye className="h-4 w-4" />
+							</span>
 						),
 					},
 					...(canManage

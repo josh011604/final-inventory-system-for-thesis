@@ -47,7 +47,7 @@ function initialsFor(fullName: string) {
 async function loadActiveUser(userId: string): Promise<SchoolUser | null> {
 	const { data, error } = await supabase
 		.from('profiles')
-		.select('id, full_name, employee_id, department_id, position, email, username, role, status, departments(name)')
+		.select('id, full_name, employee_id, department_id, position, email, username, role, status, profile_picture_url, departments(name)')
 		.eq('id', userId)
 		.eq('status', 'active')
 		.maybeSingle()
@@ -68,6 +68,7 @@ async function loadActiveUser(userId: string): Promise<SchoolUser | null> {
 		role: data.role as Role,
 		status: 'Active',
 		profilePicture: initialsFor(data.full_name),
+		avatarUrl: data.profile_picture_url,
 	}
 }
 
@@ -134,6 +135,10 @@ export default function App() {
 		setTheme(theme === 'light' ? 'dark' : 'light')
 	}
 
+	const updateActiveUserAvatar = (avatarUrl: string) => {
+		setActiveUser((current) => (current ? { ...current, avatarUrl } : current))
+	}
+
 	const sessionBanner = sessionMessage ? (
 		<div className="fixed inset-x-4 top-4 z-50 mx-auto max-w-3xl rounded-2xl border border-primary-light bg-primary-light px-4 py-3 text-sm text-primary shadow-lg">
 			{sessionMessage}
@@ -172,7 +177,7 @@ export default function App() {
 						<Route path="/reports" element={<ReportsPage user={activeUser} />} />
 						<Route path="/notifications" element={<NotificationsPage />} />
 						<Route path="/audit-logs" element={<AuditLogsPage />} />
-						<Route path="/settings" element={<SettingsPage />} />
+						<Route path="/settings" element={<SettingsPage user={activeUser} onAvatarUpdated={updateActiveUserAvatar} />} />
 						<Route path="*" element={<Navigate to="/dashboard" replace />} />
 					</Route>
 				</Routes>

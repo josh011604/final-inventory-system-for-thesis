@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { Building2, Package, Settings } from 'lucide-react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { Building2, CircleUserRound, Package, Settings } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -13,8 +13,12 @@ import {
 	useDeleteCategory,
 	useDeleteSupplier,
 	useSuppliers,
+	useUploadAvatar,
 } from '@/backend/lib/supabase/queries'
 import { getErrorMessage } from '@/backend/lib/errors'
+import type { SchoolUser } from '@/backend/types/school'
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -198,10 +202,85 @@ function SuppliersCard() {
 	)
 }
 
-export default function SettingsPage() {
+function ProfileCard({ user, onAvatarUpdated }: { user: SchoolUser; onAvatarUpdated: (avatarUrl: string) => void }) {
+	const uploadAvatar = useUploadAvatar()
+	const fileInputRef = useRef<HTMLInputElement>(null)
+	const [preview, setPreview] = useState<string | null>(null)
+	const [error, setError] = useState<string | null>(null)
+
+	const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0]
+		event.target.value = ''
+		if (!file) return
+
+		setError(null)
+
+		if (!file.type.startsWith('image/')) {
+			setError('Please select an image file.')
+			return
+		}
+		if (file.size > MAX_AVATAR_BYTES) {
+			setError('Image must be smaller than 5MB.')
+			return
+		}
+
+		const localPreview = URL.createObjectURL(file)
+		setPreview(localPreview)
+
+		try {
+			const avatarUrl = await uploadAvatar.mutateAsync({ userId: user.id, file })
+			onAvatarUpdated(avatarUrl)
+		} catch (mutationError) {
+			setError(getErrorMessage(mutationError, 'Failed to upload profile picture.'))
+		} finally {
+			URL.revokeObjectURL(localPreview)
+			setPreview(null)
+		}
+	}
+
+	const avatarSrc = preview ?? user.avatarUrl
+
+	return (
+		<Card title="Profile" subtitle="Your account" action={<CircleUserRound className="h-5 w-5 text-primary" />}>
+			<div className="flex flex-wrap items-center gap-5">
+				<button
+					type="button"
+					onClick={() => fileInputRef.current?.click()}
+					disabled={uploadAvatar.isPending}
+					className="group relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary-hover text-xl font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+					aria-label="Change profile picture"
+				>
+					{avatarSrc ? <img src={avatarSrc} alt={user.fullName} className="h-full w-full object-cover" /> : user.profilePicture}
+					<span className="absolute inset-0 flex items-center justify-center bg-black/50 text-[11px] font-medium text-white opacity-0 transition group-hover:opacity-100">
+						{uploadAvatar.isPending ? 'Uploading…' : 'Change'}
+					</span>
+				</button>
+				<div>
+					<p className="text-base font-semibold text-text-primary">{user.fullName}</p>
+					<p className="text-sm text-text-muted">{user.email}</p>
+					<Button
+						type="button"
+						size="sm"
+						variant="secondary"
+						className="mt-2"
+						onClick={() => fileInputRef.current?.click()}
+						disabled={uploadAvatar.isPending}
+					>
+						{uploadAvatar.isPending ? 'Uploading…' : 'Upload new picture'}
+					</Button>
+				</div>
+				<input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+			</div>
+			{error ? <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div> : null}
+		</Card>
+	)
+}
+
+export default function SettingsPage({ user, onAvatarUpdated }: { user: SchoolUser; onAvatarUpdated: (avatarUrl: string) => void }) {
+	const isSuperAdmin = user.role === 'super_admin'
 	const { data: categories } = useCategories()
 	const { data: suppliers } = useSuppliers()
-	const [tab, setTab] = useState<'general' | 'backup'>('general')
+	const [tab, setTab] = useState<'profile' | 'general' | 'backup'>('profile')
 
 	const tabClass = (active: boolean) =>
 		`rounded-lg px-4 py-2 text-sm font-semibold transition ${
@@ -210,18 +289,27 @@ export default function SettingsPage() {
 
 	return (
 		<div className="space-y-6">
-			<Card title="System Settings" subtitle="Administration" action={<Settings className="h-5 w-5 text-primary" />}>
+			<Card title={isSuperAdmin ? 'System Settings' : 'Account Settings'} subtitle="Administration" action={<Settings className="h-5 w-5 text-primary" />}>
 				<div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-bg p-1">
-					<button type="button" className={tabClass(tab === 'general')} onClick={() => setTab('general')}>
-						General
+					<button type="button" className={tabClass(tab === 'profile')} onClick={() => setTab('profile')}>
+						Profile
 					</button>
-					<button type="button" className={tabClass(tab === 'backup')} onClick={() => setTab('backup')}>
-						Backup &amp; Restore
-					</button>
+					{isSuperAdmin ? (
+						<>
+							<button type="button" className={tabClass(tab === 'general')} onClick={() => setTab('general')}>
+								General
+							</button>
+							<button type="button" className={tabClass(tab === 'backup')} onClick={() => setTab('backup')}>
+								Backup &amp; Restore
+							</button>
+						</>
+					) : null}
 				</div>
 			</Card>
 
-			{tab === 'general' ? (
+			{tab === 'profile' ? (
+				<ProfileCard user={user} onAvatarUpdated={onAvatarUpdated} />
+			) : tab === 'general' && isSuperAdmin ? (
 				<>
 					<div className="grid gap-3 sm:grid-cols-3">
 						<div className="rounded-xl border border-border bg-surface p-4">
