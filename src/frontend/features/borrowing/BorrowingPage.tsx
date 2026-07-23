@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button'
 import StatusChip from '@/components/ui/StatusChip'
 import BorrowRequestModal from '@/frontend/features/borrowing/BorrowRequestModal'
 import { useBorrowCandidates } from '@/frontend/features/borrowing/useBorrowCandidates'
+import { statusTone } from '@/frontend/features/borrowing/borrowDisplay'
 import { useBorrowRecords, useCancelBorrowRecord, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
@@ -12,16 +13,6 @@ import { getErrorMessage } from '@/backend/lib/errors'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
-
-const statusTone: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'muted'> = {
-	pending: 'warning',
-	confirmed: 'info',
-	borrowed: 'info',
-	return_requested: 'warning',
-	returned: 'success',
-	overdue: 'danger',
-	rejected: 'danger',
-}
 
 export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const { data, isLoading, error: loadError } = useBorrowRecords()

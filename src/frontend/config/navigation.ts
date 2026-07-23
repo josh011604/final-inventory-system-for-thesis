@@ -4,6 +4,7 @@ import {
 	Package,
 	ArrowRightLeft,
 	Wrench,
+	History,
 	Users,
 	FileBarChart2,
 	ScrollText,
@@ -24,7 +25,10 @@ export const NAV_ITEMS: NavItem[] = [
 	{ label: 'Departments', icon: Building2, path: '/departments', roles: ['super_admin'] },
 	{ label: 'Facilities', icon: Building2, path: '/facilities', roles: ['super_admin', 'department_admin', 'staff'] },
 	{ label: 'Inventory Items', icon: Package, path: '/inventory', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
-	{ label: 'Borrowing', icon: ArrowRightLeft, path: '/borrowing', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
+	{ label: 'Borrowing', icon: ArrowRightLeft, path: '/borrowing', roles: ['super_admin', 'department_admin', 'staff'] },
+	// Students request items from the Inventory screen; this is their read-only
+	// record of what they borrowed, in place of the Borrowing workqueue.
+	{ label: 'History', icon: History, path: '/history', roles: ['student'] },
 	{ label: 'Maintenance', icon: Wrench, path: '/maintenance', roles: ['super_admin', 'department_admin', 'staff'] },
 	{ label: 'Users', icon: Users, path: '/users', roles: ['super_admin', 'department_admin'] },
 	{ label: 'Reports', icon: FileBarChart2, path: '/reports', roles: ['super_admin', 'department_admin'] },

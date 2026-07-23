@@ -8,6 +8,7 @@ import DepartmentsPage from '@/frontend/features/departments/DepartmentsPage'
 import FacilitiesPage from '@/frontend/features/facilities/FacilitiesPage'
 import InventoryPage from '@/frontend/features/inventory/InventoryPage'
 import BorrowingPage from '@/frontend/features/borrowing/BorrowingPage'
+import BorrowHistoryPage from '@/frontend/features/borrowing/BorrowHistoryPage'
 import MaintenancePage from '@/frontend/features/maintenance/MaintenancePage'
 import UsersPage from '@/frontend/features/users/UsersPage'
 import ReportsPage from '@/frontend/features/reports/ReportsPage'
@@ -165,6 +166,7 @@ export default function App() {
 						<Route path="/facilities" element={<FacilitiesPage user={activeUser} />} />
 						<Route path="/inventory" element={<InventoryPage user={activeUser} />} />
 						<Route path="/borrowing" element={<BorrowingPage user={activeUser} />} />
+						<Route path="/history" element={<BorrowHistoryPage user={activeUser} />} />
 						<Route path="/maintenance" element={<MaintenancePage user={activeUser} />} />
 						<Route path="/users" element={<UsersPage user={activeUser} />} />
 						<Route path="/reports" element={<ReportsPage user={activeUser} />} />
