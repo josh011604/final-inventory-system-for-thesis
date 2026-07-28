@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
@@ -16,6 +16,7 @@ import FacilityReservationDetailsModal from '@/frontend/features/facilities/Faci
 import type { FacilityReservationRow, FacilityRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
+import { useNow } from '@/backend/hooks/useNow'
 import { activeBooking, facilityBookingsOn, facilityReserveBlockedReason, reservationAutoApproves, toMinutes, validateReservation } from '@/backend/lib/reservations'
 import { availabilityTone, formatTime, reservationTone } from '@/frontend/features/facilities/facilityDisplay'
 
@@ -42,16 +43,13 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	// Staff, deans, and admins may reserve; students borrow items but not rooms.
 	const canReserve = user.role === 'super_admin' || user.role === 'department_admin' || user.role === 'staff'
 
-	// A reservation's "Booked"/"Available" state is computed live (see
+	// A facility's "Occupied"/"Available" state is computed live (see
 	// facilityBookingsOn/activeBooking) rather than stored, so it must be
 	// re-evaluated as the clock moves — not just when something else causes a
-	// re-render — or a room reserved e.g. 8-9am keeps reading "Booked" all day
-	// to anyone who leaves this page open past 9am.
-	const [now, setNow] = useState(() => new Date())
-	useEffect(() => {
-		const interval = setInterval(() => setNow(new Date()), 30_000)
-		return () => clearInterval(interval)
-	}, [])
+	// re-render — or a room reserved e.g. 8-9am keeps reading "Occupied" all day
+	// to anyone who leaves this page open past 9am. useNow ticks on the minute
+	// boundary, so the flip lands as the wall clock changes.
+	const now = useNow()
 	const today = now.toLocaleDateString('en-CA')
 	const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
@@ -77,7 +75,6 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 	// One rule drives both the picker and the per-row Reserve button, so the
 	// table can never offer a room the modal would refuse (or vice versa).
 	const availableFacilities = data?.filter((facility) => facilityReserveBlockedReason(facility, user) === null) ?? []
-	const canOpenReserve = canReserve && availableFacilities.length > 0
 
 	// The clash guard below can only see reservations this user is allowed to
 	// read. For a central facility that is nobody's department, a non-super-admin
@@ -193,14 +190,7 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 				emptyMessage="No facilities recorded yet."
 				emptyAction={canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add the first facility</Button> : null}
 				action={
-					<div className="flex flex-wrap gap-2">
-						{canReserve ? (
-							<Button size="sm" variant="secondary" onClick={() => openReserveFor()} disabled={!canOpenReserve}>
-								{canOpenReserve ? 'Reserve Facility' : 'None available'}
-							</Button>
-						) : null}
-						{canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add Facility</Button> : null}
-					</div>
+					canManage ? <Button size="sm" onClick={() => setOpen(true)}>Add Facility</Button> : undefined
 				}
 				columns={[
 					{ header: 'Name', render: (row) => <span className="font-medium text-text-primary">{row.name}</span> },
@@ -217,12 +207,17 @@ export default function FacilitiesPage({ user }: { user: SchoolUser }) {
 							}
 
 							const todaysBookings = facilityBookingsOn(visibleReservations, row.id, today)
+							// A booking is running right now — the room is physically taken,
+							// so say "Occupied" rather than the forward-looking "Reserved".
 							const current = activeBooking(todaysBookings, nowMinutes)
 							if (current) {
 								return (
 									<div>
-										<StatusChip tone="warning">Reserved</StatusChip>
-										<p className="mt-1 text-xs text-text-muted">Until {formatTime(current.end_time)}</p>
+										<StatusChip tone="warning">Occupied</StatusChip>
+										<p className="mt-1 text-xs text-text-muted">
+											Until {formatTime(current.end_time)}
+											{current.requester?.full_name ? ` · ${current.requester.full_name}` : ''}
+										</p>
 									</div>
 								)
 							}

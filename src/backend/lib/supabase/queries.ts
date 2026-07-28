@@ -146,8 +146,11 @@ export function useFacilityReservations() {
 				.select(
 					'*, facilities(name, facility_type), departments(name), requester:profiles!facility_reservations_requester_id_fkey(full_name), approver:profiles!facility_reservations_approved_by_fkey(full_name)',
 				)
-				.order('reserved_date', { ascending: false })
-				.order('start_time', { ascending: true })
+				// Newest booking first, so a request just submitted lands at the top of
+				// page one and the oldest history falls to the last page. `id` breaks
+				// ties so pagination stays stable when two rows share a timestamp.
+				.order('created_at', { ascending: false })
+				.order('id', { ascending: false })
 			if (error) throw error
 			return data as unknown as FacilityReservationRow[]
 		},
