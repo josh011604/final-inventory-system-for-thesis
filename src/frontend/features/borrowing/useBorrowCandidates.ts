@@ -1,5 +1,5 @@
 import { useBorrowRecords, useEquipment, useMainSupplyEquipment } from '@/backend/lib/supabase/queries'
-import { freeUnits, isBorrowable, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { freeUnits, isBorrowable, OUT_OF_SERVICE_STATUSES, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 
 // One item the signed-in user may request, normalized across the two sources it
@@ -28,7 +28,7 @@ export function useBorrowCandidates(user: SchoolUser) {
 
 	// The edge function already computes available_units for Supply Office items.
 	const supply: BorrowCandidate[] = (mainSupply ?? [])
-		.filter((item) => item.status === 'available' && item.available_units > 0)
+		.filter((item) => !OUT_OF_SERVICE_STATUSES.has(item.status) && item.available_units > 0)
 		.map((item) => ({
 			id: item.id,
 			equipment_code: item.equipment_code,

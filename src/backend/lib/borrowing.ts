@@ -26,16 +26,35 @@ export function freeUnits(item: BorrowableItem, unitsOut: ReadonlyMap<number, nu
 	return Math.max((item.quantity ?? 1) - (unitsOut.get(item.id) ?? 0), 0)
 }
 
+// Statuses that take an item out of service entirely: no unit can be borrowed
+// no matter how much stock is on hand. 'available' and 'borrowed' are absent on
+// purpose — for multi-unit stock 'borrowed' only means *some* units are out, so
+// the item stays borrowable as long as free units remain.
+export const OUT_OF_SERVICE_STATUSES = new Set(['maintenance', 'damaged', 'lost', 'disposed'])
+
 // An item is borrowable when it is in service and at least one unit is free.
 export function isBorrowable(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): boolean {
-	return item.status === 'available' && freeUnits(item, unitsOut) > 0
+	return !OUT_OF_SERVICE_STATUSES.has(item.status) && freeUnits(item, unitsOut) > 0
 }
 
 // Why a given item cannot be borrowed right now — null when it can be.
 export function borrowBlockedReason(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): string | null {
-	if (item.status !== 'available') return `This item is marked ${item.status.replace('_', ' ')}.`
-	if (freeUnits(item, unitsOut) === 0) return 'Every unit of this item is currently out on loan.'
+	if (OUT_OF_SERVICE_STATUSES.has(item.status)) return `This item is marked ${item.status.replace('_', ' ')}.`
+	if (freeUnits(item, unitsOut) === 0) {
+		// A zero stock and a fully-loaned-out stock both leave no free units,
+		// but the reason the button is disabled is different for each.
+		return (item.quantity ?? 1) === 0 ? 'This item is out of stock.' : 'Every unit of this item is currently out on loan.'
+	}
 	return null
+}
+
+// The status to show in the Inventory list. Availability is driven by free units,
+// not the coarse equipment status: an item with stock left reads 'available' even
+// while some of its units are out on loan, and only reads 'unavailable' once every
+// unit is gone. Out-of-service statuses (maintenance, damaged…) are shown as-is.
+export function displayStatus(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): string {
+	if (OUT_OF_SERVICE_STATUSES.has(item.status)) return item.status
+	return freeUnits(item, unitsOut) === 0 ? 'unavailable' : 'available'
 }
 
 export type ScopedItem = { department_id: string | null }

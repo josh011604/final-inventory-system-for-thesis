@@ -10,7 +10,7 @@ import EquipmentEditModal from '@/frontend/features/inventory/EquipmentEditModal
 import BorrowRequestModal from '@/frontend/features/borrowing/BorrowRequestModal'
 import { useBorrowRecords, useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
-import { borrowBlockedReason, borrowScopeReason, freeUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowBlockedReason, borrowScopeReason, displayStatus, freeUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
 
@@ -19,6 +19,7 @@ const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
 
 const statusTone: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'muted'> = {
 	available: 'success',
+	unavailable: 'muted',
 	borrowed: 'info',
 	maintenance: 'warning',
 	damaged: 'danger',
@@ -178,19 +179,30 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 							</span>
 						),
 					},
-					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status}</StatusChip> },
+					{
+						header: 'Status',
+						render: (row) => {
+							// Show the real availability, not the raw DB status: an item with no
+							// free units reads as 'unavailable' so the chip matches the Borrow button.
+							const label = displayStatus(row, unitsOut)
+							return <StatusChip tone={statusTone[label] ?? 'muted'}>{label}</StatusChip>
+						},
+					},
 					{
 						header: 'Borrow',
 						render: (row) => {
-							// Scope first: "not your department" is the more useful reason
-							// to show when an item is both out of scope and fully out.
-							const blocked = borrowScopeReason(row, user) ?? borrowBlockedReason(row, unitsOut)
+							// Availability alone decides whether the button is clickable: if the
+							// item shows 'available' (has a free unit), it can be clicked. A
+							// department-scope mismatch no longer disables it — the request just
+							// surfaces the server's "not your department" error after clicking.
+							const blocked = borrowBlockedReason(row, unitsOut)
+							const scopeHint = blocked ? null : borrowScopeReason(row, user)
 							return (
 								<Button
 									size="sm"
 									variant={blocked ? 'secondary' : 'primary'}
 									disabled={Boolean(blocked)}
-									title={blocked ?? 'Request this item'}
+									title={blocked ?? scopeHint ?? 'Request this item'}
 									onClick={(event) => {
 										// Keep the row's click-for-history behavior intact.
 										event.stopPropagation()

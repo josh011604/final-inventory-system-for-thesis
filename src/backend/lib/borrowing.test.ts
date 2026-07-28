@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { borrowBlockedReason, borrowScopeReason, freeUnits, isBorrowable, isSelfBorrowRequest, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowBlockedReason, borrowScopeReason, displayStatus, freeUnits, isBorrowable, isSelfBorrowRequest, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 
 const item = (overrides: Partial<{ id: number; quantity: number | null; status: string }> = {}) => ({
 	id: 1,
@@ -69,9 +69,46 @@ describe('isBorrowable / borrowBlockedReason', () => {
 		expect(borrowBlockedReason(item({ quantity: 3 }), unitsOut)).toMatch(/currently out on loan/i)
 	})
 
-	it.each(['maintenance', 'damaged', 'lost', 'disposed', 'borrowed'])('blocks an item marked %s', (status) => {
+	it.each(['maintenance', 'damaged', 'lost', 'disposed'])('blocks an out-of-service item marked %s', (status) => {
 		expect(isBorrowable(item({ status }), new Map())).toBe(false)
 		expect(borrowBlockedReason(item({ status }), new Map())).toContain(status)
+	})
+
+	it('keeps a partly-loaned item borrowable while stock remains', () => {
+		// 3 in stock, 1 already out → 2 free, so it can still be borrowed even
+		// though the coarse equipment status may read 'borrowed'.
+		const unitsOut = new Map([[1, 1]])
+		expect(isBorrowable(item({ quantity: 3, status: 'borrowed' }), unitsOut)).toBe(true)
+		expect(borrowBlockedReason(item({ quantity: 3, status: 'borrowed' }), unitsOut)).toBeNull()
+	})
+
+	it('blocks an out-of-stock item and says so', () => {
+		expect(isBorrowable(item({ quantity: 0 }), new Map())).toBe(false)
+		expect(borrowBlockedReason(item({ quantity: 0 }), new Map())).toMatch(/out of stock/i)
+	})
+})
+
+describe('displayStatus', () => {
+	it('keeps the raw status when a unit is free', () => {
+		expect(displayStatus(item({ quantity: 3 }), new Map([[1, 1]]))).toBe('available')
+	})
+
+	it('reports an available item with zero stock as unavailable', () => {
+		expect(displayStatus(item({ quantity: 0 }), new Map())).toBe('unavailable')
+	})
+
+	it('reports an available item with every unit out on loan as unavailable', () => {
+		expect(displayStatus(item({ quantity: 2 }), new Map([[1, 2]]))).toBe('unavailable')
+	})
+
+	it('still reads available when only some units are out on loan', () => {
+		// 3 in stock, 2 out → 1 free; a 'borrowed' equipment status must not hide
+		// that there is still stock to lend.
+		expect(displayStatus(item({ quantity: 3, status: 'borrowed' }), new Map([[1, 2]]))).toBe('available')
+	})
+
+	it.each(['maintenance', 'damaged', 'lost', 'disposed'])('passes an out-of-service status through untouched (%s)', (status) => {
+		expect(displayStatus(item({ status }), new Map())).toBe(status)
 	})
 })
 

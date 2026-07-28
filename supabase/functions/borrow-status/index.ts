@@ -8,6 +8,10 @@ const corsHeaders = {
 
 // A borrow record in one of these states holds one physical unit of the item.
 const ACTIVE_STATUSES = ['confirmed', 'borrowed', 'return_requested', 'overdue']
+// Equipment statuses that take an item out of service entirely — no unit can be
+// borrowed regardless of stock. 'borrowed' is deliberately absent: for multi-unit
+// stock it only means some units are out, so free units remain requestable.
+const OUT_OF_SERVICE_STATUSES = ['maintenance', 'damaged', 'lost', 'disposed']
 const TRANSITION_STATUSES = ['confirmed', 'rejected', 'returned']
 // Business rules for new requests.
 const MAX_ACTIVE_BORROWS_PER_USER = 3
@@ -129,11 +133,13 @@ Deno.serve(async (req) => {
 			return json({ error: 'You can only request Supply Office items or items from your own department' }, 403)
 		}
 
-		if (equipment.status !== 'available') {
+		if (OUT_OF_SERVICE_STATUSES.includes(equipment.status)) {
 			return json({ error: 'This item is not available for borrowing' }, 400)
 		}
 
-		// Rule: per-unit availability — quantity minus units already out.
+		// Rule: per-unit availability — quantity minus units already out. This is
+		// what actually gates a request: an in-service item stays borrowable while
+		// any unit is free, even after some of its stock is already out on loan.
 		const unitsOut = await activeUnitCount(equipmentId)
 		if (unitsOut >= (equipment.quantity ?? 1)) {
 			return json({ error: 'All units of this item are currently borrowed' }, 400)

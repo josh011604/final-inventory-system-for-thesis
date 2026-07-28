@@ -50,7 +50,9 @@ export default function EquipmentEditModal({
 				updates: {
 					equipment_name: name.trim(),
 					category: category.trim() || null,
-					quantity: Math.max(Number(quantity) || 1, 1),
+					// Allow 0 so an item can be marked out of stock (which reads as
+					// 'unavailable' and disables its Borrow button).
+					quantity: Math.max(Number(quantity) || 0, 0),
 					condition: condition || null,
 					value: value === '' ? null : Number(value),
 					facility_id: facilityId ? Number(facilityId) : null,
@@ -100,7 +102,7 @@ export default function EquipmentEditModal({
 						<label className={labelClass} htmlFor="edit-quantity">
 							Quantity
 						</label>
-						<input id="edit-quantity" type="number" min={1} value={quantity} onChange={(event) => setQuantity(event.target.value)} className={inputClass} />
+						<input id="edit-quantity" type="number" min={0} value={quantity} onChange={(event) => setQuantity(event.target.value)} className={inputClass} />
 					</div>
 				</div>
 
