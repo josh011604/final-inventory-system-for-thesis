@@ -111,12 +111,26 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 						render: (row) => (
 							<div>
 								<p className="font-medium text-text-primary">{row.equipment?.equipment_name ?? mainSupplyNameById.get(row.equipment_id) ?? '—'}</p>
-								<p className="text-xs text-text-muted">{row.borrower?.full_name ?? '—'}</p>
+								<p className="text-xs text-text-muted">{row.borrower_name ?? '—'}</p>
 							</div>
 						),
 					},
 					{ header: 'Department', render: (row) => row.departments?.name ?? 'Supply Office' },
 					{ header: 'Due', render: (row) => (row.expected_return_date ? new Date(row.expected_return_date).toLocaleDateString() : '—') },
+					{
+						header: 'Approved by',
+						render: (row) =>
+							row.approved_by_name ? (
+								<span>
+									<span className="block text-text-primary">{row.approved_by_name}</span>
+									<span className="block text-xs text-text-muted">
+										{row.approved_at ? new Date(row.approved_at).toLocaleDateString() : ''}
+									</span>
+								</span>
+							) : (
+								'—'
+							),
+					},
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
 					{
 						header: 'Actions',

@@ -1,15 +1,16 @@
-# Graph Report - .  (2026-07-29)
+# Graph Report - react_invy_projects  (2026-07-29)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 142 files · ~67,603 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 460 nodes · 458 edges · 68 communities (46 shown, 22 thin omitted)
+- 624 nodes · 580 edges · 110 communities (55 shown, 55 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `05399cf7`
+- Built from commit: `e818c543`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -66,18 +67,59 @@
 - tsconfig.json
 - env.ts
 - client.ts
+- Supabase
+- Writing Guidelines for Postgres References
+- CRITICAL RULES - MUST FOLLOW
+- Changelog
+- Changelog
+- Section Definitions
+- School Facilities Management and Inventory System
+- Supabase Postgres Best Practices
+- advanced-full-text-search.md
+- advanced-jsonb-indexing.md
+- conn-idle-timeout.md
+- conn-limits.md
+- conn-pooling.md
+- conn-prepared-statements.md
+- data-batch-inserts.md
+- data-n-plus-one.md
+- data-pagination.md
+- data-upsert.md
+- lock-advisory.md
+- lock-deadlock-prevention.md
+- lock-short-transactions.md
+- lock-skip-locked.md
+- monitor-explain-analyze.md
+- monitor-pg-stat-statements.md
+- monitor-vacuum-analyze.md
+- query-composite-indexes.md
+- query-covering-indexes.md
+- query-index-types.md
+- query-missing-indexes.md
+- query-partial-indexes.md
+- schema-constraints.md
+- schema-data-types.md
+- schema-foreign-key-indexes.md
+- schema-lowercase-identifiers.md
+- schema-partitioning.md
+- schema-primary-keys.md
+- security-privileges.md
+- security-rls-basics.md
+- security-rls-performance.md
+- _template.md
+- graphify
 
 ## God Nodes (most connected - your core abstractions)
 1. `compilerOptions` - 17 edges
-2. `scripts` - 12 edges
-3. `compilerOptions` - 9 edges
-4. `withRetry()` - 6 edges
-5. `verifyReservations()` - 6 edges
-6. `verifyAutoApprove()` - 6 edges
-7. `main()` - 6 edges
-8. `BackupPage()` - 6 edges
-9. `ReportsPage()` - 6 edges
-10. `pass()` - 5 edges
+2. `CRITICAL RULES - MUST FOLLOW` - 14 edges
+3. `scripts` - 12 edges
+4. `compilerOptions` - 9 edges
+5. `Section Definitions` - 9 edges
+6. `School Facilities Management and Inventory System` - 8 edges
+7. `Writing Guidelines for Postgres References` - 7 edges
+8. `Supabase` - 7 edges
+9. `withRetry()` - 6 edges
+10. `verifyReservations()` - 6 edges
 
 ## Surprising Connections (you probably didn't know these)
 - None detected - all connections are within the same source files.
@@ -85,7 +127,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (68 total, 22 thin omitted)
+## Communities (110 total, 55 thin omitted)
 
 ### Community 0 - "queries.ts"
 Cohesion: 0.05
@@ -188,7 +230,7 @@ Cohesion: 0.40
 Nodes (3): ChipTone, dotClass, toneClass
 
 ### Community 26 - "frontend/App.tsx"
-Cohesion: 0.60
+Cohesion: 0.47
 Nodes (4): App(), initialsFor(), loadActiveUser(), queryClient
 
 ### Community 27 - "navigation.ts"
@@ -207,18 +249,50 @@ Nodes (3): BorrowRequestModal(), BorrowRequestModalProps, candidateLabel()
 Cohesion: 0.67
 Nodes (3): EquipmentEditModal(), MANUAL_STATUSES, WORKFLOW_STATUSES
 
+### Community 68 - "Supabase"
+Cohesion: 0.12
+Nodes (14): Fix suggestion, Source, What happened, Skill Feedback, Steps, Core Principles, Making and Committing Schema Changes, Option A: Declarative schemas (+6 more)
+
+### Community 69 - "Writing Guidelines for Postgres References"
+Cohesion: 0.12
+Nodes (15): 1. Concrete Transformation Patterns, 2. Error-First Structure, 3. Quantified Impact, 4. Self-Contained Examples, 5. Semantic Naming, Code Example Standards, Comments, Impact Level Guidelines (+7 more)
+
+### Community 70 - "CRITICAL RULES - MUST FOLLOW"
+Cohesion: 0.12
+Nodes (14): Architecture, CHANGE / EDIT MODE, Commands, Conventions, CRITICAL RULES - MUST FOLLOW, Deployment, Directory layout, Domain notes (facility reservations & borrowing) (+6 more)
+
+### Community 71 - "Changelog"
+Cohesion: 0.18
+Nodes (10): [0.1.3](https://github.com/supabase/agent-skills/compare/v0.1.2...v0.1.3) (2026-06-02), [0.1.4](https://github.com/supabase/agent-skills/compare/v0.1.3...v0.1.4) (2026-06-05), [0.1.5](https://github.com/supabase/agent-skills/compare/v0.1.4...v0.1.5) (2026-07-10), Bug Fixes, Bug Fixes, Bug Fixes, Changelog, Features (+2 more)
+
+### Community 72 - "Changelog"
+Cohesion: 0.18
+Nodes (10): [1.2.0](https://github.com/supabase/agent-skills/compare/v1.1.1...v1.2.0) (2026-06-02), [1.3.0](https://github.com/supabase/agent-skills/compare/v1.2.0...v1.3.0) (2026-06-05), [1.4.0](https://github.com/supabase/agent-skills/compare/v1.3.0...v1.4.0) (2026-07-10), Bug Fixes, Bug Fixes, Bug Fixes, Changelog, Features (+2 more)
+
+### Community 73 - "Section Definitions"
+Cohesion: 0.20
+Nodes (9): 1. Query Performance (query), 2. Connection Management (conn), 3. Security & RLS (security), 4. Schema Design (schema), 5. Concurrency & Locking (lock), 6. Data Access Patterns (data), 7. Monitoring & Diagnostics (monitor), 8. Advanced Features (advanced) (+1 more)
+
+### Community 74 - "School Facilities Management and Inventory System"
+Cohesion: 0.22
+Nodes (8): Database, Demo Accounts, Deployment, Facility reservations and borrowing, School Facilities Management and Inventory System, Scripts, Setup, Structure
+
+### Community 75 - "Supabase Postgres Best Practices"
+Cohesion: 0.33
+Nodes (5): How to Use, References, Rule Categories by Priority, Supabase Postgres Best Practices, When to Apply
+
 ## Knowledge Gaps
-- **193 isolated node(s):** `supabase`, `github`, `name`, `private`, `version` (+188 more)
+- **293 isolated node(s):** `supabase`, `github`, `name`, `private`, `version` (+288 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **55 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `devDependencies` connect `devDependencies` to `scripts`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **What connects `supabase`, `github`, `name` to the rest of the system?**
-  _193 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _293 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `queries.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
 - **Should `scripts` be split into smaller, more focused modules?**

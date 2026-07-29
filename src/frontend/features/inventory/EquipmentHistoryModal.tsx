@@ -99,7 +99,11 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 
 		// Borrowing lifecycle.
 		for (const borrow of itemBorrows) {
-			const who = borrow.borrower?.full_name ?? 'a borrower'
+			const who = borrow.borrower_name ?? 'a borrower'
+			// Legacy rows predating approver tracking have approved_by_name but no
+			// approved_at (there was no reliable historical timestamp to backfill
+			// from) — updated_at is the closest available stand-in for those.
+			const approvedAt = borrow.approved_at ?? borrow.updated_at
 			list.push({
 				id: `borrow-req-${borrow.id}`,
 				at: ms(borrow.borrowed_date ?? borrow.created_at),
@@ -109,13 +113,36 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 				tone: 'info',
 				icon: ArrowRightLeft,
 			})
+
+			if (borrow.status === 'rejected') {
+				list.push({
+					id: `borrow-rej-${borrow.id}`,
+					at: ms(approvedAt),
+					label: formatDate(approvedAt),
+					title: 'Borrow request rejected',
+					detail: `By ${borrow.approved_by_name ?? 'an approver'} · requested by ${who}`,
+					tone: 'muted',
+					icon: Clock,
+				})
+			} else if (borrow.approved_by_name) {
+				list.push({
+					id: `borrow-appr-${borrow.id}`,
+					at: ms(approvedAt),
+					label: formatDate(approvedAt),
+					title: 'Approved',
+					detail: `By ${borrow.approved_by_name}`,
+					tone: 'info',
+					icon: CheckCircle2,
+				})
+			}
+
 			if (borrow.actual_return_date) {
 				list.push({
 					id: `borrow-ret-${borrow.id}`,
 					at: ms(borrow.actual_return_date),
 					label: formatDate(borrow.actual_return_date),
 					title: 'Returned',
-					detail: `By ${who}`,
+					detail: `Confirmed by ${borrow.returned_by_name ?? 'an approver'}`,
 					tone: 'success',
 					icon: CheckCircle2,
 				})
@@ -128,16 +155,6 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 					detail: `Held by ${who}`,
 					tone: 'danger',
 					icon: AlertTriangle,
-				})
-			} else if (borrow.status === 'rejected') {
-				list.push({
-					id: `borrow-rej-${borrow.id}`,
-					at: ms(borrow.updated_at),
-					label: formatDate(borrow.updated_at),
-					title: 'Borrow request rejected',
-					detail: `Requested by ${who}`,
-					tone: 'muted',
-					icon: Clock,
 				})
 			}
 		}

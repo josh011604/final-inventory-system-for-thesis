@@ -294,19 +294,19 @@ export function useDeleteEquipment() {
 export type BorrowRecordRow = Tables<'borrow_records'> & {
 	equipment: { equipment_name: string } | null
 	departments: { name: string } | null
-	borrower: { full_name: string } | null
-	approver: { full_name: string } | null
 }
 
 export function useBorrowRecords() {
 	return useQuery({
 		queryKey: ['borrow_records'],
 		queryFn: async () => {
+			// approved_by_name/returned_by_name/borrower_name are read straight off
+			// the row rather than joined from profiles: "profiles select own or
+			// admin" RLS blocks a non-admin viewer from resolving another user's
+			// profile, which silently nulled out those joins for anyone but an admin.
 			const { data, error } = await supabase
 				.from('borrow_records')
-				.select(
-					'*, equipment(equipment_name), departments(name), borrower:profiles!borrow_records_borrower_id_fkey(full_name), approver:profiles!borrow_records_approved_by_fkey(full_name)',
-				)
+				.select('*, equipment(equipment_name), departments(name)')
 				.order('created_at', { ascending: false })
 			if (error) throw error
 			return data as unknown as BorrowRecordRow[]

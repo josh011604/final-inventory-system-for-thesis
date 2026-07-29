@@ -42,7 +42,30 @@ export default function BorrowHistoryPage({ user }: { user: SchoolUser }) {
 				{ header: 'Department', render: (row) => row.departments?.name ?? 'Supply Office' },
 				{ header: 'Requested', render: (row) => formatDate(row.created_at) },
 				{ header: 'Due', render: (row) => formatDate(row.expected_return_date) },
-				{ header: 'Returned', render: (row) => formatDate(row.actual_return_date) },
+				{
+					header: 'Approved by',
+					render: (row) =>
+						row.approved_by_name ? (
+							<span>
+								<span className="block text-text-primary">{row.approved_by_name}</span>
+								<span className="block text-xs text-text-muted">{formatDate(row.approved_at)}</span>
+							</span>
+						) : (
+							'—'
+						),
+				},
+				{
+					header: 'Returned',
+					render: (row) =>
+						row.actual_return_date ? (
+							<span>
+								<span className="block text-text-primary">{formatDate(row.actual_return_date)}</span>
+								{row.returned_by_name ? <span className="block text-xs text-text-muted">by {row.returned_by_name}</span> : null}
+							</span>
+						) : (
+							'—'
+						),
+				},
 				{ header: 'Condition', render: (row) => row.condition_after ?? '—' },
 				{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
 			]}
