@@ -11,6 +11,9 @@ export type BorrowCandidate = {
 	quantity: number
 	freeUnits: number
 	source: 'supply' | 'department'
+	// The owning department's name — shown for faculty, who can now request
+	// items from departments other than their own.
+	departmentName?: string
 }
 
 // Requestable stock draws from two places at once:
@@ -38,21 +41,28 @@ export function useBorrowCandidates(user: SchoolUser) {
 			source: 'supply' as const,
 		}))
 
-	// Department items are counted from the borrow records this user can see —
-	// department scoping already covers the whole department.
+	// Department items are counted from the borrow records this user can see.
+	// Faculty (staff) may borrow from ANY department, so their picker draws from
+	// every department's inventory; students and department admins stay scoped to
+	// their own department; the super admin borrows from Supply Office only.
 	const unitsOut = unitsOutByEquipmentId(records ?? [])
-	const department: BorrowCandidate[] = user.departmentId
-		? (equipment ?? [])
-				.filter((item) => item.department_id === user.departmentId && isBorrowable(item, unitsOut))
-				.map((item) => ({
-					id: item.id,
-					equipment_code: item.equipment_code,
-					equipment_name: item.equipment_name,
-					quantity: item.quantity ?? 1,
-					freeUnits: freeUnits(item, unitsOut),
-					source: 'department' as const,
-				}))
-		: []
+	const departmentSource =
+		user.role === 'staff'
+			? (equipment ?? []).filter((item) => item.department_id !== null)
+			: user.departmentId
+				? (equipment ?? []).filter((item) => item.department_id === user.departmentId)
+				: []
+	const department: BorrowCandidate[] = departmentSource
+		.filter((item) => isBorrowable(item, unitsOut))
+		.map((item) => ({
+			id: item.id,
+			equipment_code: item.equipment_code,
+			equipment_name: item.equipment_name,
+			quantity: item.quantity ?? 1,
+			freeUnits: freeUnits(item, unitsOut),
+			source: 'department' as const,
+			departmentName: item.departments?.name ?? undefined,
+		}))
 
 	const all = [...supply, ...department]
 

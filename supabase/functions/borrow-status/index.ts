@@ -83,13 +83,15 @@ Deno.serve(async (req) => {
 		return json({ error: 'Account is not active' }, 403)
 	}
 
+	// Units currently out for an item — the SUM of each active request's
+	// quantity, since one request can now hold several units.
 	async function activeUnitCount(equipmentId: number): Promise<number> {
-		const { count } = await adminClient
+		const { data } = await adminClient
 			.from('borrow_records')
-			.select('id', { count: 'exact', head: true })
+			.select('quantity')
 			.eq('equipment_id', equipmentId)
 			.in('status', ACTIVE_STATUSES)
-		return count ?? 0
+		return (data ?? []).reduce((sum, row) => sum + Math.max(Number(row.quantity ?? 1), 1), 0)
 	}
 
 	// ---------- action: create ----------
@@ -100,6 +102,36 @@ Deno.serve(async (req) => {
 		}
 		const expectedReturn = typeof body.expected_return_date === 'string' && body.expected_return_date ? body.expected_return_date : null
 		const notes = typeof body.notes === 'string' && body.notes ? body.notes : null
+
+		// How many units this request is for. Defaults to 1; must be a positive
+		// integer. The upper bound is checked against live availability below.
+		const quantity = Number(body.quantity)
+		if (body.quantity !== undefined && (!Number.isInteger(quantity) || quantity < 1)) {
+			return json({ error: 'Quantity must be a whole number of at least 1' }, 400)
+		}
+		const requestedQuantity = Number.isInteger(quantity) && quantity >= 1 ? quantity : 1
+
+		// Rule: overdue-borrow penalty. A member still holding an item past its
+		// return date is barred from borrowing again until they return it. The
+		// super admin is exempt. Mirrors the enforce_borrow_overdue_penalty trigger.
+		if (actor.role !== 'super_admin') {
+			const { data: heldRecords } = await adminClient
+				.from('borrow_records')
+				.select('status, expected_return_date')
+				.eq('borrower_id', actorId)
+				.in('status', ACTIVE_STATUSES)
+			const nowMs = Date.now()
+			const hasOverdue = (heldRecords ?? []).some(
+				(row) =>
+					row.status === 'overdue' ||
+					(row.expected_return_date != null &&
+						['confirmed', 'borrowed', 'return_requested'].includes(row.status) &&
+						new Date(row.expected_return_date).getTime() < nowMs),
+			)
+			if (hasOverdue) {
+				return json({ error: 'You have an overdue borrowed item. Return it before borrowing again.' }, 403)
+			}
+		}
 
 		// Rule: the return date must be today..+MAX_BORROW_DAYS.
 		if (expectedReturn) {
@@ -117,32 +149,34 @@ Deno.serve(async (req) => {
 
 		const { data: equipment } = await adminClient
 			.from('equipment')
-			.select('id, equipment_name, department_id, status, quantity')
+			.select('id, equipment_name, department_id, status, quantity, condition')
 			.eq('id', equipmentId)
 			.maybeSingle()
 		if (!equipment) return json({ error: 'Equipment not found' }, 404)
 
-		// Rule: only Supply Office (no department) items or the borrower's own
-		// department's items may be requested — except students, who may never
-		// touch Supply Office / Super Admin inventory, department-scoped only.
-		if (equipment.department_id === null) {
-			if (actor.role === 'student') {
-				return json({ error: 'Students can only request items from their own department' }, 403)
-			}
-		} else if (equipment.department_id !== actor.department_id) {
-			return json({ error: 'You can only request Supply Office items or items from your own department' }, 403)
+		// Rule: only students are department-locked — they may request only their
+		// own department's items and never Supply Office inventory. Everyone else
+		// (faculty, department admins, super admin) may request Supply Office items
+		// or any department's items; a cross-department request is routed to that
+		// department's admin. Mirrors enforce_borrow_department_scope.
+		if (actor.role === 'student' && equipment.department_id !== actor.department_id) {
+			return json({ error: 'Students can only request items from their own department' }, 403)
 		}
 
 		if (OUT_OF_SERVICE_STATUSES.includes(equipment.status)) {
 			return json({ error: 'This item is not available for borrowing' }, 400)
 		}
 
-		// Rule: per-unit availability — quantity minus units already out. This is
-		// what actually gates a request: an in-service item stays borrowable while
-		// any unit is free, even after some of its stock is already out on loan.
+		// Rule: per-unit availability — quantity minus units already out. An
+		// in-service item stays borrowable while any unit is free, and the whole
+		// requested quantity must fit within what is currently free.
 		const unitsOut = await activeUnitCount(equipmentId)
-		if (unitsOut >= (equipment.quantity ?? 1)) {
+		const freeUnits = (equipment.quantity ?? 1) - unitsOut
+		if (freeUnits <= 0) {
 			return json({ error: 'All units of this item are currently borrowed' }, 400)
+		}
+		if (requestedQuantity > freeUnits) {
+			return json({ error: `Only ${freeUnits} unit${freeUnits === 1 ? '' : 's'} of this item ${freeUnits === 1 ? 'is' : 'are'} available right now` }, 400)
 		}
 
 		// Rule: no duplicate pending request for the same item by the same person.
@@ -166,6 +200,61 @@ Deno.serve(async (req) => {
 			return json({ error: `You already have ${MAX_ACTIVE_BORROWS_PER_USER} pending or active borrows — return an item first` }, 400)
 		}
 
+		// The item's condition at the moment it is borrowed, captured on every
+		// request so the history records what shape the item was in when it went
+		// out. condition_after is filled in on return.
+		const conditionBefore = equipment.condition ?? null
+
+		// Auto-approve: an approver borrowing an item they themselves have
+		// approval authority over skips the pending step — a super admin taking a
+		// Supply Office item, or a department admin taking their own department's
+		// item. Anyone else (all faculty and student requests) stays pending.
+		const isAutoApproved =
+			(equipment.department_id === null && actor.role === 'super_admin') ||
+			(equipment.department_id !== null && actor.role === 'department_admin' && equipment.department_id === actor.department_id)
+
+		if (isAutoApproved) {
+			// Written with the service-role client so it can land as 'confirmed'
+			// (the "borrow insert scoped" RLS pins client inserts to 'pending').
+			// approved_by is the borrower themselves — they are the authorizing
+			// admin — and an explicit audit entry records that it was automatic.
+			const { data: record, error: insertError } = await adminClient
+				.from('borrow_records')
+				.insert({
+					equipment_id: equipmentId,
+					borrower_id: actorId,
+					created_by: actorId,
+					approved_by: actorId,
+					department_id: equipment.department_id,
+					expected_return_date: expectedReturn,
+					notes,
+					quantity: requestedQuantity,
+					condition_before: conditionBefore,
+					status: 'confirmed',
+				})
+				.select('*')
+				.single()
+			if (insertError) return json({ error: insertError.message }, 400)
+
+			// Flip the item to 'borrowed' only once every unit is out; while stock
+			// remains it stays 'available'.
+			if (unitsOut + requestedQuantity >= (equipment.quantity ?? 1)) {
+				await adminClient.from('equipment').update({ status: 'borrowed' }).eq('id', equipmentId)
+			}
+
+			await adminClient.from('audit_logs').insert({
+				actor_id: actorId,
+				action: 'borrow_auto_approved',
+				entity_type: 'borrow_records',
+				entity_id: record.id,
+				old_values: null,
+				new_values: { status: 'confirmed', quantity: requestedQuantity },
+				description: `Borrow request #${record.id} auto-approved for ${actor.full_name} (${requestedQuantity} unit${requestedQuantity === 1 ? '' : 's'} of ${equipment.equipment_name})`,
+			})
+
+			return json({ data: record }, 200)
+		}
+
 		// Inserted through callerClient (the requester's own JWT), not adminClient:
 		// the request is always for the caller themselves, so "borrow insert
 		// scoped" RLS already permits it, and doing it this way lets auth.uid()
@@ -180,17 +269,25 @@ Deno.serve(async (req) => {
 				department_id: equipment.department_id,
 				expected_return_date: expectedReturn,
 				notes,
+				quantity: requestedQuantity,
+				condition_before: conditionBefore,
 				status: 'pending',
 			})
 			.select('*')
 			.single()
 		if (insertError) return json({ error: insertError.message }, 400)
 
-		// Notify the approvers: super admins for Supply Office items, the
-		// department's admins for department items.
-		const approverQuery = equipment.department_id
-			? adminClient.from('profiles').select('id').eq('role', 'department_admin').eq('department_id', equipment.department_id).eq('status', 'active')
-			: adminClient.from('profiles').select('id').eq('role', 'super_admin').eq('status', 'active')
+		// Notify the approvers who can actually clear this request:
+		//   * Supply Office item  → super admins;
+		//   * department item     → that department's admins, plus (for a student
+		//     borrower) that department's faculty, who may also approve.
+		let approverQuery
+		if (equipment.department_id === null) {
+			approverQuery = adminClient.from('profiles').select('id').eq('role', 'super_admin').eq('status', 'active')
+		} else {
+			const roles = actor.role === 'student' ? ['department_admin', 'staff'] : ['department_admin']
+			approverQuery = adminClient.from('profiles').select('id').in('role', roles).eq('department_id', equipment.department_id).eq('status', 'active')
+		}
 		const { data: approvers } = await approverQuery
 		if (approvers && approvers.length > 0) {
 			await adminClient.from('notifications').insert(
@@ -198,7 +295,7 @@ Deno.serve(async (req) => {
 					profile_id: approver.id,
 					department_id: equipment.department_id,
 					title: 'New borrow request',
-					message: `${actor.full_name} requested ${equipment.equipment_name} (request #${record.id}).`,
+					message: `${actor.full_name} requested ${requestedQuantity} × ${equipment.equipment_name} (request #${record.id}).`,
 					tone: 'info',
 				})),
 			)
@@ -246,14 +343,17 @@ Deno.serve(async (req) => {
 	}
 
 	// Guard confirms against unit exhaustion before the transition runs — the
-	// SQL transition only checks the coarse equipment status.
+	// SQL transition only checks the coarse equipment status. The pending record
+	// is not yet counted in units-out, so its own quantity must still fit.
 	if (status === 'confirmed') {
-		const { data: pendingRecord } = await adminClient.from('borrow_records').select('equipment_id').eq('id', recordId).maybeSingle()
+		const { data: pendingRecord } = await adminClient.from('borrow_records').select('equipment_id, quantity').eq('id', recordId).maybeSingle()
 		if (pendingRecord?.equipment_id != null) {
 			const { data: equipment } = await adminClient.from('equipment').select('quantity').eq('id', pendingRecord.equipment_id).single()
 			const unitsOut = await activeUnitCount(pendingRecord.equipment_id)
-			if (unitsOut >= (equipment?.quantity ?? 1)) {
-				return json({ error: 'All units of this item are currently borrowed' }, 400)
+			const freeUnits = (equipment?.quantity ?? 1) - unitsOut
+			const needed = Math.max(Number(pendingRecord.quantity ?? 1), 1)
+			if (needed > freeUnits) {
+				return json({ error: `Only ${Math.max(freeUnits, 0)} unit${freeUnits === 1 ? '' : 's'} available — cannot approve a request for ${needed}` }, 400)
 			}
 		}
 	}

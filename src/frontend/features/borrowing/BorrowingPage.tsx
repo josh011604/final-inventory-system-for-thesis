@@ -10,7 +10,7 @@ import { useBorrowRecords, useCancelBorrowRecord, useRunOverdueCheck, useUpdateB
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
-import { isSelfBorrowRequest } from '@/backend/lib/borrowing'
+import { borrowPenaltyReason, canApproveBorrow, canReturnBorrow, isSelfBorrowRequest } from '@/backend/lib/borrowing'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
@@ -20,7 +20,13 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const updateStatus = useUpdateBorrowRecordStatus()
 	const runOverdueCheck = useRunOverdueCheck()
 
-	const canApprove = user.role === 'super_admin' || user.role === 'department_admin'
+	// The signed-in user as a potential approver; each row is checked against it.
+	const approver = { id: user.id, role: user.role, departmentId: user.departmentId }
+	const asRecord = (row: BorrowRecordRow) => ({
+		department_id: row.department_id,
+		borrower_id: row.borrower_id,
+		borrower_role: row.borrower?.role ?? null,
+	})
 
 	const [open, setOpen] = useState(false)
 	const [actionError, setActionError] = useState<string | null>(null)
@@ -32,7 +38,10 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	// Shared with the Inventory screen's per-item Borrow button so both offer
 	// exactly the same set of requestable items.
 	const { all: availableEquipment, supplyNameById: mainSupplyNameById } = useBorrowCandidates(user)
-	const canRequest = availableEquipment.length > 0
+	// Overdue-borrow penalty: an unreturned overdue item blocks all new requests
+	// (super admin exempt). Takes priority over "nothing available".
+	const penaltyReason = borrowPenaltyReason(data ?? [], user)
+	const canRequest = availableEquipment.length > 0 && !penaltyReason
 
 	const handleOverdueCheck = () => {
 		setActionError(null)
@@ -74,6 +83,11 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 
 	return (
 		<>
+			{penaltyReason ? (
+				<div className="mb-4 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+					{penaltyReason} New requests are disabled until it is returned.
+				</div>
+			) : null}
 			{actionError ? (
 				<div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{actionError}</div>
 			) : null}
@@ -89,8 +103,8 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 				searchKeys={['status']}
 				emptyMessage="No borrow requests yet."
 				emptyAction={
-					<Button size="sm" onClick={() => setOpen(true)} disabled={!canRequest}>
-						{canRequest ? 'Submit the first request' : 'No items available to request'}
+					<Button size="sm" onClick={() => setOpen(true)} disabled={!canRequest} title={penaltyReason ?? undefined}>
+						{canRequest ? 'Submit the first request' : penaltyReason ? 'Return your overdue item first' : 'No items available to request'}
 					</Button>
 				}
 				action={
@@ -100,7 +114,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 								{runOverdueCheck.isPending ? 'Checking…' : 'Check Overdue Now'}
 							</Button>
 						) : null}
-						<Button size="sm" onClick={() => setOpen(true)} disabled={!canRequest}>
+						<Button size="sm" onClick={() => setOpen(true)} disabled={!canRequest} title={penaltyReason ?? undefined}>
 							New Request
 						</Button>
 					</div>
@@ -110,14 +124,24 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 						header: 'Item',
 						render: (row) => (
 							<div>
-								<p className="font-medium text-text-primary">{row.equipment?.equipment_name ?? mainSupplyNameById.get(row.equipment_id) ?? '—'}</p>
+								<p className="font-medium text-text-primary">
+									{row.equipment?.equipment_name ?? mainSupplyNameById.get(row.equipment_id) ?? '—'}
+									{(row.quantity ?? 1) > 1 ? <span className="ml-1.5 text-xs font-semibold text-text-muted">× {row.quantity}</span> : null}
+								</p>
 								<p className="text-xs text-text-muted">{row.borrower?.full_name ?? '—'}</p>
 							</div>
 						),
 					},
 					{ header: 'Department', render: (row) => row.departments?.name ?? 'Supply Office' },
+					{ header: 'Qty', render: (row) => row.quantity ?? 1 },
 					{ header: 'Due', render: (row) => (row.expected_return_date ? new Date(row.expected_return_date).toLocaleDateString() : '—') },
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
+					{
+						// Who approved the request — recorded so a borrow can always be
+						// traced back to the person who authorized it.
+						header: 'Approved by',
+						render: (row) => <span className="text-text-muted">{row.approver?.full_name ?? '—'}</span>,
+					},
 					{
 						header: 'Actions',
 						render: (row) =>
@@ -128,7 +152,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 								<Button size="sm" variant="danger" onClick={() => runCancel(row.id)} disabled={cancelRequest.isPending}>
 									{cancelRequest.isPending ? 'Cancelling…' : 'Cancel'}
 								</Button>
-							) : canApprove && row.status === 'pending' ? (
+							) : row.status === 'pending' && canApproveBorrow(asRecord(row), approver) ? (
 								<div className="flex gap-2">
 									<Button size="sm" variant="secondary" onClick={() => runStatusChange(row.id, 'confirmed')}>
 										Approve
@@ -137,7 +161,7 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 										Reject
 									</Button>
 								</div>
-							) : canApprove && (row.status === 'confirmed' || row.status === 'borrowed' || row.status === 'overdue') ? (
+							) : (row.status === 'confirmed' || row.status === 'borrowed' || row.status === 'overdue') && canReturnBorrow(asRecord(row), approver) ? (
 								<Button size="sm" variant="secondary" onClick={() => { setReturnCondition('Good'); setReturnTarget(row) }}>
 									Mark Returned
 								</Button>

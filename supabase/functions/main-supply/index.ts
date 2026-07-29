@@ -70,15 +70,17 @@ Deno.serve(async (req) => {
 	const items = data ?? []
 
 	// Per-unit availability: quantity minus units currently out on active borrows.
+	// A single request can hold several units, so sum quantities rather than
+	// counting rows.
 	const { data: activeBorrows } = await adminClient
 		.from('borrow_records')
-		.select('equipment_id')
+		.select('equipment_id, quantity')
 		.in('status', ['confirmed', 'borrowed', 'return_requested', 'overdue'])
 		.in('equipment_id', items.map((item) => item.id))
 
 	const unitsOut = new Map<number, number>()
 	for (const row of activeBorrows ?? []) {
-		unitsOut.set(row.equipment_id, (unitsOut.get(row.equipment_id) ?? 0) + 1)
+		unitsOut.set(row.equipment_id, (unitsOut.get(row.equipment_id) ?? 0) + Math.max(Number(row.quantity ?? 1), 1))
 	}
 
 	return json(

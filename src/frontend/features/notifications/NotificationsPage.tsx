@@ -1,7 +1,7 @@
 import EntityTablePage from '@/components/ui/EntityTablePage'
 import StatusChip from '@/components/ui/StatusChip'
 import Button from '@/components/ui/Button'
-import { useMarkNotificationRead, useNotifications } from '@/backend/lib/supabase/queries'
+import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '@/backend/lib/supabase/queries'
 import type { Tables } from '@/backend/types/supabase'
 
 const toneMap: Record<string, 'info' | 'warning' | 'success' | 'danger'> = {
@@ -14,15 +14,28 @@ const toneMap: Record<string, 'info' | 'warning' | 'success' | 'danger'> = {
 export default function NotificationsPage() {
 	const { data, isLoading } = useNotifications()
 	const markRead = useMarkNotificationRead()
+	const markAllRead = useMarkAllNotificationsRead()
+
+	const unreadCount = data?.filter((n) => !n.is_read).length ?? 0
 
 	return (
 		<EntityTablePage<Tables<'notifications'>>
 			title="Notifications"
-			subtitle={`${data?.filter((n) => !n.is_read).length ?? 0} unread`}
+			subtitle={`${unreadCount} unread`}
 			rows={data}
 			isLoading={isLoading}
 			searchKeys={['title', 'message']}
 			emptyMessage="No notifications yet."
+			action={
+				<Button
+					size="sm"
+					variant="secondary"
+					disabled={unreadCount === 0 || markAllRead.isPending}
+					onClick={() => markAllRead.mutate()}
+				>
+					{markAllRead.isPending ? 'Marking…' : 'Mark all as read'}
+				</Button>
+			}
 			columns={[
 				{
 					header: 'Notification',

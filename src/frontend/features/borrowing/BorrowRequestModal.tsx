@@ -37,6 +37,7 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 	const [itemSearch, setItemSearch] = useState('')
 	const [itemDropdownOpen, setItemDropdownOpen] = useState(false)
 	const itemPickerRef = useRef<HTMLDivElement>(null)
+	const [quantity, setQuantity] = useState('1')
 	const [expectedReturnDate, setExpectedReturnDate] = useState('')
 	const [notes, setNotes] = useState('')
 	const [error, setError] = useState<string | null>(null)
@@ -49,12 +50,18 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 	useEffect(() => {
 		if (!open) return
 		setError(null)
+		setQuantity('1')
 		setExpectedReturnDate('')
 		setNotes('')
 		setItemDropdownOpen(false)
 		setEquipmentId(presetId != null ? String(presetId) : '')
 		setItemSearch('')
 	}, [open, presetId])
+
+	// The item currently selected (preset row, or one picked from the dropdown),
+	// so the quantity input can cap itself at that item's free units.
+	const selectedCandidate = presetItem ?? [...supply, ...department].find((item) => String(item.id) === equipmentId) ?? null
+	const maxUnits = Math.max(selectedCandidate?.freeUnits ?? 1, 1)
 
 	useEffect(() => {
 		if (!itemDropdownOpen) return
@@ -96,6 +103,15 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 			setError('Please select an item to borrow.')
 			return
 		}
+		const requestedQuantity = Number(quantity)
+		if (!Number.isInteger(requestedQuantity) || requestedQuantity < 1) {
+			setError('Enter how many units you want to borrow (at least 1).')
+			return
+		}
+		if (requestedQuantity > maxUnits) {
+			setError(`Only ${maxUnits} unit${maxUnits === 1 ? '' : 's'} of this item ${maxUnits === 1 ? 'is' : 'are'} available.`)
+			return
+		}
 		if (expectedReturnDate && expectedReturnDate < today) {
 			setError('The expected return date cannot be in the past. Please choose today or a future date.')
 			return
@@ -106,6 +122,7 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 			// notifies the right approvers.
 			await createBorrowRecord.mutateAsync({
 				equipment_id: Number(equipmentId),
+				quantity: requestedQuantity,
 				expected_return_date: expectedReturnDate || null,
 				notes: notes || null,
 			})
@@ -128,7 +145,7 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 						<div className="rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary">
 							<span className="font-medium">{presetItem.equipment_name}</span>{' '}
 							<span className="text-text-muted">
-								({presetItem.equipment_code}) · {presetItem.freeUnits} of {presetItem.quantity} free
+								({presetItem.equipment_code}){presetItem.departmentName ? ` · ${presetItem.departmentName}` : ''} · {presetItem.freeUnits} of {presetItem.quantity} free
 							</span>
 						</div>
 					</div>
@@ -177,7 +194,7 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 										{filteredDepartment.length > 0 ? (
 											<div>
 												<p className="bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
-													{user.department || 'My Department'} · {filteredDepartment.length} available
+													{user.role === 'staff' ? 'Departments' : user.department || 'My Department'} · {filteredDepartment.length} available
 												</p>
 												{filteredDepartment.map((item) => (
 													<button
@@ -186,7 +203,7 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 														onClick={() => selectItem(item)}
 														className="block w-full px-3 py-2 text-left text-sm text-text-primary transition hover:bg-primary-light"
 													>
-														{item.equipment_name} ({item.equipment_code}) · {item.freeUnits} of {item.quantity} free
+														{item.equipment_name} ({item.equipment_code}){item.departmentName ? ` · ${item.departmentName}` : ''} · {item.freeUnits} of {item.quantity} free
 													</button>
 												))}
 											</div>
@@ -196,12 +213,32 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 							</div>
 						) : null}
 						<p className="mt-1.5 text-xs text-text-muted">
-							{supply.length > 0
-								? 'Supply Office requests are approved by the Super Admin; department items by your department admin.'
-								: 'Requests are approved by your department admin.'}
+							{user.role === 'student'
+								? "Requests are approved by your department's admin or faculty."
+								: supply.length > 0
+									? "Supply Office requests are approved by the Super Admin; department items by that department's admin."
+									: "Department items are approved by that department's admin."}
 						</p>
 					</div>
 				)}
+
+				<div>
+					<label className={labelClass} htmlFor="borrow-quantity">
+						Quantity
+					</label>
+					<input
+						id="borrow-quantity"
+						type="number"
+						min={1}
+						max={maxUnits}
+						value={quantity}
+						onChange={(event) => setQuantity(event.target.value)}
+						className={inputClass}
+					/>
+					<p className="mt-1.5 text-xs text-text-muted">
+						{selectedCandidate ? `${maxUnits} unit${maxUnits === 1 ? '' : 's'} available to borrow.` : 'Select an item to set how many units you need.'}
+					</p>
+				</div>
 
 				<div>
 					<label className={labelClass} htmlFor="borrow-due">

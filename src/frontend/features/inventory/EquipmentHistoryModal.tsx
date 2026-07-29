@@ -100,22 +100,45 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 		// Borrowing lifecycle.
 		for (const borrow of itemBorrows) {
 			const who = borrow.borrower?.full_name ?? 'a borrower'
+			const units = borrow.quantity ?? 1
+			// Everything the record captures about the moment it went out: who
+			// borrowed, how many units, and the item's condition at that time.
+			const requestDetail = [
+				`By ${who}`,
+				`${units} unit${units === 1 ? '' : 's'}`,
+				borrow.condition_before ? `condition: ${borrow.condition_before}` : null,
+				borrow.expected_return_date ? `due ${formatDate(borrow.expected_return_date, true)}` : null,
+			]
+				.filter(Boolean)
+				.join(' · ')
 			list.push({
 				id: `borrow-req-${borrow.id}`,
 				at: ms(borrow.borrowed_date ?? borrow.created_at),
 				label: formatDate(borrow.borrowed_date ?? borrow.created_at),
 				title: 'Borrow requested',
-				detail: `By ${who}${borrow.expected_return_date ? ` · due ${formatDate(borrow.expected_return_date, true)}` : ''}`,
+				detail: requestDetail,
 				tone: 'info',
 				icon: ArrowRightLeft,
 			})
+			// Who approved it — recorded so every borrow is traceable to its approver.
+			if (borrow.approver?.full_name && (borrow.status === 'confirmed' || borrow.status === 'borrowed' || borrow.status === 'overdue' || borrow.actual_return_date)) {
+				list.push({
+					id: `borrow-appr-${borrow.id}`,
+					at: ms(borrow.updated_at),
+					label: formatDate(borrow.updated_at),
+					title: 'Borrow approved',
+					detail: `By ${borrow.approver.full_name}`,
+					tone: 'info',
+					icon: CheckCircle2,
+				})
+			}
 			if (borrow.actual_return_date) {
 				list.push({
 					id: `borrow-ret-${borrow.id}`,
 					at: ms(borrow.actual_return_date),
 					label: formatDate(borrow.actual_return_date),
 					title: 'Returned',
-					detail: `By ${who}`,
+					detail: `By ${who}${borrow.condition_after ? ` · condition: ${borrow.condition_after}` : ''}`,
 					tone: 'success',
 					icon: CheckCircle2,
 				})

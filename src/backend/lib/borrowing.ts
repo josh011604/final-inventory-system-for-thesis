@@ -5,18 +5,23 @@
 // The authoritative check still lives in the borrow-status edge function; this
 // is the client-side mirror that drives what the UI offers.
 
-export type BorrowRecordLike = { equipment_id: number; status: string }
+// `quantity` is how many physical units this one request is for. It is optional
+// here and defaults to 1 so older single-unit callers and test fixtures keep
+// working unchanged.
+export type BorrowRecordLike = { equipment_id: number; status: string; quantity?: number | null }
 export type BorrowableItem = { id: number; quantity: number | null; status: string }
 
 // A request in any of these states is holding a physical unit. 'pending' is
 // deliberately excluded: it has not been approved, so it reserves nothing.
 export const ACTIVE_BORROW_STATUSES = new Set(['confirmed', 'borrowed', 'return_requested', 'overdue'])
 
+// Total units out per item — the SUM of each active request's quantity, not a
+// row count, so a single multi-unit request removes as many units as it holds.
 export function unitsOutByEquipmentId(records: readonly BorrowRecordLike[]): Map<number, number> {
 	const counts = new Map<number, number>()
 	for (const record of records) {
 		if (ACTIVE_BORROW_STATUSES.has(record.status)) {
-			counts.set(record.equipment_id, (counts.get(record.equipment_id) ?? 0) + 1)
+			counts.set(record.equipment_id, (counts.get(record.equipment_id) ?? 0) + Math.max(record.quantity ?? 1, 1))
 		}
 	}
 	return counts
@@ -48,6 +53,24 @@ export function borrowBlockedReason(item: BorrowableItem, unitsOut: ReadonlyMap<
 	return null
 }
 
+// Reorder point for the Inventory "low stock" warning. An item is low when it
+// still has free units to lend but they have fallen to a small fraction of its
+// total stock — a soft heads-up to restock, distinct from the hard 'unavailable'
+// state (which is zero free units, handled by displayStatus/borrowBlockedReason).
+export const LOW_STOCK_RATIO = 0.2
+
+// True when an in-service item is running low: it has at least one free unit but
+// no more than LOW_STOCK_RATIO of its total stock remains free. The `free < total`
+// guard means a fully-stocked item never flags — including single-unit items,
+// which are either fully available or already 'unavailable', never "low".
+export function isLowStock(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): boolean {
+	if (OUT_OF_SERVICE_STATUSES.has(item.status)) return false
+	const total = item.quantity ?? 1
+	const free = freeUnits(item, unitsOut)
+	if (free === 0 || free >= total) return false
+	return free <= Math.max(1, Math.floor(total * LOW_STOCK_RATIO))
+}
+
 // The status to show in the Inventory list. Availability is driven by free units,
 // not the coarse equipment status: an item with stock left reads 'available' even
 // while some of its units are out on loan, and only reads 'unavailable' once every
@@ -70,16 +93,86 @@ export function isSelfBorrowRequest(record: ApprovableRecord, actorId: string): 
 	return record.borrower_id === actorId
 }
 
-// Mirrors the enforce_borrow_department_scope database trigger
-// (20260719130000) so the UI never offers a request the server will reject.
-// A department-less item is the central Supply Office pool, open to everyone
-// except students; anything else must match the borrower's own department.
+// Mirrors the enforce_borrow_department_scope database trigger so the UI never
+// offers a request the server will reject. Only STUDENTS are department-locked:
+// a student may request only their own department's items and never the central
+// Supply Office pool. Everyone else (staff/faculty, department admins, the super
+// admin) may request Supply Office items and any department's items — a
+// cross-department request is simply routed to that item's department admin.
 export function borrowScopeReason(item: ScopedItem, borrower: Borrower): string | null {
-	if (item.department_id === null) {
-		return borrower.role === 'student' ? 'Students can only request items from their own department.' : null
-	}
-	if (item.department_id !== borrower.departmentId) {
-		return 'You can only request items from your own department.'
+	if (borrower.role !== 'student') return null
+	if (item.department_id === null || item.department_id !== borrower.departmentId) {
+		return 'Students can only request items from their own department.'
 	}
 	return null
+}
+
+// Who may approve/reject/return a given borrow request — the client mirror of
+// the authorization block in transition_borrow_record(). An approver may never
+// act on their own request. Beyond that:
+//   * super admin  — any request;
+//   * department admin — any request scoped to their own department;
+//   * staff/faculty — only a STUDENT's request scoped to their own department
+//     (so a faculty member can clear student borrows for items in their dept,
+//     but faculty and admin requests still need an admin).
+export type ApprovableBorrow = { department_id: string | null; borrower_id: string | null; borrower_role: string | null }
+export type BorrowApprover = { id: string; role: string; departmentId: string | null }
+
+// Does this actor have authority over this record at all, ignoring the
+// self-approval rule? This is the role-and-department scope shared by both
+// approving and returning.
+export function hasBorrowAuthority(record: ApprovableBorrow, actor: BorrowApprover): boolean {
+	if (actor.role === 'super_admin') return true
+	if (actor.role === 'department_admin') return record.department_id === actor.departmentId
+	if (actor.role === 'staff') return record.borrower_role === 'student' && record.department_id === actor.departmentId
+	return false
+}
+
+// Approve / reject: authority AND not the actor's own request (an approver may
+// never rubber-stamp themselves — matches transition_borrow_record).
+export function canApproveBorrow(record: ApprovableBorrow, actor: BorrowApprover): boolean {
+	return record.borrower_id !== actor.id && hasBorrowAuthority(record, actor)
+}
+
+// Mark returned: authority is enough — returning your own (auto-approved) borrow
+// is allowed, so there is no self-block here.
+export function canReturnBorrow(record: ApprovableBorrow, actor: BorrowApprover): boolean {
+	return hasBorrowAuthority(record, actor)
+}
+
+// ---------- Overdue-borrow penalty ----------
+// A member holding an item past its return date is barred from borrowing
+// anything else until they return it. The super admin is exempt; the rule
+// applies to department admins, faculty (staff), and students.
+
+const STILL_OUT_STATUSES = new Set(['confirmed', 'borrowed', 'return_requested'])
+
+// A borrow is overdue when it has been explicitly flagged, or it is still out
+// and past its expected return date. Mirrors the rule used on the dashboard and
+// in Reports (the hourly sweep only flips the status periodically, so the
+// past-due computation catches the gap in between).
+export function isBorrowOverdue(record: { status: string; expected_return_date?: string | null }, now: number = Date.now()): boolean {
+	if (record.status === 'overdue') return true
+	if (!record.expected_return_date) return false
+	return STILL_OUT_STATUSES.has(record.status) && new Date(record.expected_return_date).getTime() < now
+}
+
+// Roles the overdue penalty applies to. The super admin is intentionally absent.
+export const OVERDUE_PENALTY_ROLES = new Set(['department_admin', 'staff', 'student'])
+
+export type OverdueRecord = { borrower_id: string | null; status: string; expected_return_date?: string | null }
+
+// True when this user personally holds at least one overdue item.
+export function hasBlockingOverdue(records: readonly OverdueRecord[], userId: string, now: number = Date.now()): boolean {
+	return records.some((record) => record.borrower_id === userId && isBorrowOverdue(record, now))
+}
+
+// Why a user is barred from borrowing right now under the overdue penalty —
+// null when they are clear or exempt. Mirrors the enforce_borrow_overdue_penalty
+// database trigger so the UI never offers a request the server will reject.
+export function borrowPenaltyReason(records: readonly OverdueRecord[], user: { id: string; role: string }, now: number = Date.now()): string | null {
+	if (!OVERDUE_PENALTY_ROLES.has(user.role)) return null
+	return hasBlockingOverdue(records, user.id, now)
+		? 'You have an overdue item that must be returned before you can borrow again.'
+		: null
 }

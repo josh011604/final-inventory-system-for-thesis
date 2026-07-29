@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { borrowBlockedReason, borrowScopeReason, displayStatus, freeUnits, isBorrowable, isSelfBorrowRequest, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowBlockedReason, borrowPenaltyReason, borrowScopeReason, canApproveBorrow, canReturnBorrow, displayStatus, freeUnits, isBorrowable, isBorrowOverdue, isSelfBorrowRequest, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 
 const item = (overrides: Partial<{ id: number; quantity: number | null; status: string }> = {}) => ({
 	id: 1,
@@ -113,8 +113,8 @@ describe('displayStatus', () => {
 })
 
 // These must stay in lockstep with the enforce_borrow_department_scope trigger
-// in supabase/migrations/20260719130000; if they drift, the UI offers requests
-// the database will reject.
+// in supabase/migrations/20260728130000; if they drift, the UI offers requests
+// the database will reject. Only students are department-locked now.
 describe('borrowScopeReason', () => {
 	const DEPT_A = 'aaaaaaaa-0000-0000-0000-000000000000'
 	const DEPT_B = 'bbbbbbbb-0000-0000-0000-000000000000'
@@ -124,8 +124,8 @@ describe('borrowScopeReason', () => {
 		expect(borrowScopeReason({ department_id: DEPT_A }, { role: 'staff', departmentId: DEPT_A })).toBeNull()
 	})
 
-	it('blocks an item belonging to another department', () => {
-		expect(borrowScopeReason({ department_id: DEPT_B }, { role: 'staff', departmentId: DEPT_A })).toMatch(/your own department/i)
+	it('lets faculty request another department’s item (approval routed to that department)', () => {
+		expect(borrowScopeReason({ department_id: DEPT_B }, { role: 'staff', departmentId: DEPT_A })).toBeNull()
 	})
 
 	it.each(['staff', 'department_admin', 'super_admin'])('lets a %s request Supply Office items', (role) => {
@@ -136,10 +136,52 @@ describe('borrowScopeReason', () => {
 		expect(borrowScopeReason(supplyItem, { role: 'student', departmentId: DEPT_A })).toMatch(/students can only request/i)
 	})
 
-	it('blocks a super admin from department stock, since they have no department', () => {
-		// The super admin's department is null, so the trigger's
-		// "distinct from" comparison rejects every department-owned item.
-		expect(borrowScopeReason({ department_id: DEPT_A }, { role: 'super_admin', departmentId: null })).toMatch(/your own department/i)
+	it('blocks a student from another department’s stock', () => {
+		expect(borrowScopeReason({ department_id: DEPT_B }, { role: 'student', departmentId: DEPT_A })).toMatch(/students can only request/i)
+	})
+
+	it('lets a super admin request department stock (routed to that department’s admin)', () => {
+		expect(borrowScopeReason({ department_id: DEPT_A }, { role: 'super_admin', departmentId: null })).toBeNull()
+	})
+})
+
+// Mirrors the authorization block in transition_borrow_record (migration
+// 20260728130000): who may approve/return which requests.
+describe('canApproveBorrow / canReturnBorrow', () => {
+	const DEPT_A = 'aaaaaaaa-0000-0000-0000-000000000000'
+	const DEPT_B = 'bbbbbbbb-0000-0000-0000-000000000000'
+	const studentReq = { department_id: DEPT_A, borrower_id: 'stu', borrower_role: 'student' }
+	const staffReq = { department_id: DEPT_A, borrower_id: 'fac', borrower_role: 'staff' }
+
+	it('lets faculty approve a student request in their own department', () => {
+		expect(canApproveBorrow(studentReq, { id: 'me', role: 'staff', departmentId: DEPT_A })).toBe(true)
+	})
+
+	it('does not let faculty approve a student request from another department', () => {
+		expect(canApproveBorrow(studentReq, { id: 'me', role: 'staff', departmentId: DEPT_B })).toBe(false)
+	})
+
+	it('does not let faculty approve another faculty member’s request', () => {
+		expect(canApproveBorrow(staffReq, { id: 'me', role: 'staff', departmentId: DEPT_A })).toBe(false)
+	})
+
+	it('lets a department admin approve their own department’s requests', () => {
+		expect(canApproveBorrow(staffReq, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(true)
+		expect(canApproveBorrow(staffReq, { id: 'me', role: 'department_admin', departmentId: DEPT_B })).toBe(false)
+	})
+
+	it('never lets an approver approve their own request', () => {
+		expect(canApproveBorrow({ ...staffReq, borrower_id: 'me' }, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
+	})
+
+	it('allows returning your own (auto-approved) borrow even though approving it is blocked', () => {
+		const own = { department_id: DEPT_A, borrower_id: 'me', borrower_role: 'department_admin' }
+		expect(canApproveBorrow(own, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
+		expect(canReturnBorrow(own, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(true)
+	})
+
+	it('gives students no approval authority', () => {
+		expect(canApproveBorrow(studentReq, { id: 'me', role: 'student', departmentId: DEPT_A })).toBe(false)
 	})
 })
 
@@ -159,5 +201,51 @@ describe('isSelfBorrowRequest', () => {
 
 	it('allows a request with no recorded borrower', () => {
 		expect(isSelfBorrowRequest({ borrower_id: null }, ADMIN_ID)).toBe(false)
+	})
+})
+
+// Mirrors enforce_borrow_overdue_penalty (migration 20260728140000): a member
+// holding an overdue item is blocked from borrowing until they return it.
+describe('isBorrowOverdue / borrowPenaltyReason', () => {
+	const NOW = new Date('2026-07-29T00:00:00Z').getTime()
+	const PAST = '2026-07-20T00:00:00Z'
+	const FUTURE = '2026-08-10T00:00:00Z'
+	const ME = 'me-0000'
+	const OTHER = 'other-0000'
+
+	it('treats an explicitly flagged record as overdue', () => {
+		expect(isBorrowOverdue({ status: 'overdue', expected_return_date: FUTURE }, NOW)).toBe(true)
+	})
+
+	it('treats a still-out record past its due date as overdue', () => {
+		expect(isBorrowOverdue({ status: 'borrowed', expected_return_date: PAST }, NOW)).toBe(true)
+		expect(isBorrowOverdue({ status: 'confirmed', expected_return_date: FUTURE }, NOW)).toBe(false)
+	})
+
+	it('does not treat a returned or pending record as overdue', () => {
+		expect(isBorrowOverdue({ status: 'returned', expected_return_date: PAST }, NOW)).toBe(false)
+		expect(isBorrowOverdue({ status: 'pending', expected_return_date: PAST }, NOW)).toBe(false)
+	})
+
+	it('blocks a student/faculty/dept-admin who holds an overdue item', () => {
+		const records = [{ borrower_id: ME, status: 'overdue', expected_return_date: FUTURE }]
+		for (const role of ['student', 'staff', 'department_admin']) {
+			expect(borrowPenaltyReason(records, { id: ME, role }, NOW)).toMatch(/overdue/i)
+		}
+	})
+
+	it('exempts the super admin from the penalty', () => {
+		const records = [{ borrower_id: ME, status: 'overdue', expected_return_date: FUTURE }]
+		expect(borrowPenaltyReason(records, { id: ME, role: 'super_admin' }, NOW)).toBeNull()
+	})
+
+	it('only penalizes the user’s own overdue items', () => {
+		const records = [{ borrower_id: OTHER, status: 'overdue', expected_return_date: FUTURE }]
+		expect(borrowPenaltyReason(records, { id: ME, role: 'student' }, NOW)).toBeNull()
+	})
+
+	it('lets a clear user borrow', () => {
+		const records = [{ borrower_id: ME, status: 'borrowed', expected_return_date: FUTURE }]
+		expect(borrowPenaltyReason(records, { id: ME, role: 'staff' }, NOW)).toBeNull()
 	})
 })

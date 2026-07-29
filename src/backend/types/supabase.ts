@@ -76,6 +76,7 @@ export type Database = {
           expected_return_date: string | null
           id: number
           notes: string | null
+          quantity: number
           status: string
           updated_at: string
         }
@@ -93,6 +94,7 @@ export type Database = {
           expected_return_date?: string | null
           id?: number
           notes?: string | null
+          quantity?: number
           status?: string
           updated_at?: string
         }
@@ -110,6 +112,7 @@ export type Database = {
           expected_return_date?: string | null
           id?: number
           notes?: string | null
+          quantity?: number
           status?: string
           updated_at?: string
         }

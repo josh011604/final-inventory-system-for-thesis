@@ -5,6 +5,7 @@ import Card from '@/components/ui/Card'
 import StatusChip from '@/components/ui/StatusChip'
 import Skeleton from '@/components/ui/Skeleton'
 import AlertsPanel from '@/frontend/features/dashboard/AlertsPanel'
+import LowStockPanel from '@/frontend/features/dashboard/LowStockPanel'
 import {
 	useBorrowRecords,
 	useDepartments,
@@ -168,6 +169,8 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 				</div>
 
 				<AlertsPanel user={user} />
+
+				<LowStockPanel user={user} />
 
 				{totalEquipment > 0 ? (
 					<Card title="Asset Status Breakdown" subtitle="Live inventory split">

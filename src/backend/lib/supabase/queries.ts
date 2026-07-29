@@ -294,7 +294,9 @@ export function useDeleteEquipment() {
 export type BorrowRecordRow = Tables<'borrow_records'> & {
 	equipment: { equipment_name: string } | null
 	departments: { name: string } | null
-	borrower: { full_name: string } | null
+	// `role` rides along so the UI can tell whether the borrower is a student —
+	// faculty may approve student requests but not each other's.
+	borrower: { full_name: string; role: string } | null
 	approver: { full_name: string } | null
 }
 
@@ -305,7 +307,7 @@ export function useBorrowRecords() {
 			const { data, error } = await supabase
 				.from('borrow_records')
 				.select(
-					'*, equipment(equipment_name), departments(name), borrower:profiles!borrow_records_borrower_id_fkey(full_name), approver:profiles!borrow_records_approved_by_fkey(full_name)',
+					'*, equipment(equipment_name), departments(name), borrower:profiles!borrow_records_borrower_id_fkey(full_name, role), approver:profiles!borrow_records_approved_by_fkey(full_name)',
 				)
 				.order('created_at', { ascending: false })
 			if (error) throw error
@@ -317,7 +319,7 @@ export function useBorrowRecords() {
 export function useCreateBorrowRecord() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: async (input: { equipment_id: number; expected_return_date: string | null; notes: string | null }) => {
+		mutationFn: async (input: { equipment_id: number; quantity: number; expected_return_date: string | null; notes: string | null }) => {
 			// Routed through the borrow-status edge function so every request rule
 			// is enforced server-side: date window, per-unit availability,
 			// duplicate guard, per-user borrow cap, and approver notifications.
@@ -502,6 +504,20 @@ export function useMarkNotificationRead() {
 	return useMutation({
 		mutationFn: async (id: number) => {
 			const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+	})
+}
+
+export function useMarkAllNotificationsRead() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		// Flips every still-unread notification the caller can see to read in one
+		// update. RLS ("notifications update scoped") limits the reach to the
+		// caller's own + their department's rows, the same set the list shows.
+		mutationFn: async () => {
+			const { error } = await supabase.from('notifications').update({ is_read: true }).eq('is_read', false)
 			if (error) throw error
 		},
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),

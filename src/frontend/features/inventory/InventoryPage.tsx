@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Eye } from 'lucide-react'
+import { AlertTriangle, Eye } from 'lucide-react'
 import EntityTablePage from '@/components/ui/EntityTablePage'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -10,7 +10,7 @@ import EquipmentEditModal from '@/frontend/features/inventory/EquipmentEditModal
 import BorrowRequestModal from '@/frontend/features/borrowing/BorrowRequestModal'
 import { useBorrowRecords, useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
-import { borrowBlockedReason, borrowScopeReason, displayStatus, freeUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowBlockedReason, borrowPenaltyReason, borrowScopeReason, displayStatus, freeUnits, isLowStock, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
 
@@ -67,14 +67,19 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const createEquipment = useCreateEquipment()
 
 	const canManage = user.role === 'super_admin' || user.role === 'department_admin'
-	// Department Inventory: staff and department admins see only their own
-	// department's items; the super admin sees everything, including Main Supply.
-	const visibleItems = user.role === 'super_admin' ? data : data?.filter((item) => item.department_id === user.departmentId)
+	// Inventory visibility: the super admin and faculty (staff) see every item,
+	// since faculty may now borrow from any department. Department admins and
+	// students stay scoped to their own department's items.
+	const visibleItems =
+		user.role === 'super_admin' || user.role === 'staff' ? data : data?.filter((item) => item.department_id === user.departmentId)
 
 	// Per-item Borrow: how many units of each item are already out on an active
 	// loan, so a row only offers Borrow when a unit is genuinely free. The
 	// borrow-status edge function re-checks all of this server-side.
 	const unitsOut = unitsOutByEquipmentId(borrowRecords ?? [])
+	// Overdue-borrow penalty: if this user is still holding an overdue item, every
+	// Borrow button is disabled until they return it (super admin is exempt).
+	const penaltyReason = borrowPenaltyReason(borrowRecords ?? [], user)
 	const [borrowItem, setBorrowItem] = useState<EquipmentRow | null>(null)
 
 	const [open, setOpen] = useState(false)
@@ -147,7 +152,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 			<EntityTablePage<EquipmentRow>
 				title="Inventory Items"
 				subtitle={
-					user.role === 'super_admin'
+					user.role === 'super_admin' || user.role === 'staff'
 						? `${visibleItems?.length ?? 0} items · click a row for its history`
 						: `${user.department || 'Department'} inventory · ${visibleItems?.length ?? 0} items · click a row for history`
 				}
@@ -173,11 +178,26 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 					{ header: 'Facility', render: (row) => row.facilities?.name ?? '—' },
 					{
 						header: 'Available',
-						render: (row) => (
-							<span className={freeUnits(row, unitsOut) === 0 ? 'text-text-muted' : 'text-text-primary'}>
-								{freeUnits(row, unitsOut)} / {row.quantity ?? 1}
-							</span>
-						),
+						render: (row) => {
+							const free = freeUnits(row, unitsOut)
+							const low = isLowStock(row, unitsOut)
+							return (
+								<span className="inline-flex items-center gap-1.5">
+									<span className={free === 0 ? 'text-text-muted' : 'text-text-primary'}>
+										{free} / {row.quantity ?? 1}
+									</span>
+									{low ? (
+										<span
+											className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning ring-1 ring-inset ring-warning/25"
+											title={`Low stock — only ${free} of ${row.quantity ?? 1} unit${free === 1 ? '' : 's'} left`}
+										>
+											<AlertTriangle className="h-3 w-3" aria-hidden />
+											Low stock
+										</span>
+									) : null}
+								</span>
+							)
+						},
 					},
 					{
 						header: 'Status',
@@ -195,7 +215,8 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 							// item shows 'available' (has a free unit), it can be clicked. A
 							// department-scope mismatch no longer disables it — the request just
 							// surfaces the server's "not your department" error after clicking.
-							const blocked = borrowBlockedReason(row, unitsOut)
+							// The overdue penalty overrides everything: it disables every row.
+							const blocked = penaltyReason ?? borrowBlockedReason(row, unitsOut)
 							const scopeHint = blocked ? null : borrowScopeReason(row, user)
 							return (
 								<Button
@@ -264,6 +285,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 								quantity: borrowItem.quantity ?? 1,
 								freeUnits: freeUnits(borrowItem, unitsOut),
 								source: borrowItem.department_id === null ? 'supply' : 'department',
+								departmentName: borrowItem.departments?.name ?? undefined,
 							}
 						: null
 				}
