@@ -61,3 +61,16 @@ export async function signUp(args: {
 export async function signOut() {
 	await supabase.auth.signOut()
 }
+
+export async function changePassword(email: string, currentPassword: string, newPassword: string): Promise<{ error: string | null }> {
+	const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: currentPassword })
+	if (verifyError) {
+		return { error: 'Current password is incorrect.' }
+	}
+
+	const { error } = await supabase.auth.updateUser({ password: newPassword })
+	if (error) {
+		return { error: error.message }
+	}
+	return { error: null }
+}

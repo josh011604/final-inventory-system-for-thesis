@@ -105,9 +105,9 @@
     "semantic_hash": "8b9ae3aaf7c7ac938b6cc33eec2642ac"
   },
   "src/backend/lib/supabase/auth.ts": {
-    "mtime": 1784081729.8375542,
-    "ast_hash": "ab63ee6c030e1481a910a55d3f2c4ced",
-    "semantic_hash": "ab63ee6c030e1481a910a55d3f2c4ced"
+    "mtime": 1785338656.8072734,
+    "ast_hash": "23a6dccc0ed309bba629bc1a06b4259e",
+    "semantic_hash": ""
   },
   "src/backend/lib/supabase/client.ts": {
     "mtime": 1783667571.002772,
@@ -280,9 +280,9 @@
     "semantic_hash": "715612cbcb1cd99f8a8e45a4112aca0d"
   },
   "src/frontend/features/settings/SettingsPage.tsx": {
-    "mtime": 1784785254.306948,
-    "ast_hash": "19c9f4acc525902957b055e4a19ded8e",
-    "semantic_hash": "19c9f4acc525902957b055e4a19ded8e"
+    "mtime": 1785339324.970615,
+    "ast_hash": "a8ce02be80063d62abc0b4d673082093",
+    "semantic_hash": ""
   },
   "src/frontend/features/users/UsersPage.tsx": {
     "mtime": 1784737930.274665,
@@ -722,6 +722,16 @@
   "supabase/migrations/20260729130000_borrow_borrower_name.sql": {
     "mtime": 1785333632.0515268,
     "ast_hash": "acefeae2ce562b3b28f9dd7465ce4e49",
+    "semantic_hash": ""
+  },
+  "src/frontend/features/settings/ActivityHistoryCard.tsx": {
+    "mtime": 1785339072.5776722,
+    "ast_hash": "34675f898b1a3149e2975633a1f669dc",
+    "semantic_hash": ""
+  },
+  "src/frontend/features/settings/ChangePasswordCard.tsx": {
+    "mtime": 1785338707.3929334,
+    "ast_hash": "3653cee681b877eb7bdfc2f822b697af",
     "semantic_hash": ""
   }
 }
