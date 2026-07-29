@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AuthScreen from '@/frontend/features/auth/AuthScreen'
 import DashboardScreen from '@/frontend/features/dashboard/DashboardScreen'
 import AppShell from '@/components/layout/AppShell'
@@ -20,6 +20,15 @@ import { signOut } from '@/backend/lib/supabase/auth'
 import type { Role, SchoolUser, ThemeMode } from '@/backend/types/school'
 import { usePersistentState } from '@/backend/hooks/usePersistentState'
 
+// Every edge function (borrow-status, maintenance-status, overdue-check,
+// create-student, main-supply) returns this exact string when the caller's
+// session was revoked server-side (e.g. signed out elsewhere) even though the
+// locally cached JWT hasn't hit its own expiry yet. Force a clean re-login
+// instead of leaving the UI signed-in-looking but silently broken.
+function isSessionInvalidError(error: unknown) {
+	return error instanceof Error && error.message === 'Invalid or expired session'
+}
+
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
@@ -27,6 +36,16 @@ const queryClient = new QueryClient({
 			retry: 1,
 		},
 	},
+	queryCache: new QueryCache({
+		onError: (error) => {
+			if (isSessionInvalidError(error)) void supabase.auth.signOut()
+		},
+	}),
+	mutationCache: new MutationCache({
+		onError: (error) => {
+			if (isSessionInvalidError(error)) void supabase.auth.signOut()
+		},
+	}),
 })
 
 function initialsFor(fullName: string) {
@@ -112,6 +131,11 @@ export default function App() {
 
 		const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
 			if (event === 'SIGNED_OUT') {
+				// A manual logout (see `logout` below) overwrites this with its own
+				// message right after signOut() resolves, so this is only the
+				// message a user actually sees when something else triggered it
+				// (e.g. a revoked session caught by queryClient's onError above).
+				setSessionMessage('Your session has expired. Please log in again.')
 				setActiveUser(null)
 				return
 			}

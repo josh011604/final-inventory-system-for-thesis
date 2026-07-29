@@ -1,0 +1,760 @@
+{
+  "communities": {
+    "0": [
+      "src_backend_lib_supabase_queries",
+      "src_backend_lib_supabase_queries_auditlogrow",
+      "src_backend_lib_supabase_queries_borrowrecordrow",
+      "src_backend_lib_supabase_queries_equipmentrow",
+      "src_backend_lib_supabase_queries_facilityreservationrow",
+      "src_backend_lib_supabase_queries_facilityrow",
+      "src_backend_lib_supabase_queries_mainsupplyitem",
+      "src_backend_lib_supabase_queries_maintenancerequestrow",
+      "src_backend_lib_supabase_queries_profilerow",
+      "src_backend_lib_supabase_queries_useauditlogs",
+      "src_backend_lib_supabase_queries_useborrowrecords",
+      "src_backend_lib_supabase_queries_usecancelborrowrecord",
+      "src_backend_lib_supabase_queries_usecategories",
+      "src_backend_lib_supabase_queries_usecreateborrowrecord",
+      "src_backend_lib_supabase_queries_usecreatecategory",
+      "src_backend_lib_supabase_queries_usecreatedepartment",
+      "src_backend_lib_supabase_queries_usecreateequipment",
+      "src_backend_lib_supabase_queries_usecreatefacility",
+      "src_backend_lib_supabase_queries_usecreatefacilityreservation",
+      "src_backend_lib_supabase_queries_usecreatemaintenancerequest",
+      "src_backend_lib_supabase_queries_usecreatestudent",
+      "src_backend_lib_supabase_queries_usecreatesupplier",
+      "src_backend_lib_supabase_queries_usedeletecategory",
+      "src_backend_lib_supabase_queries_usedeleteequipment",
+      "src_backend_lib_supabase_queries_usedeletesupplier",
+      "src_backend_lib_supabase_queries_usedepartments",
+      "src_backend_lib_supabase_queries_useequipment",
+      "src_backend_lib_supabase_queries_usefacilities",
+      "src_backend_lib_supabase_queries_usefacilityreservations",
+      "src_backend_lib_supabase_queries_usemainsupplyequipment",
+      "src_backend_lib_supabase_queries_usemaintenancerequests",
+      "src_backend_lib_supabase_queries_usemarknotificationread",
+      "src_backend_lib_supabase_queries_usenotifications",
+      "src_backend_lib_supabase_queries_useprofiles",
+      "src_backend_lib_supabase_queries_userunoverduecheck",
+      "src_backend_lib_supabase_queries_usesuppliers",
+      "src_backend_lib_supabase_queries_useupdateborrowrecordstatus",
+      "src_backend_lib_supabase_queries_useupdateequipment",
+      "src_backend_lib_supabase_queries_useupdatefacilityreservationstatus",
+      "src_backend_lib_supabase_queries_useupdatemaintenancestatus",
+      "src_backend_lib_supabase_queries_useupdateprofile",
+      "src_backend_lib_supabase_queries_useuploadavatar"
+    ],
+    "1": [
+      "lucide_react",
+      "package",
+      "package_dependencies",
+      "package_dependencies_lucide_react",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_react_router_dom",
+      "package_dependencies_supabase_ssr",
+      "package_dependencies_supabase_supabase_js",
+      "package_dependencies_tanstack_react_query",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_backfill_pii",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_preview",
+      "package_scripts_seed_data",
+      "package_scripts_seed_demo",
+      "package_scripts_test",
+      "package_scripts_test_watch",
+      "package_scripts_verify_demo",
+      "package_scripts_verify_reservations",
+      "package_type",
+      "package_version",
+      "react",
+      "react_dom",
+      "react_router_dom",
+      "supabase_ssr",
+      "supabase_supabase_js",
+      "tanstack_react_query"
+    ],
+    "2": [
+      "eslint",
+      "eslint_js",
+      "eslint_plugin_react_hooks",
+      "eslint_plugin_react_refresh",
+      "globals",
+      "package_devdependencies",
+      "package_devdependencies_eslint",
+      "package_devdependencies_eslint_js",
+      "package_devdependencies_eslint_plugin_react_hooks",
+      "package_devdependencies_eslint_plugin_react_refresh",
+      "package_devdependencies_globals",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_tailwindcss_vite",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_devdependencies_typescript_eslint",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react",
+      "package_devdependencies_vitest",
+      "tailwindcss",
+      "tailwindcss_vite",
+      "types_react",
+      "types_react_dom",
+      "typescript",
+      "typescript_eslint",
+      "vite",
+      "vitejs_plugin_react",
+      "vitest"
+    ],
+    "3": [
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_es2022",
+      "ref_src",
+      "tsconfig_app",
+      "tsconfig_app_compileroptions",
+      "tsconfig_app_compileroptions_allowimportingtsextensions",
+      "tsconfig_app_compileroptions_isolatedmodules",
+      "tsconfig_app_compileroptions_jsx",
+      "tsconfig_app_compileroptions_lib",
+      "tsconfig_app_compileroptions_module",
+      "tsconfig_app_compileroptions_moduleresolution",
+      "tsconfig_app_compileroptions_noemit",
+      "tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "tsconfig_app_compileroptions_nounusedlocals",
+      "tsconfig_app_compileroptions_nounusedparameters",
+      "tsconfig_app_compileroptions_paths",
+      "tsconfig_app_compileroptions_resolvejsonmodule",
+      "tsconfig_app_compileroptions_skiplibcheck",
+      "tsconfig_app_compileroptions_strict",
+      "tsconfig_app_compileroptions_target",
+      "tsconfig_app_compileroptions_usedefineforclassfields",
+      "tsconfig_app_include",
+      "tsconfig_app_references"
+    ],
+    "4": [
+      "src_frontend_features_reports_reportspage",
+      "src_frontend_features_reports_reportspage_barclass",
+      "src_frontend_features_reports_reportspage_bars",
+      "src_frontend_features_reports_reportspage_borrowstatustone",
+      "src_frontend_features_reports_reportspage_csvcell",
+      "src_frontend_features_reports_reportspage_datum",
+      "src_frontend_features_reports_reportspage_downloadcsv",
+      "src_frontend_features_reports_reportspage_equipmentstatustone",
+      "src_frontend_features_reports_reportspage_isoverdue",
+      "src_frontend_features_reports_reportspage_maintenancestatustone",
+      "src_frontend_features_reports_reportspage_peso",
+      "src_frontend_features_reports_reportspage_printabletable",
+      "src_frontend_features_reports_reportspage_prioritytone",
+      "src_frontend_features_reports_reportspage_rankby",
+      "src_frontend_features_reports_reportspage_reportspage",
+      "src_frontend_features_reports_reportspage_stattile",
+      "src_frontend_features_reports_reportspage_tallybystatus",
+      "src_frontend_features_reports_reportspage_tiletone",
+      "src_frontend_features_reports_reportspage_tone"
+    ],
+    "5": [
+      "scripts_verify_reservations",
+      "scripts_verify_reservations_checks",
+      "scripts_verify_reservations_env",
+      "scripts_verify_reservations_fail",
+      "scripts_verify_reservations_futuredate",
+      "scripts_verify_reservations_loadenv",
+      "scripts_verify_reservations_main",
+      "scripts_verify_reservations_pass",
+      "scripts_verify_reservations_root",
+      "scripts_verify_reservations_signin",
+      "scripts_verify_reservations_verifyautoapprove",
+      "scripts_verify_reservations_verifyborrowing",
+      "scripts_verify_reservations_verifycentralfacilityvisibility",
+      "scripts_verify_reservations_verifyreservations",
+      "scripts_verify_reservations_withretry"
+    ],
+    "6": [
+      "src_backend_lib_borrowing",
+      "src_backend_lib_borrowing_active_borrow_statuses",
+      "src_backend_lib_borrowing_approvablerecord",
+      "src_backend_lib_borrowing_borrowableitem",
+      "src_backend_lib_borrowing_borrowblockedreason",
+      "src_backend_lib_borrowing_borrower",
+      "src_backend_lib_borrowing_borrowrecordlike",
+      "src_backend_lib_borrowing_borrowscopereason",
+      "src_backend_lib_borrowing_displaystatus",
+      "src_backend_lib_borrowing_freeunits",
+      "src_backend_lib_borrowing_isborrowable",
+      "src_backend_lib_borrowing_isselfborrowrequest",
+      "src_backend_lib_borrowing_out_of_service_statuses",
+      "src_backend_lib_borrowing_scopeditem",
+      "src_backend_lib_borrowing_unitsoutbyequipmentid"
+    ],
+    "7": [
+      "scripts_seed_sample_data",
+      "scripts_seed_sample_data_admin",
+      "scripts_seed_sample_data_borrows",
+      "scripts_seed_sample_data_categories",
+      "scripts_seed_sample_data_daysfromnow",
+      "scripts_seed_sample_data_departments",
+      "scripts_seed_sample_data_env",
+      "scripts_seed_sample_data_loadenv",
+      "scripts_seed_sample_data_main",
+      "scripts_seed_sample_data_main_supply",
+      "scripts_seed_sample_data_maintenance",
+      "scripts_seed_sample_data_root",
+      "scripts_seed_sample_data_suppliers",
+      "scripts_seed_sample_data_withretry"
+    ],
+    "8": [
+      "src_backend_lib_reservations",
+      "src_backend_lib_reservations_activebooking",
+      "src_backend_lib_reservations_blocking_statuses",
+      "src_backend_lib_reservations_existingreservation",
+      "src_backend_lib_reservations_facilitybookingson",
+      "src_backend_lib_reservations_facilityreserveblockedreason",
+      "src_backend_lib_reservations_findreservationclash",
+      "src_backend_lib_reservations_reservablefacility",
+      "src_backend_lib_reservations_reservationautoapproves",
+      "src_backend_lib_reservations_reservationdraft",
+      "src_backend_lib_reservations_reserver",
+      "src_backend_lib_reservations_tominutes",
+      "src_backend_lib_reservations_validatereservation",
+      "src_backend_lib_reservations_windowsoverlap"
+    ],
+    "9": [
+      "ref_es2023",
+      "ref_vite_config_ts",
+      "tsconfig_node",
+      "tsconfig_node_compileroptions",
+      "tsconfig_node_compileroptions_allowsyntheticdefaultimports",
+      "tsconfig_node_compileroptions_lib",
+      "tsconfig_node_compileroptions_module",
+      "tsconfig_node_compileroptions_moduleresolution",
+      "tsconfig_node_compileroptions_noemit",
+      "tsconfig_node_compileroptions_skiplibcheck",
+      "tsconfig_node_compileroptions_strict",
+      "tsconfig_node_compileroptions_target",
+      "tsconfig_node_include"
+    ],
+    "10": [
+      "src_backend_types_supabase",
+      "src_backend_types_supabase_compositetypes",
+      "src_backend_types_supabase_constants",
+      "src_backend_types_supabase_database",
+      "src_backend_types_supabase_databasewithoutinternals",
+      "src_backend_types_supabase_defaultschema",
+      "src_backend_types_supabase_enums",
+      "src_backend_types_supabase_json",
+      "src_backend_types_supabase_tables",
+      "src_backend_types_supabase_tablesinsert",
+      "src_backend_types_supabase_tablesupdate"
+    ],
+    "11": [
+      "scripts_seed_demo_accounts",
+      "scripts_seed_demo_accounts_admin",
+      "scripts_seed_demo_accounts_demoaccounts",
+      "scripts_seed_demo_accounts_emailfor",
+      "scripts_seed_demo_accounts_env",
+      "scripts_seed_demo_accounts_findauthuseridbyemail",
+      "scripts_seed_demo_accounts_loadenv",
+      "scripts_seed_demo_accounts_main",
+      "scripts_seed_demo_accounts_root",
+      "scripts_seed_demo_accounts_withretry"
+    ],
+    "12": [
+      "src_frontend_features_backup_backuppage",
+      "src_frontend_features_backup_backuppage_backuppage",
+      "src_frontend_features_backup_backuppage_downloadblob",
+      "src_frontend_features_backup_backuppage_fetchtable",
+      "src_frontend_features_backup_backuppage_row",
+      "src_frontend_features_backup_backuppage_stamp",
+      "src_frontend_features_backup_backuppage_tablename",
+      "src_frontend_features_backup_backuppage_tables",
+      "src_frontend_features_backup_backuppage_tocsv"
+    ],
+    "13": [
+      "src_frontend_features_inventory_equipmenthistorymodal",
+      "src_frontend_features_inventory_equipmenthistorymodal_chipclass",
+      "src_frontend_features_inventory_equipmenthistorymodal_dotclass",
+      "src_frontend_features_inventory_equipmenthistorymodal_equipmenthistorymodal",
+      "src_frontend_features_inventory_equipmenthistorymodal_eventtone",
+      "src_frontend_features_inventory_equipmenthistorymodal_formatdate",
+      "src_frontend_features_inventory_equipmenthistorymodal_ms",
+      "src_frontend_features_inventory_equipmenthistorymodal_statustone",
+      "src_frontend_features_inventory_equipmenthistorymodal_timelineevent"
+    ],
+    "14": [
+      "scripts_verify_demo_accounts",
+      "scripts_verify_demo_accounts_demoaccounts",
+      "scripts_verify_demo_accounts_env",
+      "scripts_verify_demo_accounts_loadenv",
+      "scripts_verify_demo_accounts_main",
+      "scripts_verify_demo_accounts_root",
+      "scripts_verify_demo_accounts_verifyaccount",
+      "scripts_verify_demo_accounts_withretry"
+    ],
+    "15": [
+      "src_frontend_features_auth_authscreen",
+      "src_frontend_features_auth_authscreen_authscreen",
+      "src_frontend_features_auth_authscreen_demoaccounts",
+      "src_frontend_features_auth_authscreen_departmentoption",
+      "src_frontend_features_auth_authscreen_eyeicon",
+      "src_frontend_features_auth_authscreen_features",
+      "src_frontend_features_auth_authscreen_passwordfield",
+      "src_frontend_features_auth_authscreen_tab"
+    ],
+    "16": [
+      "scripts_backfill_profile_pii",
+      "scripts_backfill_profile_pii_admin",
+      "scripts_backfill_profile_pii_encryptpii",
+      "scripts_backfill_profile_pii_env",
+      "scripts_backfill_profile_pii_importkey",
+      "scripts_backfill_profile_pii_loadenv",
+      "scripts_backfill_profile_pii_root"
+    ],
+    "17": [
+      "scripts_prune_accounts",
+      "scripts_prune_accounts_admin",
+      "scripts_prune_accounts_env",
+      "scripts_prune_accounts_loadenv",
+      "scripts_prune_accounts_main",
+      "scripts_prune_accounts_root",
+      "scripts_prune_accounts_withretry"
+    ],
+    "18": [
+      "src_components_ui_button",
+      "src_components_ui_button_button",
+      "src_components_ui_button_buttonprops",
+      "src_components_ui_button_buttonsize",
+      "src_components_ui_button_buttonvariant",
+      "src_components_ui_button_sizeclass",
+      "src_components_ui_button_variantclass"
+    ],
+    "19": [
+      "src_frontend_features_dashboard_dashboardscreen",
+      "src_frontend_features_dashboard_dashboardscreen_dashboardscreen",
+      "src_frontend_features_dashboard_dashboardscreen_dashboardscreenprops",
+      "src_frontend_features_dashboard_dashboardscreen_metriccard",
+      "src_frontend_features_dashboard_dashboardscreen_metrictone",
+      "src_frontend_features_dashboard_dashboardscreen_metrictoneclass",
+      "src_frontend_features_dashboard_dashboardscreen_statusbreakdown"
+    ],
+    "20": [
+      "supabase_functions_borrow_status_index",
+      "supabase_functions_borrow_status_index_active_statuses",
+      "supabase_functions_borrow_status_index_activeunitcount",
+      "supabase_functions_borrow_status_index_corsheaders",
+      "supabase_functions_borrow_status_index_json",
+      "supabase_functions_borrow_status_index_out_of_service_statuses",
+      "supabase_functions_borrow_status_index_transition_statuses"
+    ],
+    "21": [
+      "supabase_functions_profile_pii_index",
+      "supabase_functions_profile_pii_index_corsheaders",
+      "supabase_functions_profile_pii_index_json",
+      "supabase_functions_shared_pii_crypto",
+      "supabase_functions_shared_pii_crypto_decryptpii",
+      "supabase_functions_shared_pii_crypto_encryptpii",
+      "supabase_functions_shared_pii_crypto_importkey"
+    ],
+    "22": [
+      "src_backend_types_school",
+      "src_backend_types_school_department",
+      "src_backend_types_school_role",
+      "src_backend_types_school_schooluser",
+      "src_backend_types_school_thememode",
+      "src_backend_types_school_userstatus"
+    ],
+    "23": [
+      "src_frontend_features_dashboard_alertspanel",
+      "src_frontend_features_dashboard_alertspanel_alert",
+      "src_frontend_features_dashboard_alertspanel_alertspanel",
+      "src_frontend_features_dashboard_alertspanel_alerttone",
+      "src_frontend_features_dashboard_alertspanel_isoverdue",
+      "src_frontend_features_dashboard_alertspanel_tonestyles"
+    ],
+    "24": [
+      "src_backend_lib_supabase_auth",
+      "src_backend_lib_supabase_auth_resolveemail",
+      "src_backend_lib_supabase_auth_signin",
+      "src_backend_lib_supabase_auth_signout",
+      "src_backend_lib_supabase_auth_signup"
+    ],
+    "25": [
+      "src_components_ui_statuschip",
+      "src_components_ui_statuschip_chiptone",
+      "src_components_ui_statuschip_dotclass",
+      "src_components_ui_statuschip_statuschip",
+      "src_components_ui_statuschip_toneclass"
+    ],
+    "26": [
+      "src_frontend_app",
+      "src_frontend_app_app",
+      "src_frontend_app_initialsfor",
+      "src_frontend_app_loadactiveuser",
+      "src_frontend_app_queryclient"
+    ],
+    "27": [
+      "src_frontend_config_navigation",
+      "src_frontend_config_navigation_isrouteallowed",
+      "src_frontend_config_navigation_nav_items",
+      "src_frontend_config_navigation_navitem",
+      "src_frontend_config_navigation_navitemsforrole"
+    ],
+    "28": [
+      "src_frontend_features_facilities_facilityreservationdetailsmodal",
+      "src_frontend_features_facilities_facilityreservationdetailsmodal_facilityreservationdetailsmodal",
+      "src_frontend_features_facilities_facilityreservationdetailsmodal_formatdatelong",
+      "src_frontend_features_facilities_facilityreservationdetailsmodal_formatdatetime",
+      "src_frontend_features_facilities_facilityreservationdetailsmodal_row"
+    ],
+    "29": [
+      "src_frontend_features_inventory_inventorypage",
+      "src_frontend_features_inventory_inventorypage_inventorypage",
+      "src_frontend_features_inventory_inventorypage_statustone",
+      "src_frontend_features_inventory_inventorypage_stepindicator",
+      "src_frontend_features_inventory_inventorypage_steps"
+    ],
+    "30": [
+      "src_frontend_features_settings_settingspage",
+      "src_frontend_features_settings_settingspage_categoriescard",
+      "src_frontend_features_settings_settingspage_profilecard",
+      "src_frontend_features_settings_settingspage_settingspage",
+      "src_frontend_features_settings_settingspage_supplierscard"
+    ],
+    "31": [
+      "src_components_layout_appshell",
+      "src_components_layout_appshell_appshell",
+      "src_components_layout_appshell_appshellprops",
+      "src_components_layout_appshell_breadcrumbs"
+    ],
+    "32": [
+      "src_components_ui_entitytablepage",
+      "src_components_ui_entitytablepage_column",
+      "src_components_ui_entitytablepage_entitytablepage",
+      "src_components_ui_entitytablepage_entitytablepageprops"
+    ],
+    "33": [
+      "src_frontend_features_borrowing_borrowrequestmodal",
+      "src_frontend_features_borrowing_borrowrequestmodal_borrowrequestmodal",
+      "src_frontend_features_borrowing_borrowrequestmodal_borrowrequestmodalprops",
+      "src_frontend_features_borrowing_borrowrequestmodal_candidatelabel"
+    ],
+    "34": [
+      "src_frontend_features_facilities_facilitydisplay",
+      "src_frontend_features_facilities_facilitydisplay_availabilitytone",
+      "src_frontend_features_facilities_facilitydisplay_formattime",
+      "src_frontend_features_facilities_facilitydisplay_reservationtone"
+    ],
+    "35": [
+      "src_frontend_features_inventory_equipmenteditmodal",
+      "src_frontend_features_inventory_equipmenteditmodal_equipmenteditmodal",
+      "src_frontend_features_inventory_equipmenteditmodal_manual_statuses",
+      "src_frontend_features_inventory_equipmenteditmodal_workflow_statuses"
+    ],
+    "36": [
+      "supabase_functions_maintenance_status_index",
+      "supabase_functions_maintenance_status_index_corsheaders",
+      "supabase_functions_maintenance_status_index_json",
+      "supabase_functions_maintenance_status_index_valid_statuses"
+    ],
+    "37": [
+      "mcp",
+      "mcp_mcp_server_github",
+      "mcp_mcp_server_supabase"
+    ],
+    "38": [
+      "src_backend_lib_errors",
+      "src_backend_lib_errors_friendly_by_code",
+      "src_backend_lib_errors_geterrormessage"
+    ],
+    "39": [
+      "src_backend_lib_rbac",
+      "src_backend_lib_rbac_getrolelabel",
+      "src_backend_lib_rbac_rolelabels"
+    ],
+    "40": [
+      "src_backend_lib_reservations_test",
+      "src_backend_lib_reservations_test_draft",
+      "src_backend_lib_reservations_test_reservation"
+    ],
+    "41": [
+      "src_components_ui_card",
+      "src_components_ui_card_card",
+      "src_components_ui_card_cardprops"
+    ],
+    "42": [
+      "src_components_ui_modal",
+      "src_components_ui_modal_modal",
+      "src_components_ui_modal_modalprops"
+    ],
+    "43": [
+      "src_frontend_features_borrowing_borrowdisplay",
+      "src_frontend_features_borrowing_borrowdisplay_formatdate",
+      "src_frontend_features_borrowing_borrowdisplay_statustone"
+    ],
+    "44": [
+      "src_frontend_features_borrowing_useborrowcandidates",
+      "src_frontend_features_borrowing_useborrowcandidates_borrowcandidate",
+      "src_frontend_features_borrowing_useborrowcandidates_useborrowcandidates"
+    ],
+    "45": [
+      "src_frontend_features_maintenance_maintenancepage",
+      "src_frontend_features_maintenance_maintenancepage_maintenancepage",
+      "src_frontend_features_maintenance_maintenancepage_statustone"
+    ],
+    "46": [
+      "src_frontend_features_notifications_notificationspage",
+      "src_frontend_features_notifications_notificationspage_notificationspage",
+      "src_frontend_features_notifications_notificationspage_tonemap"
+    ],
+    "47": [
+      "src_vite_env_d",
+      "src_vite_env_d_importmeta",
+      "src_vite_env_d_importmetaenv"
+    ],
+    "48": [
+      "supabase_functions_create_student_index",
+      "supabase_functions_create_student_index_corsheaders",
+      "supabase_functions_create_student_index_json"
+    ],
+    "49": [
+      "supabase_functions_main_supply_index",
+      "supabase_functions_main_supply_index_corsheaders",
+      "supabase_functions_main_supply_index_json"
+    ],
+    "50": [
+      "supabase_functions_overdue_check_index",
+      "supabase_functions_overdue_check_index_corsheaders",
+      "supabase_functions_overdue_check_index_json"
+    ],
+    "51": [
+      "tsconfig",
+      "tsconfig_files",
+      "tsconfig_references"
+    ],
+    "52": [
+      "src_app",
+      "src_main"
+    ],
+    "53": [
+      "src_backend_config_env",
+      "src_backend_config_env_appconfig"
+    ],
+    "54": [
+      "src_backend_hooks_usenow",
+      "src_backend_hooks_usenow_usenow"
+    ],
+    "55": [
+      "src_backend_hooks_usepersistentstate",
+      "src_backend_hooks_usepersistentstate_usepersistentstate"
+    ],
+    "56": [
+      "src_backend_lib_borrowing_test",
+      "src_backend_lib_borrowing_test_item"
+    ],
+    "57": [
+      "src_backend_lib_supabase_client",
+      "src_backend_lib_supabase_client_supabase"
+    ],
+    "58": [
+      "src_components_ui_comingsoonpage",
+      "src_components_ui_comingsoonpage_comingsoonpage"
+    ],
+    "59": [
+      "src_components_ui_skeleton",
+      "src_components_ui_skeleton_skeleton"
+    ],
+    "60": [
+      "src_frontend_features_audit_logs_auditlogspage",
+      "src_frontend_features_audit_logs_auditlogspage_auditlogspage"
+    ],
+    "61": [
+      "src_frontend_features_borrowing_borrowhistorypage",
+      "src_frontend_features_borrowing_borrowhistorypage_borrowhistorypage"
+    ],
+    "62": [
+      "src_frontend_features_borrowing_borrowingpage",
+      "src_frontend_features_borrowing_borrowingpage_borrowingpage"
+    ],
+    "63": [
+      "src_frontend_features_departments_departmentspage",
+      "src_frontend_features_departments_departmentspage_departmentspage"
+    ],
+    "64": [
+      "src_frontend_features_facilities_facilitiespage",
+      "src_frontend_features_facilities_facilitiespage_facilitiespage"
+    ],
+    "65": [
+      "src_frontend_features_users_userspage",
+      "src_frontend_features_users_userspage_userspage"
+    ],
+    "66": [
+      "eslint_config"
+    ],
+    "67": [
+      "vite_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.047619047619047616,
+    "1": 0.0625,
+    "2": 0.06896551724137931,
+    "3": 0.08333333333333333,
+    "4": 0.14035087719298245,
+    "5": 0.3238095238095238,
+    "6": 0.17142857142857143,
+    "7": 0.16483516483516483,
+    "8": 0.21978021978021978,
+    "9": 0.15384615384615385,
+    "10": 0.18181818181818182,
+    "11": 0.26666666666666666,
+    "12": 0.3611111111111111,
+    "13": 0.2777777777777778,
+    "14": 0.32142857142857145,
+    "15": 0.25,
+    "16": 0.2857142857142857,
+    "17": 0.3333333333333333,
+    "18": 0.2857142857142857,
+    "19": 0.2857142857142857,
+    "20": 0.2857142857142857,
+    "21": 0.47619047619047616,
+    "22": 0.3333333333333333,
+    "23": 0.4,
+    "24": 0.5,
+    "25": 0.4,
+    "26": 0.6,
+    "27": 0.5,
+    "28": 0.6,
+    "29": 0.4,
+    "30": 0.4,
+    "31": 0.5,
+    "32": 0.5,
+    "33": 0.6666666666666666,
+    "34": 0.5,
+    "35": 0.6666666666666666,
+    "36": 0.5,
+    "37": 0.6666666666666666,
+    "38": 0.6666666666666666,
+    "39": 0.6666666666666666,
+    "40": 0.6666666666666666,
+    "41": 0.6666666666666666,
+    "42": 0.6666666666666666,
+    "43": 0.6666666666666666,
+    "44": 0.6666666666666666,
+    "45": 0.6666666666666666,
+    "46": 0.6666666666666666,
+    "47": 0.6666666666666666,
+    "48": 0.6666666666666666,
+    "49": 0.6666666666666666,
+    "50": 0.6666666666666666,
+    "51": 0.6666666666666666,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0
+  },
+  "gods": [
+    {
+      "id": "tsconfig_app_compileroptions",
+      "label": "compilerOptions",
+      "degree": 17
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 12
+    },
+    {
+      "id": "tsconfig_node_compileroptions",
+      "label": "compilerOptions",
+      "degree": 9
+    },
+    {
+      "id": "scripts_verify_reservations_withretry",
+      "label": "withRetry()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_verify_reservations_verifyreservations",
+      "label": "verifyReservations()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_verify_reservations_verifyautoapprove",
+      "label": "verifyAutoApprove()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_verify_reservations_main",
+      "label": "main()",
+      "degree": 6
+    },
+    {
+      "id": "src_frontend_features_backup_backuppage_backuppage",
+      "label": "BackupPage()",
+      "degree": 6
+    },
+    {
+      "id": "src_frontend_features_reports_reportspage_reportspage",
+      "label": "ReportsPage()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_verify_reservations_pass",
+      "label": "pass()",
+      "degree": 5
+    }
+  ],
+  "surprises": [],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `devDependencies` connect `devDependencies` to `scripts`?",
+      "why": "High betweenness centrality (0.012) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `supabase`, `github`, `name` to the rest of the system?",
+      "why": "193 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `queries.ts` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `scripts` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.0625 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `devDependencies` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `compilerOptions` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08333333333333333 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `ReportsPage.tsx` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.14035087719298245 - nodes in this community are weakly interconnected."
+    }
+  ]
+}
