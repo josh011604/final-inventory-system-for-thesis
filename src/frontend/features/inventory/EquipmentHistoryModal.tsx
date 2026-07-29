@@ -99,7 +99,7 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 
 		// Borrowing lifecycle.
 		for (const borrow of itemBorrows) {
-			const who = borrow.borrower?.full_name ?? 'a borrower'
+			const who = borrow.borrower_name ?? 'a borrower'
 			const units = borrow.quantity ?? 1
 			// Everything the record captures about the moment it went out: who
 			// borrowed, how many units, and the item's condition at that time.
@@ -111,6 +111,10 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 			]
 				.filter(Boolean)
 				.join(' · ')
+			// Legacy rows predating approver tracking have approved_by_name but no
+			// approved_at (there was no reliable historical timestamp to backfill
+			// from) — updated_at is the closest available stand-in for those.
+			const approvedAt = borrow.approved_at ?? borrow.updated_at
 			list.push({
 				id: `borrow-req-${borrow.id}`,
 				at: ms(borrow.borrowed_date ?? borrow.created_at),
@@ -120,30 +124,44 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 				tone: 'info',
 				icon: ArrowRightLeft,
 			})
+
 			// Who approved it — recorded so every borrow is traceable to its approver.
 			// A request the borrower had the authority to approve themselves (super
 			// admin on a Supply Office item, department admin on their own
 			// department's item) is stamped with their own id; say so explicitly
 			// instead of showing it as an ordinary approval.
 			const wasAutoApproved = borrow.approved_by != null && borrow.approved_by === borrow.borrower_id
-			if (borrow.approver?.full_name && (borrow.status === 'confirmed' || borrow.status === 'borrowed' || borrow.status === 'overdue' || borrow.actual_return_date)) {
+			if (borrow.status === 'rejected') {
+				list.push({
+					id: `borrow-rej-${borrow.id}`,
+					at: ms(approvedAt),
+					label: formatDate(approvedAt),
+					title: 'Borrow request rejected',
+					detail: `By ${borrow.approved_by_name ?? 'an approver'} · requested by ${who}`,
+					tone: 'muted',
+					icon: Clock,
+				})
+			} else if (borrow.approved_by_name) {
 				list.push({
 					id: `borrow-appr-${borrow.id}`,
-					at: ms(borrow.updated_at),
-					label: formatDate(borrow.updated_at),
-					title: wasAutoApproved ? 'Auto-approved' : 'Borrow approved',
-					detail: wasAutoApproved ? `${borrow.approver.full_name} — own inventory, no approval step` : `By ${borrow.approver.full_name}`,
+					at: ms(approvedAt),
+					label: formatDate(approvedAt),
+					title: wasAutoApproved ? 'Auto-approved' : 'Approved',
+					detail: wasAutoApproved ? `${borrow.approved_by_name} — own inventory, no approval step` : `By ${borrow.approved_by_name}`,
 					tone: 'info',
 					icon: CheckCircle2,
 				})
 			}
+
 			if (borrow.actual_return_date) {
 				list.push({
 					id: `borrow-ret-${borrow.id}`,
 					at: ms(borrow.actual_return_date),
 					label: formatDate(borrow.actual_return_date),
 					title: 'Returned',
-					detail: `By ${who}${borrow.condition_after ? ` · condition: ${borrow.condition_after}` : ''}`,
+					// Who processed the return, plus the condition it came back in —
+					// the pair the record is meant to make auditable.
+					detail: `Confirmed by ${borrow.returned_by_name ?? 'an approver'}${borrow.condition_after ? ` · condition: ${borrow.condition_after}` : ''}`,
 					tone: 'success',
 					icon: CheckCircle2,
 				})
@@ -156,16 +174,6 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 					detail: `Held by ${who}`,
 					tone: 'danger',
 					icon: AlertTriangle,
-				})
-			} else if (borrow.status === 'rejected') {
-				list.push({
-					id: `borrow-rej-${borrow.id}`,
-					at: ms(borrow.updated_at),
-					label: formatDate(borrow.updated_at),
-					title: 'Borrow request rejected',
-					detail: `Requested by ${who}`,
-					tone: 'muted',
-					icon: Clock,
 				})
 			}
 		}

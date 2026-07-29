@@ -118,12 +118,23 @@ create trigger trg_borrow_stock_sync
 after insert or update or delete on public.borrow_records
 for each row execute function public.sync_equipment_stock_on_borrow();
 
--- 5. transition_borrow_record no longer touches equipment.status — the trigger
---    above owns that cascade, and it knows whether any stock is left. The
---    approval guard also changes: it used to demand status = 'available', which
---    is wrong once a partly-loaned item reads 'borrowed'. Now it only refuses
---    out-of-service items; running out of units is caught by the trigger.
---    Everything else is unchanged from 20260728130000.
+-- 5. transition_borrow_record, definitive version. This migration is dated
+--    after 20260729120000_borrow_approver_tracking so that it is the one that
+--    survives, and it has to combine three separate lines of change that all
+--    replaced this same function:
+--
+--      * 20260728130000 — faculty (role 'staff') may approve a STUDENT's
+--        request scoped to their own department. The approver-tracking version
+--        was written from the older function body and does not contain this
+--        clause, so applying it alone silently revokes faculty approval.
+--      * 20260729120000 — stamps approved_at / approved_by_name / returned_by /
+--        returned_by_name so item history can name the approver without a
+--        profiles join. Carried over verbatim.
+--      * this migration — the equipment.status cascade is gone (the stock
+--        trigger above owns it, and only it knows whether any units are left),
+--        and the confirm guard no longer demands status = 'available', which is
+--        wrong once a partly-loaned item reads 'borrowed'. It now refuses only
+--        out-of-service items; running out of units is caught by the trigger.
 create or replace function public.transition_borrow_record(
   p_record_id bigint,
   p_new_status text,
@@ -139,10 +150,11 @@ declare
   v_old_status text;
   v_actor_role text;
   v_actor_department uuid;
+  v_actor_name text;
   v_borrower_role text;
   v_equipment_status text;
 begin
-  select role, department_id into v_actor_role, v_actor_department
+  select role, department_id, full_name into v_actor_role, v_actor_department, v_actor_name
   from public.profiles
   where id = p_actor_id;
 
@@ -201,6 +213,10 @@ begin
   set
     status = p_new_status,
     approved_by = case when p_new_status in ('confirmed', 'rejected') then p_actor_id else approved_by end,
+    approved_at = case when p_new_status in ('confirmed', 'rejected') then now() else approved_at end,
+    approved_by_name = case when p_new_status in ('confirmed', 'rejected') then v_actor_name else approved_by_name end,
+    returned_by = case when p_new_status = 'returned' then p_actor_id else returned_by end,
+    returned_by_name = case when p_new_status = 'returned' then v_actor_name else returned_by_name end,
     actual_return_date = case when p_new_status = 'returned' then now() else actual_return_date end
   where id = p_record_id
   returning * into v_record;

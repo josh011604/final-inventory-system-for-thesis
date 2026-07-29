@@ -64,9 +64,13 @@ export type Database = {
       borrow_records: {
         Row: {
           actual_return_date: string | null
+          approved_at: string | null
           approved_by: string | null
+          approved_by_name: string | null
           borrowed_date: string
           borrower_id: string
+          borrower_name: string | null
+          borrower_role: string | null
           condition_after: string | null
           condition_before: string | null
           created_at: string
@@ -77,14 +81,20 @@ export type Database = {
           id: number
           notes: string | null
           quantity: number
+          returned_by: string | null
+          returned_by_name: string | null
           status: string
           updated_at: string
         }
         Insert: {
           actual_return_date?: string | null
+          approved_at?: string | null
           approved_by?: string | null
+          approved_by_name?: string | null
           borrowed_date?: string
           borrower_id: string
+          borrower_name?: string | null
+          borrower_role?: string | null
           condition_after?: string | null
           condition_before?: string | null
           created_at?: string
@@ -95,14 +105,20 @@ export type Database = {
           id?: number
           notes?: string | null
           quantity?: number
+          returned_by?: string | null
+          returned_by_name?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           actual_return_date?: string | null
+          approved_at?: string | null
           approved_by?: string | null
+          approved_by_name?: string | null
           borrowed_date?: string
           borrower_id?: string
+          borrower_name?: string | null
+          borrower_role?: string | null
           condition_after?: string | null
           condition_before?: string | null
           created_at?: string
@@ -113,6 +129,8 @@ export type Database = {
           id?: number
           notes?: string | null
           quantity?: number
+          returned_by?: string | null
+          returned_by_name?: string | null
           status?: string
           updated_at?: string
         }
@@ -150,6 +168,13 @@ export type Database = {
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrow_records_returned_by_fkey"
+            columns: ["returned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -720,15 +745,7 @@ export type Database = {
       }
     }
     Views: {
-      profile_directory: {
-        Row: {
-          department_id: string | null
-          full_name: string | null
-          id: string | null
-          role: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       current_user_department_id: { Args: never; Returns: string }

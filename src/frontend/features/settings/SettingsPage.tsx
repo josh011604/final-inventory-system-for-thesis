@@ -6,6 +6,8 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Skeleton from '@/components/ui/Skeleton'
 import BackupPage from '@/frontend/features/backup/BackupPage'
+import ChangePasswordCard from '@/frontend/features/settings/ChangePasswordCard'
+import ActivityHistoryCard from '@/frontend/features/settings/ActivityHistoryCard'
 import {
 	useCategories,
 	useCreateCategory,
@@ -272,6 +274,19 @@ function ProfileCard({ user, onAvatarUpdated }: { user: SchoolUser; onAvatarUpda
 				<input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 			</div>
 			{error ? <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div> : null}
+
+			<div className="mt-5 border-t border-border pt-5">
+				<label className={labelClass} htmlFor="registered-email">Registered Email</label>
+				<input
+					id="registered-email"
+					type="email"
+					value={user.email}
+					disabled
+					readOnly
+					className={`${inputClass} cursor-not-allowed bg-border/30 text-text-muted`}
+				/>
+				<p className="mt-1.5 text-xs text-text-muted">Contact admin to change your email.</p>
+			</div>
 		</Card>
 	)
 }
@@ -308,7 +323,11 @@ export default function SettingsPage({ user, onAvatarUpdated }: { user: SchoolUs
 			</Card>
 
 			{tab === 'profile' ? (
-				<ProfileCard user={user} onAvatarUpdated={onAvatarUpdated} />
+				<>
+					<ProfileCard user={user} onAvatarUpdated={onAvatarUpdated} />
+					<ChangePasswordCard user={user} />
+					<ActivityHistoryCard user={user} />
+				</>
 			) : tab === 'general' && isSuperAdmin ? (
 				<>
 					<div className="grid gap-3 sm:grid-cols-3">

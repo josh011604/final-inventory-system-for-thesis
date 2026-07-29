@@ -253,9 +253,10 @@ describe('canApproveBorrow / canReturnBorrow', () => {
 
 	// Faculty authority is conditional on the borrower being a student, so an
 	// unreadable borrower profile silently removes the Approve button. This is
-	// why borrow records fall back to the profile_directory view for the
-	// borrower's role (migration 20260729150000) — without it, faculty could
-	// never clear their own department's student requests.
+	// why the role is denormalized onto borrow_records.borrower_role at write
+	// time (migration 20260729180000) instead of joined from profiles, which RLS
+	// hides — without it, faculty could never clear their department's student
+	// requests.
 	it('cannot judge faculty authority when the borrower’s role is unknown', () => {
 		const unknownBorrower = { department_id: DEPT_A, borrower_id: 'stu', borrower_role: null }
 		expect(canApproveBorrow(unknownBorrower, { id: 'me', role: 'staff', departmentId: DEPT_A })).toBe(false)

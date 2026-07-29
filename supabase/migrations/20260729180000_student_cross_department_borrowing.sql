@@ -34,10 +34,37 @@ using (
   or department_id = public.current_user_department_id()
 );
 
--- 2. Request scope. The trigger is the unconditional backstop for a client that
---    calls the table directly instead of going through the borrow-status edge
---    function. Students lose the own-department restriction but keep the
---    Supply Office one. Replaces the rule from 20260728130000.
+-- 2. The borrower's role, denormalized onto the row.
+--
+--    Faculty may approve a STUDENT's request in their own department, so the
+--    Borrowing screen has to know whether the borrower is a student. It used to
+--    read that from a profiles join, but "profiles select own or admin" RLS lets
+--    a faculty member read only their own profile — the join came back null and
+--    their Approve button silently disappeared. Same problem, and same fix, as
+--    borrower_name in 20260729130000: store it on the row at write time.
+alter table public.borrow_records
+  add column if not exists borrower_role text;
+
+update public.borrow_records br
+set borrower_role = p.role
+from public.profiles p
+where br.borrower_id = p.id and br.borrower_role is null;
+
+-- 3. Request scope, plus the denormalized borrower fields. This trigger is the
+--    unconditional backstop for a client that writes to the table directly
+--    instead of going through the borrow-status edge function.
+--
+--    It combines two lines of change that both replaced this function:
+--      * 20260729130000 — stamps borrower_name so item history can show who
+--        borrowed without a profiles join. Kept.
+--      * this migration — students lose the own-department restriction and keep
+--        only the Supply Office one. Note that the version in 20260729130000
+--        still carried the original "own department only" rule for EVERY role;
+--        that was already relaxed for faculty in 20260728130000 and is relaxed
+--        for students here, so re-applying it would undo both.
+--
+--    borrower_name / borrower_role are always taken from the resolved profile,
+--    never from a client-supplied value.
 create or replace function public.enforce_borrow_department_scope()
 returns trigger
 language plpgsql
@@ -47,13 +74,17 @@ as $$
 declare
 	v_equipment_department uuid;
 	v_borrower_role text;
+	v_borrower_name text;
 begin
 	select department_id into v_equipment_department from public.equipment where id = new.equipment_id;
-	select role into v_borrower_role from public.profiles where id = new.borrower_id;
+	select role, full_name into v_borrower_role, v_borrower_name from public.profiles where id = new.borrower_id;
 
 	if v_borrower_role = 'student' and v_equipment_department is null then
 		raise exception 'Students cannot request Supply Office items' using errcode = '42501';
 	end if;
+
+	new.borrower_name := v_borrower_name;
+	new.borrower_role := v_borrower_role;
 
 	return new;
 end;

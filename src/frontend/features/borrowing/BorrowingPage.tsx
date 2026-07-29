@@ -22,10 +22,13 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 
 	// The signed-in user as a potential approver; each row is checked against it.
 	const approver = { id: user.id, role: user.role, departmentId: user.departmentId }
+	// borrower_role is denormalized onto the row (not joined from profiles) so a
+	// faculty viewer can actually read it — their Approve button for a student's
+	// request depends on it, and the profiles policy hides other users' rows.
 	const asRecord = (row: BorrowRecordRow) => ({
 		department_id: row.department_id,
 		borrower_id: row.borrower_id,
-		borrower_role: row.borrower?.role ?? null,
+		borrower_role: row.borrower_role ?? null,
 	})
 
 	const [open, setOpen] = useState(false)
@@ -128,30 +131,38 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 									{row.equipment?.equipment_name ?? mainSupplyNameById.get(row.equipment_id) ?? '—'}
 									{(row.quantity ?? 1) > 1 ? <span className="ml-1.5 text-xs font-semibold text-text-muted">× {row.quantity}</span> : null}
 								</p>
-								<p className="text-xs text-text-muted">{row.borrower?.full_name ?? '—'}</p>
+								<p className="text-xs text-text-muted">{row.borrower_name ?? '—'}</p>
 							</div>
 						),
 					},
 					{ header: 'Department', render: (row) => row.departments?.name ?? 'Supply Office' },
 					{ header: 'Qty', render: (row) => row.quantity ?? 1 },
 					{ header: 'Due', render: (row) => (row.expected_return_date ? new Date(row.expected_return_date).toLocaleDateString() : '—') },
-					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
 					{
-						// Who approved the request — recorded so a borrow can always be
-						// traced back to the person who authorized it. An auto-approved
-						// request is stamped with the borrower's own name (they held the
-						// approval authority), so it is labelled as such rather than
-						// reading like someone rubber-stamped themselves.
+						// Who approved the request, and when — recorded so a borrow can
+						// always be traced back to the person who authorized it. An
+						// auto-approved request is stamped with the borrower's own name
+						// (they held the approval authority), so it is labelled as such
+						// rather than reading like someone rubber-stamped themselves.
 						header: 'Approved by',
 						render: (row) =>
-							row.approved_by && row.approved_by === row.borrower_id ? (
-								<span className="text-text-muted">
-									{row.approver?.full_name ?? '—'} <span className="text-xs">· auto</span>
+							row.approved_by_name ? (
+								<span>
+									<span className="block text-text-primary">
+										{row.approved_by_name}
+										{row.approved_by && row.approved_by === row.borrower_id ? (
+											<span className="ml-1 text-xs font-normal text-text-muted">· auto</span>
+										) : null}
+									</span>
+									<span className="block text-xs text-text-muted">
+										{row.approved_at ? new Date(row.approved_at).toLocaleDateString() : ''}
+									</span>
 								</span>
 							) : (
-								<span className="text-text-muted">{row.approver?.full_name ?? '—'}</span>
+								'—'
 							),
 					},
+					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
 					{
 						header: 'Actions',
 						render: (row) =>
