@@ -720,7 +720,15 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profile_directory: {
+        Row: {
+          department_id: string | null
+          full_name: string | null
+          id: string | null
+          role: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       current_user_department_id: { Args: never; Returns: string }

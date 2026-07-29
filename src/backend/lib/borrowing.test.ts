@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { borrowBlockedReason, borrowPenaltyReason, borrowScopeReason, canApproveBorrow, canReturnBorrow, displayStatus, freeUnits, isBorrowable, isBorrowOverdue, isSelfBorrowRequest, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowBlockedReason, borrowPenaltyReason, borrowScopeReason, canApproveBorrow, canReturnBorrow, displayStatus, freeUnits, isBorrowable, isBorrowOverdue, isLowStock, isSelfBorrowRequest, totalUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 
 const item = (overrides: Partial<{ id: number; quantity: number | null; status: string }> = {}) => ({
 	id: 1,
@@ -38,77 +38,106 @@ describe('unitsOutByEquipmentId', () => {
 	})
 })
 
+// equipment.quantity is the ON-HAND stock: the database already subtracted every
+// approved borrow's units from it, so freeUnits reads it directly and must NOT
+// subtract the units-out map a second time.
 describe('freeUnits', () => {
-	it('subtracts the units already out', () => {
-		expect(freeUnits(item({ quantity: 3 }), new Map([[1, 2]]))).toBe(1)
+	it('reads the on-hand quantity without deducting units out again', () => {
+		expect(freeUnits(item({ quantity: 3 }))).toBe(3)
 	})
 
-	it('treats a null quantity as a single unit', () => {
-		expect(freeUnits(item({ quantity: null }), new Map())).toBe(1)
-		expect(freeUnits(item({ quantity: null }), new Map([[1, 1]]))).toBe(0)
+	it('treats a missing quantity as no stock', () => {
+		expect(freeUnits(item({ quantity: null }))).toBe(0)
 	})
 
-	it('never goes negative when more are out than the recorded quantity', () => {
-		expect(freeUnits(item({ quantity: 1 }), new Map([[1, 3]]))).toBe(0)
+	it('never goes negative', () => {
+		expect(freeUnits(item({ quantity: -2 }))).toBe(0)
+	})
+})
+
+describe('totalUnits', () => {
+	it('adds the units out on loan back onto the on-hand stock', () => {
+		// 7 left on the shelf + 3 out on loan = the item's original 10.
+		expect(totalUnits(item({ quantity: 7 }), new Map([[1, 3]]))).toBe(10)
+	})
+
+	it('equals the on-hand stock when nothing is out', () => {
+		expect(totalUnits(item({ quantity: 4 }), new Map())).toBe(4)
 	})
 
 	it('is unaffected by counts for other items', () => {
-		expect(freeUnits(item({ id: 1, quantity: 2 }), new Map([[99, 5]]))).toBe(2)
+		expect(totalUnits(item({ id: 1, quantity: 2 }), new Map([[99, 5]]))).toBe(2)
 	})
 })
 
 describe('isBorrowable / borrowBlockedReason', () => {
-	it('allows an available item with a free unit', () => {
-		expect(isBorrowable(item(), new Map())).toBe(true)
+	it('allows an available item with stock on hand', () => {
+		expect(isBorrowable(item())).toBe(true)
 		expect(borrowBlockedReason(item(), new Map())).toBeNull()
 	})
 
-	it('blocks an item whose units are all out', () => {
+	it('blocks an item whose stock is all out on loan', () => {
+		// Nothing on the shelf, 3 units out → they are coming back.
 		const unitsOut = new Map([[1, 3]])
-		expect(isBorrowable(item({ quantity: 3 }), unitsOut)).toBe(false)
-		expect(borrowBlockedReason(item({ quantity: 3 }), unitsOut)).toMatch(/currently out on loan/i)
+		expect(isBorrowable(item({ quantity: 0 }))).toBe(false)
+		expect(borrowBlockedReason(item({ quantity: 0 }), unitsOut)).toMatch(/currently out on loan/i)
 	})
 
 	it.each(['maintenance', 'damaged', 'lost', 'disposed'])('blocks an out-of-service item marked %s', (status) => {
-		expect(isBorrowable(item({ status }), new Map())).toBe(false)
+		expect(isBorrowable(item({ status }))).toBe(false)
 		expect(borrowBlockedReason(item({ status }), new Map())).toContain(status)
 	})
 
 	it('keeps a partly-loaned item borrowable while stock remains', () => {
-		// 3 in stock, 1 already out → 2 free, so it can still be borrowed even
-		// though the coarse equipment status may read 'borrowed'.
-		const unitsOut = new Map([[1, 1]])
-		expect(isBorrowable(item({ quantity: 3, status: 'borrowed' }), unitsOut)).toBe(true)
-		expect(borrowBlockedReason(item({ quantity: 3, status: 'borrowed' }), unitsOut)).toBeNull()
+		// 2 left on the shelf, 1 out; the coarse equipment status may still read
+		// 'borrowed' from an earlier full loan-out, which must not block it.
+		expect(isBorrowable(item({ quantity: 2, status: 'borrowed' }))).toBe(true)
+		expect(borrowBlockedReason(item({ quantity: 2, status: 'borrowed' }), new Map([[1, 1]]))).toBeNull()
 	})
 
 	it('blocks an out-of-stock item and says so', () => {
-		expect(isBorrowable(item({ quantity: 0 }), new Map())).toBe(false)
+		// Nothing on the shelf and nothing out on loan → there is none to lend.
+		expect(isBorrowable(item({ quantity: 0 }))).toBe(false)
 		expect(borrowBlockedReason(item({ quantity: 0 }), new Map())).toMatch(/out of stock/i)
 	})
 })
 
+describe('isLowStock', () => {
+	it('flags an item down to its last units', () => {
+		// 1 left on hand of an original 10 → 10% remaining, under the 20% mark.
+		expect(isLowStock(item({ quantity: 1 }), new Map([[1, 9]]))).toBe(true)
+	})
+
+	it('does not flag an item still comfortably stocked', () => {
+		expect(isLowStock(item({ quantity: 8 }), new Map([[1, 2]]))).toBe(false)
+	})
+
+	it('does not flag an empty shelf — that is unavailable, not low', () => {
+		expect(isLowStock(item({ quantity: 0 }), new Map([[1, 10]]))).toBe(false)
+	})
+
+	it('does not flag a fully-stocked item', () => {
+		expect(isLowStock(item({ quantity: 10 }), new Map())).toBe(false)
+	})
+})
+
 describe('displayStatus', () => {
-	it('keeps the raw status when a unit is free', () => {
-		expect(displayStatus(item({ quantity: 3 }), new Map([[1, 1]]))).toBe('available')
+	it('reads available while any unit is on hand', () => {
+		expect(displayStatus(item({ quantity: 3 }))).toBe('available')
 	})
 
-	it('reports an available item with zero stock as unavailable', () => {
-		expect(displayStatus(item({ quantity: 0 }), new Map())).toBe('unavailable')
-	})
-
-	it('reports an available item with every unit out on loan as unavailable', () => {
-		expect(displayStatus(item({ quantity: 2 }), new Map([[1, 2]]))).toBe('unavailable')
+	it('reports an item with an empty shelf as unavailable', () => {
+		expect(displayStatus(item({ quantity: 0 }))).toBe('unavailable')
 	})
 
 	it('still reads available when only some units are out on loan', () => {
-		// 3 in stock, 2 out → 1 free; a 'borrowed' equipment status must not hide
-		// that there is still stock to lend.
-		expect(displayStatus(item({ quantity: 3, status: 'borrowed' }), new Map([[1, 2]]))).toBe('available')
+		// 1 left in stock; a stale 'borrowed' equipment status must not hide that
+		// there is still something to lend.
+		expect(displayStatus(item({ quantity: 1, status: 'borrowed' }))).toBe('available')
 	})
 
 	it.each(['maintenance', 'damaged', 'lost', 'disposed'])('passes an out-of-service status through untouched (%s)', (status) => {
-		expect(displayStatus(item({ status }), new Map())).toBe(status)
+		expect(displayStatus(item({ status }))).toBe(status)
 	})
 })
 
@@ -133,11 +162,19 @@ describe('borrowScopeReason', () => {
 	})
 
 	it('keeps students out of the Supply Office pool', () => {
-		expect(borrowScopeReason(supplyItem, { role: 'student', departmentId: DEPT_A })).toMatch(/students can only request/i)
+		expect(borrowScopeReason(supplyItem, { role: 'student', departmentId: DEPT_A })).toMatch(/supply office/i)
 	})
 
-	it('blocks a student from another department’s stock', () => {
-		expect(borrowScopeReason({ department_id: DEPT_B }, { role: 'student', departmentId: DEPT_A })).toMatch(/students can only request/i)
+	// Students may request another department's stock; it is routed to that
+	// department for approval. The Supply Office is the only thing they cannot
+	// reach — see the Inventory screen (own department only) vs the New Request
+	// picker (every department).
+	it('lets a student request another department’s item', () => {
+		expect(borrowScopeReason({ department_id: DEPT_B }, { role: 'student', departmentId: DEPT_A })).toBeNull()
+	})
+
+	it('lets a student request their own department’s item', () => {
+		expect(borrowScopeReason({ department_id: DEPT_A }, { role: 'student', departmentId: DEPT_A })).toBeNull()
 	})
 
 	it('lets a super admin request department stock (routed to that department’s admin)', () => {
@@ -182,6 +219,49 @@ describe('canApproveBorrow / canReturnBorrow', () => {
 
 	it('gives students no approval authority', () => {
 		expect(canApproveBorrow(studentReq, { id: 'me', role: 'student', departmentId: DEPT_A })).toBe(false)
+	})
+
+	// A Supply Office request carries department_id = null, which no department
+	// admin's department can ever equal — so it lands with the super admin alone.
+	// (Read RLS keeps it out of their Borrowing list entirely; this is the
+	// second, independent guard.)
+	describe('a Supply Office request', () => {
+		const supplyReq = { department_id: null, borrower_id: 'fac', borrower_role: 'staff' }
+
+		it('is approvable by the super admin', () => {
+			expect(canApproveBorrow(supplyReq, { id: 'me', role: 'super_admin', departmentId: null })).toBe(true)
+		})
+
+		it('is not approvable by any department admin', () => {
+			expect(canApproveBorrow(supplyReq, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
+			expect(canApproveBorrow(supplyReq, { id: 'me', role: 'department_admin', departmentId: DEPT_B })).toBe(false)
+		})
+
+		it('is not approvable by faculty', () => {
+			expect(canApproveBorrow(supplyReq, { id: 'me', role: 'staff', departmentId: DEPT_A })).toBe(false)
+		})
+	})
+
+	// Faculty may borrow from a department they do not belong to; the request is
+	// scoped to the ITEM's department, so it is that department's admin who
+	// clears it — not the admin of the faculty member's own department.
+	it('routes a cross-department faculty request to the item’s department admin', () => {
+		const crossDeptReq = { department_id: DEPT_B, borrower_id: 'fac', borrower_role: 'staff' }
+		expect(canApproveBorrow(crossDeptReq, { id: 'me', role: 'department_admin', departmentId: DEPT_B })).toBe(true)
+		expect(canApproveBorrow(crossDeptReq, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
+	})
+
+	// Faculty authority is conditional on the borrower being a student, so an
+	// unreadable borrower profile silently removes the Approve button. This is
+	// why borrow records fall back to the profile_directory view for the
+	// borrower's role (migration 20260729150000) — without it, faculty could
+	// never clear their own department's student requests.
+	it('cannot judge faculty authority when the borrower’s role is unknown', () => {
+		const unknownBorrower = { department_id: DEPT_A, borrower_id: 'stu', borrower_role: null }
+		expect(canApproveBorrow(unknownBorrower, { id: 'me', role: 'staff', departmentId: DEPT_A })).toBe(false)
+		// A department admin's authority does not depend on the borrower's role,
+		// so their button is unaffected.
+		expect(canApproveBorrow(unknownBorrower, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(true)
 	})
 })
 

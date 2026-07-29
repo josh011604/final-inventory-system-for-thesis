@@ -69,9 +69,11 @@ Deno.serve(async (req) => {
 
 	const items = data ?? []
 
-	// Per-unit availability: quantity minus units currently out on active borrows.
-	// A single request can hold several units, so sum quantities rather than
-	// counting rows.
+	// equipment.quantity is the ON-HAND stock: the sync_equipment_stock_on_borrow
+	// trigger subtracts each approved request's units from it and adds them back
+	// on return. So available_units is simply that column. Units still out on
+	// loan are summed only to report the item's full stock (`quantity`), which
+	// the pickers show as "3 of 10 free".
 	const { data: activeBorrows } = await adminClient
 		.from('borrow_records')
 		.select('equipment_id, quantity')
@@ -85,10 +87,14 @@ Deno.serve(async (req) => {
 
 	return json(
 		{
-			data: items.map((item) => ({
-				...item,
-				available_units: Math.max((item.quantity ?? 1) - (unitsOut.get(item.id) ?? 0), 0),
-			})),
+			data: items.map((item) => {
+				const onHand = Math.max(item.quantity ?? 0, 0)
+				return {
+					...item,
+					available_units: onHand,
+					quantity: onHand + (unitsOut.get(item.id) ?? 0),
+				}
+			}),
 		},
 		200,
 	)

@@ -121,13 +121,18 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 				icon: ArrowRightLeft,
 			})
 			// Who approved it — recorded so every borrow is traceable to its approver.
+			// A request the borrower had the authority to approve themselves (super
+			// admin on a Supply Office item, department admin on their own
+			// department's item) is stamped with their own id; say so explicitly
+			// instead of showing it as an ordinary approval.
+			const wasAutoApproved = borrow.approved_by != null && borrow.approved_by === borrow.borrower_id
 			if (borrow.approver?.full_name && (borrow.status === 'confirmed' || borrow.status === 'borrowed' || borrow.status === 'overdue' || borrow.actual_return_date)) {
 				list.push({
 					id: `borrow-appr-${borrow.id}`,
 					at: ms(borrow.updated_at),
 					label: formatDate(borrow.updated_at),
-					title: 'Borrow approved',
-					detail: `By ${borrow.approver.full_name}`,
+					title: wasAutoApproved ? 'Auto-approved' : 'Borrow approved',
+					detail: wasAutoApproved ? `${borrow.approver.full_name} — own inventory, no approval step` : `By ${borrow.approver.full_name}`,
 					tone: 'info',
 					icon: CheckCircle2,
 				})
@@ -242,7 +247,7 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 							const isLast = index === events.length - 1
 							return (
 								<li key={event.id} className="relative flex gap-3">
-									{!isLast ? <span className="absolute left-[15px] top-9 bottom-[-16px] w-px bg-border" /> : null}
+									{!isLast ? <span className="absolute left-3.75 top-9 -bottom-4 w-px bg-border" /> : null}
 									<span className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${chipClass[event.tone]}`}>
 										<Icon className="h-4 w-4" />
 										<span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-surface ${dotClass[event.tone]}`} />

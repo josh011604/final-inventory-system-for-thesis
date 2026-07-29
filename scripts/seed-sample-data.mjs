@@ -241,6 +241,14 @@ async function main() {
 		for (const [name, id] of existingByName) facilityIdByKey.set(`null::${name}`, id)
 	}
 
+	// --- Clear previously seeded borrow/maintenance rows (marker only) ------
+	// Must happen BEFORE the equipment upsert: deleting an active borrow returns
+	// its units to equipment.quantity (which is the on-hand stock), so the upsert
+	// below has to run afterwards to reset each item to its nominal full stock.
+	// The seeded borrows re-inserted further down then deduct from that again.
+	await withRetry(() => admin.from('borrow_records').delete().ilike('notes', `%${MARKER}%`))
+	await withRetry(() => admin.from('maintenance_requests').delete().ilike('description', `%${MARKER}%`))
+
 	// --- Equipment (upsert on unique equipment_code) ------------------------
 	const equipmentRows = []
 	for (const [deptName, config] of Object.entries(DEPARTMENTS)) {
@@ -291,10 +299,6 @@ async function main() {
 	)
 	if (eqReadError) throw new Error(`Equipment read-back failed: ${eqReadError.message}`)
 	const equipByCode = new Map(equipRows.map((e) => [e.equipment_code, e]))
-
-	// --- Clear previously seeded borrow/maintenance rows (marker only) ------
-	await withRetry(() => admin.from('borrow_records').delete().ilike('notes', `%${MARKER}%`))
-	await withRetry(() => admin.from('maintenance_requests').delete().ilike('description', `%${MARKER}%`))
 
 	// --- Borrow records -----------------------------------------------------
 	const borrowRows = []

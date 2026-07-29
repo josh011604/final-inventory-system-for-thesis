@@ -138,9 +138,19 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 					{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
 					{
 						// Who approved the request — recorded so a borrow can always be
-						// traced back to the person who authorized it.
+						// traced back to the person who authorized it. An auto-approved
+						// request is stamped with the borrower's own name (they held the
+						// approval authority), so it is labelled as such rather than
+						// reading like someone rubber-stamped themselves.
 						header: 'Approved by',
-						render: (row) => <span className="text-text-muted">{row.approver?.full_name ?? '—'}</span>,
+						render: (row) =>
+							row.approved_by && row.approved_by === row.borrower_id ? (
+								<span className="text-text-muted">
+									{row.approver?.full_name ?? '—'} <span className="text-xs">· auto</span>
+								</span>
+							) : (
+								<span className="text-text-muted">{row.approver?.full_name ?? '—'}</span>
+							),
 					},
 					{
 						header: 'Actions',

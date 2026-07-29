@@ -17,6 +17,12 @@ export const ACTIVE_BORROW_STATUSES = new Set(['confirmed', 'borrowed', 'return_
 
 // Total units out per item — the SUM of each active request's quantity, not a
 // row count, so a single multi-unit request removes as many units as it holds.
+//
+// NOTE: `equipment.quantity` is now decremented directly when a borrow is
+// approved (see the sync_equipment_stock_on_borrow trigger), so this count is
+// NOT what makes an item unavailable any more. It only exists to reconstruct
+// the item's ORIGINAL stock for display ("3 of 10 left") and for the low-stock
+// ratio, since the on-hand number alone can't say what "full" was.
 export function unitsOutByEquipmentId(records: readonly BorrowRecordLike[]): Map<number, number> {
 	const counts = new Map<number, number>()
 	for (const record of records) {
@@ -27,8 +33,19 @@ export function unitsOutByEquipmentId(records: readonly BorrowRecordLike[]): Map
 	return counts
 }
 
-export function freeUnits(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): number {
-	return Math.max((item.quantity ?? 1) - (unitsOut.get(item.id) ?? 0), 0)
+// Units on the shelf right now. `equipment.quantity` IS the on-hand stock: the
+// database subtracts the borrowed amount when a request is approved and adds it
+// back on return, so nothing needs subtracting here.
+export function freeUnits(item: BorrowableItem): number {
+	return Math.max(item.quantity ?? 0, 0)
+}
+
+// The item's full stock — what is on the shelf plus what is out on loan. Only
+// meaningful for display; the borrowed half is reconstructed from the borrow
+// records the caller can see, so a user whose RLS hides other departments'
+// requests may see a smaller total. Availability never depends on it.
+export function totalUnits(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): number {
+	return freeUnits(item) + (unitsOut.get(item.id) ?? 0)
 }
 
 // Statuses that take an item out of service entirely: no unit can be borrowed
@@ -37,18 +54,18 @@ export function freeUnits(item: BorrowableItem, unitsOut: ReadonlyMap<number, nu
 // the item stays borrowable as long as free units remain.
 export const OUT_OF_SERVICE_STATUSES = new Set(['maintenance', 'damaged', 'lost', 'disposed'])
 
-// An item is borrowable when it is in service and at least one unit is free.
-export function isBorrowable(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): boolean {
-	return !OUT_OF_SERVICE_STATUSES.has(item.status) && freeUnits(item, unitsOut) > 0
+// An item is borrowable when it is in service and at least one unit is on hand.
+export function isBorrowable(item: BorrowableItem): boolean {
+	return !OUT_OF_SERVICE_STATUSES.has(item.status) && freeUnits(item) > 0
 }
 
 // Why a given item cannot be borrowed right now — null when it can be.
 export function borrowBlockedReason(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): string | null {
 	if (OUT_OF_SERVICE_STATUSES.has(item.status)) return `This item is marked ${item.status.replace('_', ' ')}.`
-	if (freeUnits(item, unitsOut) === 0) {
-		// A zero stock and a fully-loaned-out stock both leave no free units,
-		// but the reason the button is disabled is different for each.
-		return (item.quantity ?? 1) === 0 ? 'This item is out of stock.' : 'Every unit of this item is currently out on loan.'
+	if (freeUnits(item) === 0) {
+		// Nothing on the shelf either way, but the reason differs: the stock is
+		// out on loan (and will come back) or the item simply has none left.
+		return (unitsOut.get(item.id) ?? 0) > 0 ? 'Every unit of this item is currently out on loan.' : 'This item is out of stock.'
 	}
 	return null
 }
@@ -65,19 +82,20 @@ export const LOW_STOCK_RATIO = 0.2
 // which are either fully available or already 'unavailable', never "low".
 export function isLowStock(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): boolean {
 	if (OUT_OF_SERVICE_STATUSES.has(item.status)) return false
-	const total = item.quantity ?? 1
-	const free = freeUnits(item, unitsOut)
+	const total = totalUnits(item, unitsOut)
+	const free = freeUnits(item)
 	if (free === 0 || free >= total) return false
 	return free <= Math.max(1, Math.floor(total * LOW_STOCK_RATIO))
 }
 
-// The status to show in the Inventory list. Availability is driven by free units,
-// not the coarse equipment status: an item with stock left reads 'available' even
-// while some of its units are out on loan, and only reads 'unavailable' once every
-// unit is gone. Out-of-service statuses (maintenance, damaged…) are shown as-is.
-export function displayStatus(item: BorrowableItem, unitsOut: ReadonlyMap<number, number>): string {
+// The status to show in the Inventory list. Availability is driven by on-hand
+// stock, not the coarse equipment status: an item with stock left reads
+// 'available' even while some of its units are out on loan, and only reads
+// 'unavailable' once the shelf is empty. Out-of-service statuses (maintenance,
+// damaged…) are shown as-is.
+export function displayStatus(item: BorrowableItem): string {
 	if (OUT_OF_SERVICE_STATUSES.has(item.status)) return item.status
-	return freeUnits(item, unitsOut) === 0 ? 'unavailable' : 'available'
+	return freeUnits(item) === 0 ? 'unavailable' : 'available'
 }
 
 export type ScopedItem = { department_id: string | null }
@@ -94,15 +112,15 @@ export function isSelfBorrowRequest(record: ApprovableRecord, actorId: string): 
 }
 
 // Mirrors the enforce_borrow_department_scope database trigger so the UI never
-// offers a request the server will reject. Only STUDENTS are department-locked:
-// a student may request only their own department's items and never the central
-// Supply Office pool. Everyone else (staff/faculty, department admins, the super
-// admin) may request Supply Office items and any department's items — a
-// cross-department request is simply routed to that item's department admin.
+// offers a request the server will reject. Every role may request any
+// DEPARTMENT's items — a cross-department request is routed to that item's
+// department admin. The one remaining restriction is that STUDENTS may not
+// request from the central Supply Office pool (items with no department), which
+// stays super-admin business.
 export function borrowScopeReason(item: ScopedItem, borrower: Borrower): string | null {
 	if (borrower.role !== 'student') return null
-	if (item.department_id === null || item.department_id !== borrower.departmentId) {
-		return 'Students can only request items from their own department.'
+	if (item.department_id === null) {
+		return 'Students cannot request Supply Office items.'
 	}
 	return null
 }

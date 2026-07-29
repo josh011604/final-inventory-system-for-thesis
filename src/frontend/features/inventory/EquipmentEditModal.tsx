@@ -100,9 +100,13 @@ export default function EquipmentEditModal({
 					</div>
 					<div>
 						<label className={labelClass} htmlFor="edit-quantity">
-							Quantity
+							Quantity in stock
 						</label>
 						<input id="edit-quantity" type="number" min={0} value={quantity} onChange={(event) => setQuantity(event.target.value)} className={inputClass} />
+						{/* Units out on loan are already deducted from this number and are
+						    added back automatically on return — edit it only to record
+						    stock actually arriving or leaving the shelf. */}
+						<p className="mt-1 text-xs text-text-muted">Units on hand now — borrowed units are already deducted.</p>
 					</div>
 				</div>
 

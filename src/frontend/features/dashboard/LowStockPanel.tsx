@@ -4,7 +4,7 @@ import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
 import { useBorrowRecords, useEquipment } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
-import { freeUnits, isLowStock, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { freeUnits, isLowStock, totalUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 
 // How many low-stock rows to list before deferring the rest to the Inventory page.
@@ -29,8 +29,9 @@ export default function LowStockPanel({ user }: { user: SchoolUser }) {
 	// everyone else only their own department's stock.
 	const scopedEquipment = user.role === 'super_admin' ? (equipment ?? []) : (equipment ?? []).filter((item) => item.department_id === user.departmentId)
 
-	// Units out per item — the same figure that deducts from availability until
-	// each borrow is returned. Low stock is entirely a product of these.
+	// Units out per item. The stock itself is already deducted in the database
+	// (equipment.quantity is what is on hand), so this only rebuilds each item's
+	// full stock — the denominator the low-stock ratio is measured against.
 	const unitsOut = unitsOutByEquipmentId(borrowRecords ?? [])
 
 	// Units currently overdue per item, so a row can flag how much of its missing
@@ -47,8 +48,8 @@ export default function LowStockPanel({ user }: { user: SchoolUser }) {
 			name: item.equipment_name,
 			code: item.equipment_code,
 			department: item.departments?.name ?? 'Main Supply',
-			total: item.quantity ?? 1,
-			free: freeUnits(item, unitsOut),
+			total: totalUnits(item, unitsOut),
+			free: freeUnits(item),
 			out: unitsOut.get(item.id) ?? 0,
 			overdue: overdueUnits.get(item.id) ?? 0,
 		}))

@@ -10,7 +10,7 @@ import EquipmentEditModal from '@/frontend/features/inventory/EquipmentEditModal
 import BorrowRequestModal from '@/frontend/features/borrowing/BorrowRequestModal'
 import { useBorrowRecords, useCreateEquipment, useDepartments, useEquipment, useFacilities } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
-import { borrowBlockedReason, borrowPenaltyReason, borrowScopeReason, displayStatus, freeUnits, isLowStock, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowBlockedReason, borrowPenaltyReason, borrowScopeReason, displayStatus, freeUnits, isLowStock, totalUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 import { getErrorMessage } from '@/backend/lib/errors'
 
@@ -67,11 +67,12 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 	const createEquipment = useCreateEquipment()
 
 	const canManage = user.role === 'super_admin' || user.role === 'department_admin'
-	// Inventory visibility: the super admin and faculty (staff) see every item,
-	// since faculty may now borrow from any department. Department admins and
-	// students stay scoped to their own department's items.
-	const visibleItems =
-		user.role === 'super_admin' || user.role === 'staff' ? data : data?.filter((item) => item.department_id === user.departmentId)
+	// Inventory visibility: this screen is about the stock you work with, so
+	// every role except the super admin sees only their OWN department's items —
+	// faculty included, even though they may borrow far more widely than that.
+	// Other departments' stock and the Supply Office pool are reachable through
+	// Borrowing → New Request instead (see useBorrowCandidates).
+	const visibleItems = user.role === 'super_admin' ? data : data?.filter((item) => item.department_id === user.departmentId)
 
 	// Per-item Borrow: how many units of each item are already out on an active
 	// loan, so a row only offers Borrow when a unit is genuinely free. The
@@ -152,7 +153,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 			<EntityTablePage<EquipmentRow>
 				title="Inventory Items"
 				subtitle={
-					user.role === 'super_admin' || user.role === 'staff'
+					user.role === 'super_admin'
 						? `${visibleItems?.length ?? 0} items · click a row for its history`
 						: `${user.department || 'Department'} inventory · ${visibleItems?.length ?? 0} items · click a row for history`
 				}
@@ -179,17 +180,22 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 					{
 						header: 'Available',
 						render: (row) => {
-							const free = freeUnits(row, unitsOut)
+							// `free` is the stored on-hand quantity — approving a borrow for N
+							// units has already subtracted N from it in the database. `total`
+							// adds back what is out on loan, purely so the row can show the
+							// item's full stock alongside it.
+							const free = freeUnits(row)
+							const total = totalUnits(row, unitsOut)
 							const low = isLowStock(row, unitsOut)
 							return (
 								<span className="inline-flex items-center gap-1.5">
 									<span className={free === 0 ? 'text-text-muted' : 'text-text-primary'}>
-										{free} / {row.quantity ?? 1}
+										{free} / {total}
 									</span>
 									{low ? (
 										<span
 											className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning ring-1 ring-inset ring-warning/25"
-											title={`Low stock — only ${free} of ${row.quantity ?? 1} unit${free === 1 ? '' : 's'} left`}
+											title={`Low stock — only ${free} of ${total} unit${free === 1 ? '' : 's'} left`}
 										>
 											<AlertTriangle className="h-3 w-3" aria-hidden />
 											Low stock
@@ -204,7 +210,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 						render: (row) => {
 							// Show the real availability, not the raw DB status: an item with no
 							// free units reads as 'unavailable' so the chip matches the Borrow button.
-							const label = displayStatus(row, unitsOut)
+							const label = displayStatus(row)
 							return <StatusChip tone={statusTone[label] ?? 'muted'}>{label}</StatusChip>
 						},
 					},
@@ -282,8 +288,8 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 								id: borrowItem.id,
 								equipment_code: borrowItem.equipment_code,
 								equipment_name: borrowItem.equipment_name,
-								quantity: borrowItem.quantity ?? 1,
-								freeUnits: freeUnits(borrowItem, unitsOut),
+								quantity: totalUnits(borrowItem, unitsOut),
+								freeUnits: freeUnits(borrowItem),
 								source: borrowItem.department_id === null ? 'supply' : 'department',
 								departmentName: borrowItem.departments?.name ?? undefined,
 							}
@@ -363,7 +369,7 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 						</div>
 						<div>
 							<label className={labelClass} htmlFor="eq-quantity">
-								Quantity
+								Quantity in stock
 							</label>
 							<input id="eq-quantity" type="number" min={1} value={quantity} onChange={(event) => setQuantity(event.target.value)} className={inputClass} />
 						</div>

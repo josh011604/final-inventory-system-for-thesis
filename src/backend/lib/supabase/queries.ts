@@ -300,18 +300,49 @@ export type BorrowRecordRow = Tables<'borrow_records'> & {
 	approver: { full_name: string } | null
 }
 
+// Identity-only lookup for the people on a borrow record. The profiles table
+// itself is readable only by the owner, super admins, and the department admin
+// of that profile's department — so a faculty member cannot see that a request
+// came from a student, and a student cannot see who approved theirs. The
+// profile_directory view (migration 20260729150000) exposes just id/name/role/
+// department under a narrower rule and fills both gaps.
+//
+// A failure here is never fatal: it falls back to an empty map, and the joined
+// profile rows below still cover the super admin / department admin cases. That
+// keeps the screen working if the view has not been deployed yet.
+type DirectoryProfile = { full_name: string; role: string }
+
+async function fetchProfileDirectory(): Promise<Map<string, DirectoryProfile>> {
+	const { data, error } = await supabase.from('profile_directory').select('id, full_name, role')
+	if (error) return new Map()
+	const entries = (data ?? []).flatMap((row) =>
+		row.id ? [[row.id, { full_name: row.full_name ?? '', role: row.role ?? '' }] as const] : [],
+	)
+	return new Map(entries)
+}
+
 export function useBorrowRecords() {
 	return useQuery({
 		queryKey: ['borrow_records'],
 		queryFn: async () => {
-			const { data, error } = await supabase
-				.from('borrow_records')
-				.select(
-					'*, equipment(equipment_name), departments(name), borrower:profiles!borrow_records_borrower_id_fkey(full_name, role), approver:profiles!borrow_records_approved_by_fkey(full_name)',
-				)
-				.order('created_at', { ascending: false })
+			const [{ data, error }, directory] = await Promise.all([
+				supabase
+					.from('borrow_records')
+					.select(
+						'*, equipment(equipment_name), departments(name), borrower:profiles!borrow_records_borrower_id_fkey(full_name, role), approver:profiles!borrow_records_approved_by_fkey(full_name)',
+					)
+					.order('created_at', { ascending: false }),
+				fetchProfileDirectory(),
+			])
 			if (error) throw error
-			return data as unknown as BorrowRecordRow[]
+			const rows = data as unknown as BorrowRecordRow[]
+			// The directory only fills in what the join could not read; it never
+			// overwrites a profile row the caller was already allowed to see.
+			return rows.map((row) => ({
+				...row,
+				borrower: row.borrower ?? directory.get(row.borrower_id) ?? null,
+				approver: row.approver ?? (row.approved_by ? directory.get(row.approved_by) ?? null : null),
+			}))
 		},
 	})
 }

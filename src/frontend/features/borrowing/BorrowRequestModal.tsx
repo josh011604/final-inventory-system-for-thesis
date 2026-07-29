@@ -194,7 +194,10 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 										{filteredDepartment.length > 0 ? (
 											<div>
 												<p className="bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
-													{user.role === 'staff' ? 'Departments' : user.department || 'My Department'} · {filteredDepartment.length} available
+													{/* Faculty and students both draw from every department here, so the
+													    group is labelled generically and each row names its own department. */}
+													{user.role === 'staff' || user.role === 'student' ? 'Departments' : user.department || 'My Department'} ·{' '}
+													{filteredDepartment.length} available
 												</p>
 												{filteredDepartment.map((item) => (
 													<button
@@ -214,7 +217,9 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 						) : null}
 						<p className="mt-1.5 text-xs text-text-muted">
 							{user.role === 'student'
-								? "Requests are approved by your department's admin or faculty."
+								? // A student may request any department's stock, so the approver is
+									// the admin or faculty of the ITEM's department, not always their own.
+									"Requests are approved by the admin or faculty of the item's department."
 								: supply.length > 0
 									? "Supply Office requests are approved by the Super Admin; department items by that department's admin."
 									: "Department items are approved by that department's admin."}

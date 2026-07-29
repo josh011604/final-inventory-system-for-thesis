@@ -83,17 +83,6 @@ Deno.serve(async (req) => {
 		return json({ error: 'Account is not active' }, 403)
 	}
 
-	// Units currently out for an item — the SUM of each active request's
-	// quantity, since one request can now hold several units.
-	async function activeUnitCount(equipmentId: number): Promise<number> {
-		const { data } = await adminClient
-			.from('borrow_records')
-			.select('quantity')
-			.eq('equipment_id', equipmentId)
-			.in('status', ACTIVE_STATUSES)
-		return (data ?? []).reduce((sum, row) => sum + Math.max(Number(row.quantity ?? 1), 1), 0)
-	}
-
 	// ---------- action: create ----------
 	if (action === 'create') {
 		const equipmentId = Number(body.equipment_id)
@@ -154,24 +143,24 @@ Deno.serve(async (req) => {
 			.maybeSingle()
 		if (!equipment) return json({ error: 'Equipment not found' }, 404)
 
-		// Rule: only students are department-locked — they may request only their
-		// own department's items and never Supply Office inventory. Everyone else
-		// (faculty, department admins, super admin) may request Supply Office items
-		// or any department's items; a cross-department request is routed to that
-		// department's admin. Mirrors enforce_borrow_department_scope.
-		if (actor.role === 'student' && equipment.department_id !== actor.department_id) {
-			return json({ error: 'Students can only request items from their own department' }, 403)
+		// Rule: everyone may request any DEPARTMENT's items — a cross-department
+		// request is simply routed to that department's admin. The only scope
+		// restriction left is that students may not touch Supply Office (central,
+		// department-less) inventory. Mirrors enforce_borrow_department_scope.
+		if (actor.role === 'student' && equipment.department_id === null) {
+			return json({ error: 'Students cannot request Supply Office items' }, 403)
 		}
 
 		if (OUT_OF_SERVICE_STATUSES.includes(equipment.status)) {
 			return json({ error: 'This item is not available for borrowing' }, 400)
 		}
 
-		// Rule: per-unit availability — quantity minus units already out. An
-		// in-service item stays borrowable while any unit is free, and the whole
-		// requested quantity must fit within what is currently free.
-		const unitsOut = await activeUnitCount(equipmentId)
-		const freeUnits = (equipment.quantity ?? 1) - unitsOut
+		// Rule: per-unit availability. equipment.quantity IS the on-hand stock —
+		// the sync_equipment_stock_on_borrow trigger subtracts each approved
+		// request's units from it — so what is free is simply what is left. The
+		// trigger re-checks this atomically when the request is approved; this is
+		// the friendly up-front version of the same rule.
+		const freeUnits = equipment.quantity ?? 0
 		if (freeUnits <= 0) {
 			return json({ error: 'All units of this item are currently borrowed' }, 400)
 		}
@@ -234,12 +223,13 @@ Deno.serve(async (req) => {
 				})
 				.select('*')
 				.single()
-			if (insertError) return json({ error: insertError.message }, 400)
-
-			// Flip the item to 'borrowed' only once every unit is out; while stock
-			// remains it stays 'available'.
-			if (unitsOut + requestedQuantity >= (equipment.quantity ?? 1)) {
-				await adminClient.from('equipment').update({ status: 'borrowed' }).eq('id', equipmentId)
+			// The insert lands as 'confirmed', so trg_borrow_stock_sync has already
+			// deducted requestedQuantity from equipment.quantity and flipped the
+			// item to 'borrowed' if that emptied the shelf. A failure here means
+			// the stock check lost a race — report it as an availability problem.
+			if (insertError) {
+				const isStockError = insertError.message.includes('Not enough units')
+				return json({ error: isStockError ? 'Not enough units of this item are in stock right now' : insertError.message }, 400)
 			}
 
 			await adminClient.from('audit_logs').insert({
@@ -342,24 +332,25 @@ Deno.serve(async (req) => {
 		return json({ error: 'Body must be { id: number, status: confirmed|rejected|returned }' }, 400)
 	}
 
-	// Guard confirms against unit exhaustion before the transition runs — the
-	// SQL transition only checks the coarse equipment status. The pending record
-	// is not yet counted in units-out, so its own quantity must still fit.
+	// Guard confirms against unit exhaustion before the transition runs, so the
+	// approver gets a readable message instead of the raw trigger error. The
+	// trigger is still the authority — a pending request may sit for days while
+	// other requests drain the stock.
 	if (status === 'confirmed') {
 		const { data: pendingRecord } = await adminClient.from('borrow_records').select('equipment_id, quantity').eq('id', recordId).maybeSingle()
 		if (pendingRecord?.equipment_id != null) {
 			const { data: equipment } = await adminClient.from('equipment').select('quantity').eq('id', pendingRecord.equipment_id).single()
-			const unitsOut = await activeUnitCount(pendingRecord.equipment_id)
-			const freeUnits = (equipment?.quantity ?? 1) - unitsOut
+			const freeUnits = equipment?.quantity ?? 0
 			const needed = Math.max(Number(pendingRecord.quantity ?? 1), 1)
 			if (needed > freeUnits) {
-				return json({ error: `Only ${Math.max(freeUnits, 0)} unit${freeUnits === 1 ? '' : 's'} available — cannot approve a request for ${needed}` }, 400)
+				return json({ error: `Only ${freeUnits} unit${freeUnits === 1 ? '' : 's'} in stock — cannot approve a request for ${needed}` }, 400)
 			}
 		}
 	}
 
-	// The SQL function owns authorization, the transition graph, the equipment
-	// status cascade, the borrower notification, and the audit log.
+	// The SQL function owns authorization, the transition graph, the borrower
+	// notification, and the audit log; the stock trigger it fires owns the
+	// quantity movement and the equipment status cascade.
 	const { data, error } = await adminClient
 		.rpc('transition_borrow_record', {
 			p_record_id: recordId,
@@ -374,19 +365,6 @@ Deno.serve(async (req) => {
 	}
 
 	const record = data as { id: number; equipment_id: number | null; department_id: string | null; borrower_id: string | null }
-
-	// Per-unit correction: the SQL cascade flips the whole item to 'borrowed' on
-	// confirm; with multi-unit stock the item stays available until every unit
-	// is out.
-	if (record.equipment_id != null && status === 'confirmed') {
-		const { data: equipment } = await adminClient.from('equipment').select('quantity, status').eq('id', record.equipment_id).single()
-		if (equipment) {
-			const unitsOut = await activeUnitCount(record.equipment_id)
-			if (unitsOut < (equipment.quantity ?? 1) && equipment.status === 'borrowed') {
-				await adminClient.from('equipment').update({ status: 'available' }).eq('id', record.equipment_id)
-			}
-		}
-	}
 
 	// Condition on return: record it, and a damaged return automatically opens
 	// a high-priority maintenance request and flags the item.
