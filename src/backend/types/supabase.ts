@@ -591,11 +591,13 @@ export type Database = {
           department_id: string | null
           email: string
           employee_id: string | null
+          employee_id_enc: string | null
           first_name: string | null
           full_name: string
           id: string
           last_name: string | null
           phone: string | null
+          phone_enc: string | null
           position: string | null
           profile_picture_url: string | null
           role: string
@@ -609,11 +611,13 @@ export type Database = {
           department_id?: string | null
           email: string
           employee_id?: string | null
+          employee_id_enc?: string | null
           first_name?: string | null
           full_name: string
           id: string
           last_name?: string | null
           phone?: string | null
+          phone_enc?: string | null
           position?: string | null
           profile_picture_url?: string | null
           role: string
@@ -627,11 +631,13 @@ export type Database = {
           department_id?: string | null
           email?: string
           employee_id?: string | null
+          employee_id_enc?: string | null
           first_name?: string | null
           full_name?: string
           id?: string
           last_name?: string | null
           phone?: string | null
+          phone_enc?: string | null
           position?: string | null
           profile_picture_url?: string | null
           role?: string

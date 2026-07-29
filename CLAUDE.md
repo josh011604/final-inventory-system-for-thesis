@@ -1,0 +1,65 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+School Facilities Management and Inventory System — React + Vite + Tailwind CSS frontend backed by Supabase/Postgres, with role-based access control (Super Administrator, Department Administrator, Faculty/Staff, Student).
+
+## Commands
+
+- `npm run dev` — start the dev server
+- `npm run build` — type-check (`tsc -b`) then production build
+- `npm run preview` — preview the production build locally
+- `npm run lint` — ESLint over the whole repo
+- `npm test` — run the Vitest suite once (`npm run test:watch` for watch mode)
+- Single test file: `npx vitest run src/backend/lib/reservations.test.ts`
+- `npm run seed:demo` — create/repair demo Supabase auth accounts (needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`)
+- `npm run seed:data` — seed sample categories/suppliers/facilities/equipment/borrow/maintenance records (idempotent)
+- `npm run verify:demo` — sign in as every demo account and check role permissions, RLS scoping, edge functions
+- `npm run verify:reservations` — exercise facility-reservation and borrow-request flows end to end against the live project
+- `npm run backfill:pii` — one-off script for the profile PII encryption migration
+
+Setup: `npm install`, copy `.env.example` to `.env.local`, fill in `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` / `VITE_APP_NAME`.
+
+**Never use the Supabase CLI** — it's not installed in this environment. Use the `mcp__supabase__*` MCP tools for any Supabase operations (migrations, queries, project inspection, etc.) instead of shelling out to `supabase ...`.
+
+## Architecture
+
+### Directory layout
+
+- `src/frontend` — screens and presentation logic, organized as `features/<domain>/` (auth, dashboard, facilities, inventory, borrowing, maintenance, users, reports, notifications, audit-logs, departments, settings, backup). `src/frontend/App.tsx` owns routing and the session bootstrap; `src/App.tsx` is a one-line re-export of it (Vite/`main.tsx` expects `src/App.tsx`).
+- `src/backend` — everything that isn't UI: `lib/supabase/` (client, auth helpers, `queries.ts`), `lib/rbac.ts`, `lib/reservations.ts`, `lib/borrowing.ts`, `lib/errors.ts`, `hooks/`, `types/` (hand-written `school.ts` domain types plus generated `supabase.ts` DB types), `config/env.ts`.
+- `src/components` — cross-feature UI: `layout/AppShell.tsx` (shell/nav/topbar) and `ui/` primitives (Button, Card, Modal, Skeleton, StatusChip, EntityTablePage, ComingSoonPage).
+- `supabase/migrations` — timestamp-ordered SQL migrations; this is the source of truth for schema, RLS policies, and constraints (read the newest ones before changing DB-adjacent behavior — see Domain notes below).
+- `supabase/functions` — Deno edge functions (`borrow-status`, `maintenance-status`, `overdue-check`, `main-supply`, `create-student`, `profile-pii`) plus `_shared/` for code shared between them (e.g. `pii-crypto.ts`).
+- `scripts/` — Node maintenance scripts run via `npm run seed:*` / `verify:*` / `backfill:pii`, and `prune-accounts.mjs` (deletes every non-super-admin account, not wired to a script alias — run directly with `node`).
+
+### Conventions
+
+- Import via the `@` alias (`@/backend/...`, `@/frontend/...`), never relative paths across top-level folders — configured in both `tsconfig.app.json` and `vite.config.ts`.
+- New UI work goes in `src/frontend`; shared data access/business logic goes in `src/backend`.
+- RBAC logic is centralized in `src/backend/lib/rbac.ts`; route/nav visibility per role is centralized in `src/frontend/config/navigation.ts` (`NAV_ITEMS`, `navItemsForRole`, `isRouteAllowed`).
+- The Supabase client is isolated in `src/backend/lib/supabase/client.ts`; it throws at import time if `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` are missing.
+- Unit tests are colocated as `*.test.ts` next to the module they cover (e.g. `src/backend/lib/reservations.test.ts`, `src/backend/lib/borrowing.test.ts`) and run under Vitest.
+- Route mutation error handling through `getErrorMessage()` in `src/backend/lib/errors.ts` — Supabase/PostgREST errors are plain objects, not `Error` instances, and specific Postgres error codes (unique/FK/exclusion violation, RLS denial) map to friendlier messages there.
+- The stored `role` DB value for Faculty is still `'staff'` (DB check constraint, RLS policies, edge functions, and usernames like `bscs.staff` key off it) — only the display label changed to "Faculty" (`src/frontend/config/navigation.ts` label vs `src/backend/lib/rbac.ts` role labels).
+
+### Domain notes (facility reservations & borrowing)
+
+These are load-bearing invariants that span multiple files/migrations — read before touching this area:
+
+- **Overlap protection is enforced at two layers**: the client blocks visibly-colliding windows, but the `facility_reservations_no_overlap` exclusion constraint (migration `20260722140000`) is the actual authority, because RLS hides other departments' reservations from the requester so the client can't see every conflict.
+- **Reservation intervals are half-open**: a booking ending at 10:00 does not clash with one starting at 10:00.
+- **`facilities.current_availability` is admin-set only** (`under_maintenance` / `in_use`, or default `available`) — a reservation never writes to it (migration `20260723100000`). Whether a facility is occupied *right now* is computed live from `facility_reservations` via `facilityBookingsOn()` and `activeBooking()` in `src/backend/lib/reservations.ts`, not from a stored/synced field.
+- **Auto-approval**: a department admin reserving their own department's facility, or a super admin reserving anything, is approved immediately. Everything else (staff requests, a department admin booking a central/department-less facility) starts `pending`. This is mirrored client-side by `reservationAutoApproves()` in `src/backend/lib/reservations.ts` and enforced authoritatively by the `facility_reservations` insert RLS policy (migration `20260722180000`).
+- **Central (department-less) facilities** must be visible to every authenticated user, not just super admins — migration `20260722200000` fixed an RLS gap where `department_id = current_user_department_id()` is never true for `NULL`.
+- Items are borrowed two ways — the **New Request** button on Borrowing, and the per-row **Borrow** button on Inventory (enabled only when `available` with a free unit) — both routed through the same `BorrowRequestModal` and the `borrow-status` edge function.
+- Profile PII (e.g. `employee_id`) is being migrated from a plaintext column to an encrypted one; `App.tsx`'s `loadActiveUser()` prefers the decrypted value from the `profile-pii` edge function but falls back silently to the legacy plaintext column so a decrypt failure never blocks login.
+
+### Deployment
+
+- Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_APP_NAME` in the host env; never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend build.
+- Apply migrations and deploy edge functions (`borrow-status maintenance-status overdue-check main-supply`) via Supabase — use the `mcp__supabase__*` MCP tools, not the CLI.
+- `npm run build`, serve `dist/`.
+- App uses `BrowserRouter`, so the host must rewrite all paths to `index.html` (SPA fallback) or refreshing any non-`/` route 404s.

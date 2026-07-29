@@ -56,10 +56,20 @@ async function loadActiveUser(userId: string): Promise<SchoolUser | null> {
 		return null
 	}
 
+	// employee_id is the legacy plaintext column; employee_id_enc (decrypted
+	// server-side, see supabase/functions/profile-pii) is preferred once a
+	// profile has been migrated to it. Fall back silently if the function
+	// call fails so a decrypt hiccup never blocks login.
+	let employeeId = data.employee_id
+	const { data: piiData } = await supabase.functions.invoke('profile-pii', { body: { action: 'get' } })
+	if (piiData?.data?.employee_id) {
+		employeeId = piiData.data.employee_id
+	}
+
 	return {
 		id: data.id,
 		fullName: data.full_name,
-		employeeId: data.employee_id,
+		employeeId,
 		departmentId: data.department_id,
 		department: data.departments?.name ?? '',
 		position: data.position,
