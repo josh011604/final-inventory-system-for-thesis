@@ -110,8 +110,5 @@
   "108": "graphify",
   "109": "copilot-instructions.md",
   "110": "ActivityHistoryCard.tsx",
-  "111": "ChangePasswordCard.tsx",
-  "112": "LowStockPanel.tsx",
-  "113": "HelpGuideCard.tsx",
-  "114": "AboutCard.tsx"
+  "111": "ChangePasswordCard.tsx"
 }

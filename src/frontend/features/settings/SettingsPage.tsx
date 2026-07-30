@@ -8,6 +8,8 @@ import Skeleton from '@/components/ui/Skeleton'
 import BackupPage from '@/frontend/features/backup/BackupPage'
 import ChangePasswordCard from '@/frontend/features/settings/ChangePasswordCard'
 import ActivityHistoryCard from '@/frontend/features/settings/ActivityHistoryCard'
+import AboutCard from '@/frontend/features/settings/AboutCard'
+import HelpGuideCard from '@/frontend/features/settings/HelpGuideCard'
 import {
 	useCategories,
 	useCreateCategory,
@@ -295,7 +297,7 @@ export default function SettingsPage({ user, onAvatarUpdated }: { user: SchoolUs
 	const isSuperAdmin = user.role === 'super_admin'
 	const { data: categories } = useCategories()
 	const { data: suppliers } = useSuppliers()
-	const [tab, setTab] = useState<'profile' | 'general' | 'backup'>('profile')
+	const [tab, setTab] = useState<'profile' | 'about' | 'help' | 'general' | 'backup'>('profile')
 
 	const tabClass = (active: boolean) =>
 		`rounded-lg px-4 py-2 text-sm font-semibold transition ${
@@ -308,6 +310,12 @@ export default function SettingsPage({ user, onAvatarUpdated }: { user: SchoolUs
 				<div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-bg p-1">
 					<button type="button" className={tabClass(tab === 'profile')} onClick={() => setTab('profile')}>
 						Profile
+					</button>
+					<button type="button" className={tabClass(tab === 'about')} onClick={() => setTab('about')}>
+						About Us
+					</button>
+					<button type="button" className={tabClass(tab === 'help')} onClick={() => setTab('help')}>
+						Help &amp; Guide
 					</button>
 					{isSuperAdmin ? (
 						<>
@@ -328,6 +336,10 @@ export default function SettingsPage({ user, onAvatarUpdated }: { user: SchoolUs
 					<ChangePasswordCard user={user} />
 					<ActivityHistoryCard user={user} />
 				</>
+			) : tab === 'about' ? (
+				<AboutCard />
+			) : tab === 'help' ? (
+				<HelpGuideCard />
 			) : tab === 'general' && isSuperAdmin ? (
 				<>
 					<div className="grid gap-3 sm:grid-cols-3">

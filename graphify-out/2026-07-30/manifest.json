@@ -280,8 +280,8 @@
     "semantic_hash": "715612cbcb1cd99f8a8e45a4112aca0d"
   },
   "src/frontend/features/settings/SettingsPage.tsx": {
-    "mtime": 1785415735.3076673,
-    "ast_hash": "3e809fafc5624d072c896c306038418a",
+    "mtime": 1785414000.5899043,
+    "ast_hash": "a8ce02be80063d62abc0b4d673082093",
     "semantic_hash": ""
   },
   "src/frontend/features/users/UsersPage.tsx": {
@@ -772,16 +772,6 @@
   "supabase/migrations/20260729200000_borrow_visibility_to_approvers.sql": {
     "mtime": 1785414000.6231644,
     "ast_hash": "9d79b87a204901c06870d29da0b07aea",
-    "semantic_hash": ""
-  },
-  "src/frontend/features/settings/AboutCard.tsx": {
-    "mtime": 1785415673.057883,
-    "ast_hash": "b057ae5704281382eae601f800516485",
-    "semantic_hash": ""
-  },
-  "src/frontend/features/settings/HelpGuideCard.tsx": {
-    "mtime": 1785415679.097254,
-    "ast_hash": "b8e30ca221abaff908e0c2dfbf29dea2",
     "semantic_hash": ""
   }
 }

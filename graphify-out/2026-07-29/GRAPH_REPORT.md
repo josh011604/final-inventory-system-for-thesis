@@ -1,16 +1,16 @@
-# Graph Report - react_invy_projects  (2026-07-30)
+# Graph Report - react_invy_projects  (2026-07-29)
 
 ## Corpus Check
-- 154 files · ~78,986 words
+- 144 files · ~68,455 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 657 nodes · 621 edges · 115 communities (56 shown, 59 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.5)
+- 632 nodes · 586 edges · 112 communities (57 shown, 55 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cfb754ed`
+- Built from commit: `fbf310aa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -67,8 +67,6 @@
 - tsconfig.json
 - env.ts
 - client.ts
-- BorrowHistoryPage.tsx
-- BorrowingPage.tsx
 - Supabase
 - Writing Guidelines for Postgres References
 - CRITICAL RULES - MUST FOLLOW
@@ -111,8 +109,6 @@
 - _template.md
 - graphify
 - ActivityHistoryCard.tsx
-- LowStockPanel.tsx
-- HelpGuideCard.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `compilerOptions` - 17 edges
@@ -132,7 +128,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (115 total, 59 thin omitted)
+## Communities (112 total, 55 thin omitted)
 
 ### Community 0 - "queries.ts"
 Cohesion: 0.05
@@ -159,8 +155,8 @@ Cohesion: 0.32
 Nodes (13): checks, env, fail(), futureDate(), main(), pass(), root, signIn() (+5 more)
 
 ### Community 6 - "borrowing.ts"
-Cohesion: 0.10
-Nodes (26): ACTIVE_BORROW_STATUSES, ApprovableBorrow, ApprovableRecord, BorrowableItem, BorrowApprover, borrowBlockedReason(), Borrower, borrowPenaltyReason() (+18 more)
+Cohesion: 0.17
+Nodes (12): ACTIVE_BORROW_STATUSES, ApprovableRecord, BorrowableItem, borrowBlockedReason(), Borrower, BorrowRecordLike, displayStatus(), freeUnits() (+4 more)
 
 ### Community 7 - "seed-sample-data.mjs"
 Cohesion: 0.16
@@ -187,8 +183,8 @@ Cohesion: 0.36
 Nodes (8): BackupPage(), downloadBlob(), fetchTable(), Row, stamp(), TableName, TABLES, toCsv()
 
 ### Community 13 - "EquipmentHistoryModal.tsx"
-Cohesion: 0.27
-Nodes (9): chipClass, dotClass, EquipmentHistoryModal(), EventTone, formatDate(), ms(), roleLabel(), statusTone (+1 more)
+Cohesion: 0.28
+Nodes (8): chipClass, dotClass, EquipmentHistoryModal(), EventTone, formatDate(), ms(), statusTone, TimelineEvent
 
 ### Community 14 - "verify-demo-accounts.mjs"
 Cohesion: 0.32
@@ -215,7 +211,7 @@ Cohesion: 0.29
 Nodes (3): DashboardScreenProps, MetricTone, metricToneClass
 
 ### Community 20 - "borrow-status/index.ts"
-Cohesion: 0.33
+Cohesion: 0.29
 Nodes (4): ACTIVE_STATUSES, corsHeaders, OUT_OF_SERVICE_STATUSES, TRANSITION_STATUSES
 
 ### Community 21 - "profile-pii/index.ts"
@@ -291,9 +287,9 @@ Cohesion: 0.40
 Nodes (3): ActivityEntry, ActivityType, ALL_STATUSES
 
 ## Knowledge Gaps
-- **300 isolated node(s):** `supabase`, `github`, `name`, `private`, `version` (+295 more)
+- **296 isolated node(s):** `supabase`, `github`, `name`, `private`, `version` (+291 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **59 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **55 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -301,9 +297,9 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `devDependencies` connect `devDependencies` to `scripts`?**
   _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `supabase`, `github`, `name` to the rest of the system?**
-  _300 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _296 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `queries.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
 - **Should `scripts` be split into smaller, more focused modules?**
   _Cohesion score 0.0625 - nodes in this community are weakly interconnected._
 - **Should `devDependencies` be split into smaller, more focused modules?**

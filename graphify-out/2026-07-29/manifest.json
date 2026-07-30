@@ -1,13 +1,13 @@
 {
   ".claude/settings.json": {
-    "mtime": 1785414000.5264747,
-    "ast_hash": "b8013cd5f76ee48a8f9ec60017cc31e5",
+    "mtime": 1785291038.2746727,
+    "ast_hash": "21793f42206f6d0efe643f80c0734032",
     "semantic_hash": ""
   },
   ".mcp.json": {
-    "mtime": 1785414000.5275557,
-    "ast_hash": "8a03c8620216595af722ee656945e40c",
-    "semantic_hash": ""
+    "mtime": 1785288191.0294628,
+    "ast_hash": "a130bd1fe9efe497daa23baa58709e22",
+    "semantic_hash": "a130bd1fe9efe497daa23baa58709e22"
   },
   "eslint.config.js": {
     "mtime": 1783480609.7775447,
@@ -15,14 +15,14 @@
     "semantic_hash": "40c567d36f5fa746d00212ef70b588bd"
   },
   "package.json": {
-    "mtime": 1785414000.5465965,
+    "mtime": 1785286182.912457,
     "ast_hash": "50527ad4be5e67f412fe3babbb53883c",
     "semantic_hash": "50527ad4be5e67f412fe3babbb53883c"
   },
   "scripts/backfill-profile-pii.mjs": {
-    "mtime": 1785414000.5486033,
-    "ast_hash": "16cb46d8551e6ecb376d907a25c4c912",
-    "semantic_hash": ""
+    "mtime": 1785209799.3978205,
+    "ast_hash": "b2a714432fc78d66500345a53c6d6cbb",
+    "semantic_hash": "b2a714432fc78d66500345a53c6d6cbb"
   },
   "scripts/prune-accounts.mjs": {
     "mtime": 1784081729.8308716,
@@ -35,9 +35,9 @@
     "semantic_hash": "54a16f98ce1fcc174420c990e8b1198d"
   },
   "scripts/seed-sample-data.mjs": {
-    "mtime": 1785414000.5506108,
-    "ast_hash": "80b8f7dd2d4f54c8c9ad1c866a04be40",
-    "semantic_hash": ""
+    "mtime": 1784081729.8338704,
+    "ast_hash": "0b31614d7ad58a25e8123159add16700",
+    "semantic_hash": "0b31614d7ad58a25e8123159add16700"
   },
   "scripts/verify-demo-accounts.mjs": {
     "mtime": 1784728475.9019625,
@@ -45,14 +45,14 @@
     "semantic_hash": "03c890b6b45ddadd8279fe38dd4b25fd"
   },
   "scripts/verify-reservations.mjs": {
-    "mtime": 1785414000.5506108,
-    "ast_hash": "bbbb961fe38f719dc22f58db264d907c",
-    "semantic_hash": ""
+    "mtime": 1784736473.3367105,
+    "ast_hash": "c9d53143036507441204da9d6004fa91",
+    "semantic_hash": "c9d53143036507441204da9d6004fa91"
   },
   "skills-lock.json": {
-    "mtime": 1785414000.5526178,
-    "ast_hash": "c3d165a3fac945024ce630f783a1334c",
-    "semantic_hash": ""
+    "mtime": 1785286297.3359532,
+    "ast_hash": "4a14c8e3a0282a2525a02d6d07df3fb6",
+    "semantic_hash": "4a14c8e3a0282a2525a02d6d07df3fb6"
   },
   "src/App.tsx": {
     "mtime": 1783481865.807113,
@@ -65,7 +65,7 @@
     "semantic_hash": "8f4b0fafec73cd0166bfc3539d8e7163"
   },
   "src/backend/hooks/useNow.ts": {
-    "mtime": 1785414000.553611,
+    "mtime": 1785208083.6636755,
     "ast_hash": "3cba6b1fd5d0f4560c8519f697ee72d0",
     "semantic_hash": "3cba6b1fd5d0f4560c8519f697ee72d0"
   },
@@ -75,37 +75,37 @@
     "semantic_hash": "617cc7bd4d7f13ed2cb39ec1e0776c61"
   },
   "src/backend/lib/borrowing.test.ts": {
-    "mtime": 1785414000.554501,
-    "ast_hash": "a3a97a69c86f05038129e22805823fda",
-    "semantic_hash": ""
+    "mtime": 1785209940.383823,
+    "ast_hash": "b217bd0f27f845b66534b4e1f4a6c131",
+    "semantic_hash": "b217bd0f27f845b66534b4e1f4a6c131"
   },
   "src/backend/lib/borrowing.ts": {
-    "mtime": 1785414000.5555775,
-    "ast_hash": "3a095786c78295b72a57c3df328e244c",
-    "semantic_hash": ""
+    "mtime": 1785209940.3847764,
+    "ast_hash": "6a934a19f6b499fee10151a8d76973da",
+    "semantic_hash": "6a934a19f6b499fee10151a8d76973da"
   },
   "src/backend/lib/errors.ts": {
-    "mtime": 1785414000.5555775,
+    "mtime": 1784734725.270638,
     "ast_hash": "d4304f7acd33783e2e89a6eeb588dcbc",
     "semantic_hash": "d4304f7acd33783e2e89a6eeb588dcbc"
   },
   "src/backend/lib/rbac.ts": {
-    "mtime": 1785414000.5575833,
+    "mtime": 1784737925.1301596,
     "ast_hash": "77df232f7466da8db43faf4811b0ec5b",
     "semantic_hash": "77df232f7466da8db43faf4811b0ec5b"
   },
   "src/backend/lib/reservations.test.ts": {
-    "mtime": 1785414000.5583162,
-    "ast_hash": "715f1d1e038da0ac5a0adb620585137b",
-    "semantic_hash": ""
+    "mtime": 1784736252.9533484,
+    "ast_hash": "a88c57041a0382d56b3776895a815984",
+    "semantic_hash": "a88c57041a0382d56b3776895a815984"
   },
   "src/backend/lib/reservations.ts": {
-    "mtime": 1785414000.559458,
-    "ast_hash": "10317c570e354a3a2a3693651251719a",
-    "semantic_hash": ""
+    "mtime": 1784736381.0423396,
+    "ast_hash": "8b9ae3aaf7c7ac938b6cc33eec2642ac",
+    "semantic_hash": "8b9ae3aaf7c7ac938b6cc33eec2642ac"
   },
   "src/backend/lib/supabase/auth.ts": {
-    "mtime": 1785414000.559458,
+    "mtime": 1785338656.8072734,
     "ast_hash": "23a6dccc0ed309bba629bc1a06b4259e",
     "semantic_hash": ""
   },
@@ -115,22 +115,22 @@
     "semantic_hash": "4463c7c8a75142620cf116c5354747c3"
   },
   "src/backend/lib/supabase/queries.ts": {
-    "mtime": 1785414000.5609725,
-    "ast_hash": "3fd8de644ac25344acb0f269b1293f31",
+    "mtime": 1785333680.9390554,
+    "ast_hash": "d1b8cd51d380eee0e10dcc5722aff70b",
     "semantic_hash": ""
   },
   "src/backend/types/school.ts": {
-    "mtime": 1785414000.5609725,
+    "mtime": 1784785118.5940192,
     "ast_hash": "4485fb23ea8f9de5eb7de9597e54849b",
     "semantic_hash": "4485fb23ea8f9de5eb7de9597e54849b"
   },
   "src/backend/types/supabase.ts": {
-    "mtime": 1785414000.5632415,
-    "ast_hash": "e7e5e85f4420b2bdc83ae650a265dae7",
+    "mtime": 1785333653.5446348,
+    "ast_hash": "6b2956ee1efa4400d42744e077936fea",
     "semantic_hash": ""
   },
   "src/components/layout/AppShell.tsx": {
-    "mtime": 1785414000.5632415,
+    "mtime": 1784785196.8715687,
     "ast_hash": "dd32386cd2ada6529a0b096b9c581919",
     "semantic_hash": "dd32386cd2ada6529a0b096b9c581919"
   },
@@ -140,7 +140,7 @@
     "semantic_hash": "790486e15b4afa1725931ba4232b1647"
   },
   "src/components/ui/Card.tsx": {
-    "mtime": 1785414000.5652504,
+    "mtime": 1784729000.4533708,
     "ast_hash": "820d7fd9c06b0c3a7619a3320e3b350e",
     "semantic_hash": "820d7fd9c06b0c3a7619a3320e3b350e"
   },
@@ -150,7 +150,7 @@
     "semantic_hash": "84f1cdafc9d1dbaf7700dcf42213fd9b"
   },
   "src/components/ui/EntityTablePage.tsx": {
-    "mtime": 1785414000.567259,
+    "mtime": 1784730872.7555666,
     "ast_hash": "29974eacb4d78c32b2fce0c3db6b8ece",
     "semantic_hash": "29974eacb4d78c32b2fce0c3db6b8ece"
   },
@@ -170,12 +170,12 @@
     "semantic_hash": "c506989987e1b44eb7dababdae925eb3"
   },
   "src/frontend/App.tsx": {
-    "mtime": 1785414000.5684078,
+    "mtime": 1785292659.9870179,
     "ast_hash": "478bd7a1560a130ee012511a2082316f",
     "semantic_hash": ""
   },
   "src/frontend/config/navigation.ts": {
-    "mtime": 1785414000.5694346,
+    "mtime": 1784785240.3011146,
     "ast_hash": "51a0e4c230101a9b24cdc2ffcd91d13f",
     "semantic_hash": "51a0e4c230101a9b24cdc2ffcd91d13f"
   },
@@ -185,7 +185,7 @@
     "semantic_hash": "9fd23ca5e593f08a4c27a3630f5b31f6"
   },
   "src/frontend/features/auth/AuthScreen.tsx": {
-    "mtime": 1785414000.5704622,
+    "mtime": 1784737956.4886801,
     "ast_hash": "611e0521353bc2c99e084a040b613a02",
     "semantic_hash": "611e0521353bc2c99e084a040b613a02"
   },
@@ -195,29 +195,29 @@
     "semantic_hash": "5eee6152cc354a4f2615aa071d54b249"
   },
   "src/frontend/features/borrowing/BorrowHistoryPage.tsx": {
-    "mtime": 1785414000.5710468,
-    "ast_hash": "4a1061914ae8a2b60e10eefea3a43129",
+    "mtime": 1785333476.1704957,
+    "ast_hash": "18e9cc729ebe69e97e1ac7db77691f63",
     "semantic_hash": ""
   },
   "src/frontend/features/borrowing/BorrowRequestModal.tsx": {
-    "mtime": 1785414000.5721226,
-    "ast_hash": "f4cd79292d4ea7cca87ac2415400c8ec",
-    "semantic_hash": ""
+    "mtime": 1784731018.6258261,
+    "ast_hash": "3f31a6cffc85ffa87215324261c8ec01",
+    "semantic_hash": "3f31a6cffc85ffa87215324261c8ec01"
   },
   "src/frontend/features/borrowing/BorrowingPage.tsx": {
-    "mtime": 1785414000.5732186,
-    "ast_hash": "d60efed9f353d0e6b94854ff77d3b166",
+    "mtime": 1785333689.537176,
+    "ast_hash": "8236e94b53ca85755635f3f43f09c727",
     "semantic_hash": ""
   },
   "src/frontend/features/borrowing/borrowDisplay.ts": {
-    "mtime": 1785414000.574015,
+    "mtime": 1784784550.6186721,
     "ast_hash": "ee8d5e4f56bbdc37d01b817af7e81a13",
     "semantic_hash": "ee8d5e4f56bbdc37d01b817af7e81a13"
   },
   "src/frontend/features/borrowing/useBorrowCandidates.ts": {
-    "mtime": 1785414000.574015,
-    "ast_hash": "ffb15c9d037105c8f7c5d5ee8770eb9b",
-    "semantic_hash": ""
+    "mtime": 1785209940.385281,
+    "ast_hash": "6f28426a35e9b5d81bacddb967900902",
+    "semantic_hash": "6f28426a35e9b5d81bacddb967900902"
   },
   "src/frontend/features/dashboard/AlertsPanel.tsx": {
     "mtime": 1784081729.8503752,
@@ -225,9 +225,9 @@
     "semantic_hash": "823bfef9e5223b7b62eee69bccdba631"
   },
   "src/frontend/features/dashboard/DashboardScreen.tsx": {
-    "mtime": 1785414000.5765266,
-    "ast_hash": "339f10eb89c4b07638de4b3efd4eb16a",
-    "semantic_hash": ""
+    "mtime": 1784729000.4584942,
+    "ast_hash": "69b50f5e1ecf24b29d3c5d802bf57d57",
+    "semantic_hash": "69b50f5e1ecf24b29d3c5d802bf57d57"
   },
   "src/frontend/features/departments/DepartmentsPage.tsx": {
     "mtime": 1784081729.8543737,
@@ -235,34 +235,34 @@
     "semantic_hash": "d0e6b436c8dc6e929e1f416185d8512e"
   },
   "src/frontend/features/facilities/FacilitiesPage.tsx": {
-    "mtime": 1785414000.580066,
+    "mtime": 1785208083.6636755,
     "ast_hash": "272a20c299eb6260d556bae451164413",
     "semantic_hash": "272a20c299eb6260d556bae451164413"
   },
   "src/frontend/features/facilities/FacilityReservationDetailsModal.tsx": {
-    "mtime": 1785414000.5813394,
-    "ast_hash": "081a580ccdd467911afed6fa2fc80e89",
-    "semantic_hash": ""
+    "mtime": 1784734595.1359615,
+    "ast_hash": "a9cf984e7bc5467ab1aca72645bff3c0",
+    "semantic_hash": "a9cf984e7bc5467ab1aca72645bff3c0"
   },
   "src/frontend/features/facilities/facilityDisplay.ts": {
-    "mtime": 1785414000.582247,
-    "ast_hash": "054a66459a0f564781c3f334ee5450d9",
-    "semantic_hash": ""
+    "mtime": 1784734551.9243815,
+    "ast_hash": "d3102ea92e0eb54a56e965b62821c215",
+    "semantic_hash": "d3102ea92e0eb54a56e965b62821c215"
   },
   "src/frontend/features/inventory/EquipmentEditModal.tsx": {
-    "mtime": 1785414000.583628,
-    "ast_hash": "b819a161169827572ffc857fee459723",
-    "semantic_hash": ""
+    "mtime": 1785209940.3866706,
+    "ast_hash": "dd94f56a1c1e0d098dbe30ac0df812db",
+    "semantic_hash": "dd94f56a1c1e0d098dbe30ac0df812db"
   },
   "src/frontend/features/inventory/EquipmentHistoryModal.tsx": {
-    "mtime": 1785414000.583628,
-    "ast_hash": "4c75902efb3c2e14df4116b04996b769",
+    "mtime": 1785333705.5996854,
+    "ast_hash": "44f95dd9712be2b65ebbf5f65181d4d5",
     "semantic_hash": ""
   },
   "src/frontend/features/inventory/InventoryPage.tsx": {
-    "mtime": 1785414000.5859218,
-    "ast_hash": "58f0c2d95bc5dd10e53e4b5c3d67ea7b",
-    "semantic_hash": ""
+    "mtime": 1785209940.3877623,
+    "ast_hash": "6565403944a5a49ac2006481278e9177",
+    "semantic_hash": "6565403944a5a49ac2006481278e9177"
   },
   "src/frontend/features/maintenance/MaintenancePage.tsx": {
     "mtime": 1784081729.86273,
@@ -270,9 +270,9 @@
     "semantic_hash": "c7637e1bd65ec5546c9800a704bef0fe"
   },
   "src/frontend/features/notifications/NotificationsPage.tsx": {
-    "mtime": 1785414000.5864272,
-    "ast_hash": "0e456fcdf2400798a71dc7f486835373",
-    "semantic_hash": ""
+    "mtime": 1783678350.541367,
+    "ast_hash": "433d4497a294adeaa4b63f634f667111",
+    "semantic_hash": "433d4497a294adeaa4b63f634f667111"
   },
   "src/frontend/features/reports/ReportsPage.tsx": {
     "mtime": 1784081729.8647294,
@@ -280,12 +280,12 @@
     "semantic_hash": "715612cbcb1cd99f8a8e45a4112aca0d"
   },
   "src/frontend/features/settings/SettingsPage.tsx": {
-    "mtime": 1785415735.3076673,
-    "ast_hash": "3e809fafc5624d072c896c306038418a",
-    "semantic_hash": ""
+    "mtime": 1784785254.306948,
+    "ast_hash": "19c9f4acc525902957b055e4a19ded8e",
+    "semantic_hash": "19c9f4acc525902957b055e4a19ded8e"
   },
   "src/frontend/features/users/UsersPage.tsx": {
-    "mtime": 1785414000.5912814,
+    "mtime": 1784737930.274665,
     "ast_hash": "7afa8e28df734b8e5563a7234ff849d5",
     "semantic_hash": "7afa8e28df734b8e5563a7234ff849d5"
   },
@@ -300,14 +300,14 @@
     "semantic_hash": "401c70b128d56783f1a4c2c87e3f09da"
   },
   "supabase/functions/_shared/pii-crypto.ts": {
-    "mtime": 1785414000.595224,
-    "ast_hash": "0d608528e1f545bd1f4d4c4e77aa039f",
-    "semantic_hash": ""
+    "mtime": 1785209739.4699118,
+    "ast_hash": "5b5b9d281c5d24da0626e8e1bb02e482",
+    "semantic_hash": "5b5b9d281c5d24da0626e8e1bb02e482"
   },
   "supabase/functions/borrow-status/index.ts": {
-    "mtime": 1785414000.596718,
-    "ast_hash": "3203d99df1057b2da4b27d74b0db1210",
-    "semantic_hash": ""
+    "mtime": 1785209940.3889391,
+    "ast_hash": "89e4628fb63c4a2ceddc5c41125c2863",
+    "semantic_hash": "89e4628fb63c4a2ceddc5c41125c2863"
   },
   "supabase/functions/create-student/index.ts": {
     "mtime": 1784728475.9179292,
@@ -315,9 +315,9 @@
     "semantic_hash": "6ad745ec55d9fe9a09b35ddc83ddb942"
   },
   "supabase/functions/main-supply/index.ts": {
-    "mtime": 1785414000.598074,
-    "ast_hash": "62458d4affbddb0e4bfc7f3a1b44f8c1",
-    "semantic_hash": ""
+    "mtime": 1784728475.9179292,
+    "ast_hash": "d9df8bd53f50189df2f0f986d43ffc29",
+    "semantic_hash": "d9df8bd53f50189df2f0f986d43ffc29"
   },
   "supabase/functions/maintenance-status/index.ts": {
     "mtime": 1783861727.5435762,
@@ -330,9 +330,9 @@
     "semantic_hash": "0b765ef6d1665e5019419b48b74df98c"
   },
   "supabase/functions/profile-pii/index.ts": {
-    "mtime": 1785414000.5987847,
-    "ast_hash": "d0190fa74a457754df3a1fd90f204261",
-    "semantic_hash": ""
+    "mtime": 1785209757.7994099,
+    "ast_hash": "9ea2f737f8d41e7fbcf0f0c487cd396b",
+    "semantic_hash": "9ea2f737f8d41e7fbcf0f0c487cd396b"
   },
   "supabase/migrations/20260708_0001_school_inventory.sql": {
     "mtime": 1783666745.1623032,
@@ -410,54 +410,54 @@
     "semantic_hash": "4c65cd971937a5ccc1700d623687cbee"
   },
   "supabase/migrations/20260722120000_facility_reservations.sql": {
-    "mtime": 1785414000.60006,
+    "mtime": 1784729000.4647384,
     "ast_hash": "c362e9f6e81dbb2663a68b1a839df8a7",
     "semantic_hash": "c362e9f6e81dbb2663a68b1a839df8a7"
   },
   "supabase/migrations/20260722140000_facility_reservation_conflicts.sql": {
-    "mtime": 1785414000.60095,
-    "ast_hash": "8fb9e80c051bbf9d217a5d49cf90be5f",
-    "semantic_hash": ""
+    "mtime": 1784731121.322605,
+    "ast_hash": "613582b12ed3a07fd8f4cfaa34d7ca2b",
+    "semantic_hash": "613582b12ed3a07fd8f4cfaa34d7ca2b"
   },
   "supabase/migrations/20260722160000_facility_availability_sync.sql": {
-    "mtime": 1785414000.6016395,
-    "ast_hash": "2977a3422ea81cc74782de14d4503fb2",
-    "semantic_hash": ""
+    "mtime": 1784731802.7003684,
+    "ast_hash": "562f64a387f4e717968ac571da1e5348",
+    "semantic_hash": "562f64a387f4e717968ac571da1e5348"
   },
   "supabase/migrations/20260722180000_facility_reservation_auto_approve.sql": {
-    "mtime": 1785414000.6026752,
-    "ast_hash": "2f0c4db0e89af3fbf3a1183e50dd6800",
-    "semantic_hash": ""
+    "mtime": 1784734582.7533617,
+    "ast_hash": "f79ab84af9e31d31de7b6df2e8a961df",
+    "semantic_hash": "f79ab84af9e31d31de7b6df2e8a961df"
   },
   "supabase/migrations/20260722200000_facilities_central_visibility.sql": {
-    "mtime": 1785414000.6026752,
-    "ast_hash": "f7bd03fd683e8094bfcac471211b41c1",
-    "semantic_hash": ""
+    "mtime": 1784735221.8325324,
+    "ast_hash": "eb39a60d453050daa3d20eafcb24d685",
+    "semantic_hash": "eb39a60d453050daa3d20eafcb24d685"
   },
   "supabase/migrations/20260723100000_facility_availability_per_slot.sql": {
-    "mtime": 1785414000.603751,
-    "ast_hash": "86051069fe4e110ed3f0850e0df5a524",
-    "semantic_hash": ""
+    "mtime": 1784736300.9653366,
+    "ast_hash": "0aa3f34a6f0f73882d21f9d1b7d2ffb5",
+    "semantic_hash": "0aa3f34a6f0f73882d21f9d1b7d2ffb5"
   },
   "supabase/migrations/20260723110000_add_avatar_storage.sql": {
-    "mtime": 1785414000.603751,
-    "ast_hash": "828c931269bbae4fdbdf0d2cfe49d914",
-    "semantic_hash": ""
+    "mtime": 1784785115.1663923,
+    "ast_hash": "4d5ae2b5f01877ab122a826c68a332c0",
+    "semantic_hash": "4d5ae2b5f01877ab122a826c68a332c0"
   },
   "supabase/migrations/20260723120000_prevent_borrow_self_approval.sql": {
-    "mtime": 1785414000.6057563,
-    "ast_hash": "a77e6bce2b939218a9b5144c40c9a9c3",
-    "semantic_hash": ""
+    "mtime": 1784789603.34497,
+    "ast_hash": "e097463c846bbc6bd77aad968cd98d35",
+    "semantic_hash": "e097463c846bbc6bd77aad968cd98d35"
   },
   "supabase/migrations/20260723130000_borrow_insert_status_guard.sql": {
-    "mtime": 1785414000.606522,
-    "ast_hash": "b2750051cd0d544ddb6fabba0982ceba",
-    "semantic_hash": ""
+    "mtime": 1784793496.9780786,
+    "ast_hash": "d23fa98bedcdeff1eba989d7b84aa2e3",
+    "semantic_hash": "d23fa98bedcdeff1eba989d7b84aa2e3"
   },
   "supabase/migrations/20260728120000_encrypt_profile_pii.sql": {
-    "mtime": 1785414000.606522,
-    "ast_hash": "586aaede2caebc18e9151a5c0764c384",
-    "semantic_hash": ""
+    "mtime": 1785209729.7430575,
+    "ast_hash": "6c6431ddb1b4bc0896eda7a0d20b46fb",
+    "semantic_hash": "6c6431ddb1b4bc0896eda7a0d20b46fb"
   },
   "tsconfig.app.json": {
     "mtime": 1784728475.9179292,
@@ -480,212 +480,212 @@
     "semantic_hash": "30478826a4d556c5e2de864044db8e66"
   },
   "supabase/migrations/20260729120000_borrow_approver_tracking.sql": {
-    "mtime": 1785414000.6098852,
-    "ast_hash": "4d3bf978c2c77eb05473edc35dc9fd5c",
+    "mtime": 1785333274.4111893,
+    "ast_hash": "fbb8f8242e12fd9a00f677bf26bd53c8",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/CHANGELOG.md": {
-    "mtime": 1785414000.4735947,
+    "mtime": 1785286213.9697108,
     "ast_hash": "38dde63a2039f448d90c48b3b5d5d2eb",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/SKILL.md": {
-    "mtime": 1785414000.4808652,
+    "mtime": 1785286213.9697108,
     "ast_hash": "76523dd6bc0fb5d7893efa728a8707a6",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/_contributing.md": {
-    "mtime": 1785414000.4912288,
+    "mtime": 1785286213.9697108,
     "ast_hash": "32c800fa6621705288dc651da22c9366",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/_sections.md": {
-    "mtime": 1785414000.4912288,
+    "mtime": 1785286213.9697108,
     "ast_hash": "8547fba7fd9fae3b6be916c6f55b0f62",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/_template.md": {
-    "mtime": 1785414000.4948802,
+    "mtime": 1785286213.9697108,
     "ast_hash": "74ec7e2bdd6c8ddbb354fcceec038bc2",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/advanced-full-text-search.md": {
-    "mtime": 1785414000.4968858,
+    "mtime": 1785286213.9697108,
     "ast_hash": "327f8367de51b0982b963f2928184c35",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/advanced-jsonb-indexing.md": {
-    "mtime": 1785414000.4975197,
+    "mtime": 1785286213.9697108,
     "ast_hash": "413ba907ff4408d6fd3545f839101ebf",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/conn-idle-timeout.md": {
-    "mtime": 1785414000.4987092,
+    "mtime": 1785286213.9697108,
     "ast_hash": "8bbe8b609d5241351672cefc19036db6",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/conn-limits.md": {
-    "mtime": 1785414000.4987092,
+    "mtime": 1785286213.9697108,
     "ast_hash": "661b3efcf0e35136352b3923ff265d5c",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/conn-pooling.md": {
-    "mtime": 1785414000.5002246,
+    "mtime": 1785286213.9697108,
     "ast_hash": "c90dab7d0ab47443b41f17d5bc9f04b3",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/conn-prepared-statements.md": {
-    "mtime": 1785414000.5002246,
+    "mtime": 1785286213.9697108,
     "ast_hash": "b53eb9dea11d6da338a8b6f9e67a3622",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/data-batch-inserts.md": {
-    "mtime": 1785414000.5017323,
+    "mtime": 1785286213.9697108,
     "ast_hash": "6801a3a2d414dfd6a4c79970a37e795d",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/data-n-plus-one.md": {
-    "mtime": 1785414000.5017323,
+    "mtime": 1785286213.9697108,
     "ast_hash": "c3ed0702a116d654602120bd5cd7713e",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/data-pagination.md": {
-    "mtime": 1785414000.5017323,
+    "mtime": 1785286213.9697108,
     "ast_hash": "59be210a420d34780949ce16d5b4a8d5",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/data-upsert.md": {
-    "mtime": 1785414000.5017323,
+    "mtime": 1785286213.9697108,
     "ast_hash": "3ae132bce8b5368e1e4a426d55ca4567",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/lock-advisory.md": {
-    "mtime": 1785414000.5037441,
+    "mtime": 1785286213.9697108,
     "ast_hash": "ff943eb307d8b6e12cc6ab2bcb6e2d18",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/lock-deadlock-prevention.md": {
-    "mtime": 1785414000.5037441,
+    "mtime": 1785286213.9697108,
     "ast_hash": "685b04bcae3a0720e84f1507d243e959",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/lock-short-transactions.md": {
-    "mtime": 1785414000.5037441,
+    "mtime": 1785286213.9697108,
     "ast_hash": "3c947d59e0359f3b236bf2ad1da52c61",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/lock-skip-locked.md": {
-    "mtime": 1785414000.5048106,
+    "mtime": 1785286213.9697108,
     "ast_hash": "098d38542f44b656aa55923f06db74c1",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/monitor-explain-analyze.md": {
-    "mtime": 1785414000.5056121,
+    "mtime": 1785286213.9697108,
     "ast_hash": "1fd19c373a0ff272129edd215a96e3a1",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/monitor-pg-stat-statements.md": {
-    "mtime": 1785414000.5062015,
+    "mtime": 1785286213.9697108,
     "ast_hash": "2f0cab7f72ad9dfe2cba469aaaacc733",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/monitor-vacuum-analyze.md": {
-    "mtime": 1785414000.5071402,
+    "mtime": 1785286213.9697108,
     "ast_hash": "25e738451079707ac54d21364b5538e1",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/query-composite-indexes.md": {
-    "mtime": 1785414000.5071402,
+    "mtime": 1785286213.9697108,
     "ast_hash": "5017f09940ed04b5b3ad836e426d9084",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/query-covering-indexes.md": {
-    "mtime": 1785414000.5071402,
+    "mtime": 1785286213.9829733,
     "ast_hash": "fd05c38771229d97f2d4065d0af0df70",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/query-index-types.md": {
-    "mtime": 1785414000.5091462,
+    "mtime": 1785286213.9829733,
     "ast_hash": "e2395c6ef69ea2f147c9ab1d18c7f879",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/query-missing-indexes.md": {
-    "mtime": 1785414000.5101545,
+    "mtime": 1785286213.9834814,
     "ast_hash": "786767ec677862bad060fc1b4ae0a94f",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/query-partial-indexes.md": {
-    "mtime": 1785414000.5110908,
+    "mtime": 1785286213.984614,
     "ast_hash": "249d8fccca68c332e946b499531f21d8",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/schema-constraints.md": {
-    "mtime": 1785414000.5117667,
+    "mtime": 1785286213.984614,
     "ast_hash": "476ca283cfda6c5517d94c25c41de775",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/schema-data-types.md": {
-    "mtime": 1785414000.5128865,
+    "mtime": 1785286213.9856355,
     "ast_hash": "cd65e34969ebce0bce84f622f5072477",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/schema-foreign-key-indexes.md": {
-    "mtime": 1785414000.5135705,
+    "mtime": 1785286213.9856355,
     "ast_hash": "8b99b21a07cadd2d85c6c16f416b5464",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/schema-lowercase-identifiers.md": {
-    "mtime": 1785414000.5135705,
+    "mtime": 1785286213.9866178,
     "ast_hash": "632ea53a0da6fe7651e354f3744d998e",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/schema-partitioning.md": {
-    "mtime": 1785414000.5155766,
+    "mtime": 1785286213.9866178,
     "ast_hash": "0f2fe9016bf9aa79dd30d7d6a4a03358",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/schema-primary-keys.md": {
-    "mtime": 1785414000.5155766,
+    "mtime": 1785286213.9866178,
     "ast_hash": "a732b1a95b6c231d47af14b715c6b9b0",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/security-privileges.md": {
-    "mtime": 1785414000.5175824,
+    "mtime": 1785286213.9876232,
     "ast_hash": "e6fbc325f8f3af1cab3e1cb99d9f146a",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/security-rls-basics.md": {
-    "mtime": 1785414000.5185876,
+    "mtime": 1785286213.9876232,
     "ast_hash": "82ee8b214f39f78c9e88061b6f890508",
     "semantic_hash": ""
   },
   ".agents/skills/supabase-postgres-best-practices/references/security-rls-performance.md": {
-    "mtime": 1785414000.5199819,
+    "mtime": 1785286213.9876232,
     "ast_hash": "ad2ccf01dfd325527b18256c3e25b842",
     "semantic_hash": ""
   },
   ".agents/skills/supabase/CHANGELOG.md": {
-    "mtime": 1785414000.5218,
+    "mtime": 1785286213.9886763,
     "ast_hash": "f45d7e2b43b67f5086c4b6146bc4ed46",
     "semantic_hash": ""
   },
   ".agents/skills/supabase/SKILL.md": {
-    "mtime": 1785414000.522459,
+    "mtime": 1785286213.9886763,
     "ast_hash": "4d6d9d40097033a3cbb80a9cfa08bd1c",
     "semantic_hash": ""
   },
   ".agents/skills/supabase/assets/feedback-issue-template.md": {
-    "mtime": 1785414000.5244656,
+    "mtime": 1785286213.9896185,
     "ast_hash": "e2c8b4f1a20e46315dd7609540d9b8d4",
     "semantic_hash": ""
   },
   ".agents/skills/supabase/references/skill-feedback.md": {
-    "mtime": 1785414000.5244656,
+    "mtime": 1785286213.9896185,
     "ast_hash": "c9fa098e2ec8bdce9d6a0f8a64d2c6c0",
     "semantic_hash": ""
   },
   ".claude/CLAUDE.md": {
-    "mtime": 1785414000.5244656,
+    "mtime": 1785290003.4333768,
     "ast_hash": "c232166e6492ba1ed955030b16979b05",
     "semantic_hash": ""
   },
@@ -695,12 +695,12 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1785414026.3714688,
-    "ast_hash": "2273c2bcb0908c2b2d1bf542b822dbbb",
+    "mtime": 1785292240.1040666,
+    "ast_hash": "bfcd39ed0c6bc262b4a7c63dca0d6a81",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1785414000.5305448,
+    "mtime": 1785285483.5358894,
     "ast_hash": "34fc88f528610551666015d005337222",
     "semantic_hash": ""
   },
@@ -715,73 +715,23 @@
     "semantic_hash": ""
   },
   "public/bisucal.webp": {
-    "mtime": 1785414000.5486033,
+    "mtime": 1784729000.445973,
     "ast_hash": "81f703023aa4d2dba8a1aabb73a77605",
     "semantic_hash": ""
   },
   "supabase/migrations/20260729130000_borrow_borrower_name.sql": {
-    "mtime": 1785414000.61095,
-    "ast_hash": "044bb507cfa24b6ea8e5ff26bd2ca3b6",
+    "mtime": 1785333632.0515268,
+    "ast_hash": "acefeae2ce562b3b28f9dd7465ce4e49",
     "semantic_hash": ""
   },
   "src/frontend/features/settings/ActivityHistoryCard.tsx": {
-    "mtime": 1785414000.5864272,
+    "mtime": 1785339072.5776722,
     "ast_hash": "34675f898b1a3149e2975633a1f669dc",
     "semantic_hash": ""
   },
   "src/frontend/features/settings/ChangePasswordCard.tsx": {
-    "mtime": 1785414000.5884352,
-    "ast_hash": "44cb7a3502c375d37f6419e31618bd97",
-    "semantic_hash": ""
-  },
-  "src/frontend/features/dashboard/LowStockPanel.tsx": {
-    "mtime": 1785414000.5791306,
-    "ast_hash": "cf47fd0f1c3ee183661143122a5bfcc3",
-    "semantic_hash": ""
-  },
-  "supabase/migrations/20260728130000_borrow_workflow_roles.sql": {
-    "mtime": 1785414000.6085312,
-    "ast_hash": "887b4446851dd2f69bc5d2de78a9fb5a",
-    "semantic_hash": ""
-  },
-  "supabase/migrations/20260728140000_borrow_overdue_penalty.sql": {
-    "mtime": 1785414000.60936,
-    "ast_hash": "7dbd0de34417d967f7a0267f43a8cb8a",
-    "semantic_hash": ""
-  },
-  "supabase/migrations/20260729160000_borrow_update_policy_scope.sql": {
-    "mtime": 1785414000.6194606,
-    "ast_hash": "6550c0ffcf940fce457f120e8d92f006",
-    "semantic_hash": ""
-  },
-  "supabase/migrations/20260729170000_audit_actor_fallback.sql": {
-    "mtime": 1785414000.6205938,
-    "ast_hash": "b058325349a59b32c030de82e3e0e4a6",
-    "semantic_hash": ""
-  },
-  "supabase/migrations/20260729180000_student_cross_department_borrowing.sql": {
-    "mtime": 1785414000.6214538,
-    "ast_hash": "c9b5c4b853e10be636f67bf2d45070eb",
-    "semantic_hash": ""
-  },
-  "supabase/migrations/20260729190000_deduct_stock_on_borrow.sql": {
-    "mtime": 1785414000.6219864,
-    "ast_hash": "475d255739b3ab5bbe4e9a1b9a80cbfc",
-    "semantic_hash": ""
-  },
-  "supabase/migrations/20260729200000_borrow_visibility_to_approvers.sql": {
-    "mtime": 1785414000.6231644,
-    "ast_hash": "9d79b87a204901c06870d29da0b07aea",
-    "semantic_hash": ""
-  },
-  "src/frontend/features/settings/AboutCard.tsx": {
-    "mtime": 1785415673.057883,
-    "ast_hash": "b057ae5704281382eae601f800516485",
-    "semantic_hash": ""
-  },
-  "src/frontend/features/settings/HelpGuideCard.tsx": {
-    "mtime": 1785415679.097254,
-    "ast_hash": "b8e30ca221abaff908e0c2dfbf29dea2",
+    "mtime": 1785338707.3929334,
+    "ast_hash": "3653cee681b877eb7bdfc2f822b697af",
     "semantic_hash": ""
   }
 }
