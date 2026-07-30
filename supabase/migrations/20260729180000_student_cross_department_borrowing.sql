@@ -42,13 +42,23 @@ using (
 --    a faculty member read only their own profile — the join came back null and
 --    their Approve button silently disappeared. Same problem, and same fix, as
 --    borrower_name in 20260729130000: store it on the row at write time.
+--    approved_by_role is the same idea on the approver's side: an audit record
+--    has to say what authority cleared the request (super admin / department
+--    admin / faculty), not just a name, and it must stay readable after the
+--    approver changes role or leaves.
 alter table public.borrow_records
-  add column if not exists borrower_role text;
+  add column if not exists borrower_role text,
+  add column if not exists approved_by_role text;
 
 update public.borrow_records br
 set borrower_role = p.role
 from public.profiles p
 where br.borrower_id = p.id and br.borrower_role is null;
+
+update public.borrow_records br
+set approved_by_role = p.role
+from public.profiles p
+where br.approved_by = p.id and br.approved_by_role is null;
 
 -- 3. Request scope, plus the denormalized borrower fields. This trigger is the
 --    unconditional backstop for a client that writes to the table directly

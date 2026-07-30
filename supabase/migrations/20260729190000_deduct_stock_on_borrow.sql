@@ -215,6 +215,9 @@ begin
     approved_by = case when p_new_status in ('confirmed', 'rejected') then p_actor_id else approved_by end,
     approved_at = case when p_new_status in ('confirmed', 'rejected') then now() else approved_at end,
     approved_by_name = case when p_new_status in ('confirmed', 'rejected') then v_actor_name else approved_by_name end,
+    -- The authority that cleared it, not just the person: an audit trail has to
+    -- survive the approver later changing role or leaving.
+    approved_by_role = case when p_new_status in ('confirmed', 'rejected') then v_actor_role else approved_by_role end,
     returned_by = case when p_new_status = 'returned' then p_actor_id else returned_by end,
     returned_by_name = case when p_new_status = 'returned' then v_actor_name else returned_by_name end,
     actual_return_date = case when p_new_status = 'returned' then now() else actual_return_date end

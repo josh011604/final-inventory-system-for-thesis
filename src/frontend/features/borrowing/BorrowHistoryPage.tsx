@@ -4,7 +4,15 @@ import { useBorrowCandidates } from '@/frontend/features/borrowing/useBorrowCand
 import { statusTone, formatDate } from '@/frontend/features/borrowing/borrowDisplay'
 import { useBorrowRecords } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
-import type { SchoolUser } from '@/backend/types/school'
+import type { Role, SchoolUser } from '@/backend/types/school'
+import { roleLabels } from '@/backend/lib/rbac'
+
+// Stored role value -> the label users see ('staff' displays as "Faculty").
+// Falls back to the raw value for a role the labels map does not know.
+function roleLabel(role: string | null): string {
+	if (!role) return 'Unknown role'
+	return roleLabels[role as Role] ?? role
+}
 
 // Read-only record of everything this user has borrowed. Students request items
 // from the Inventory screen's per-item Borrow button; this screen is where they
@@ -40,15 +48,21 @@ export default function BorrowHistoryPage({ user }: { user: SchoolUser }) {
 					),
 				},
 				{ header: 'Department', render: (row) => row.departments?.name ?? 'Supply Office' },
-				{ header: 'Requested', render: (row) => formatDate(row.created_at) },
+				{ header: 'Qty', render: (row) => row.quantity ?? 1 },
+				{ header: 'Borrowed', render: (row) => formatDate(row.borrowed_date ?? row.created_at) },
 				{ header: 'Due', render: (row) => formatDate(row.expected_return_date) },
 				{
+					// Name, authority and timestamp together — an approval record that
+					// only says "who" is not enough to audit after the fact.
 					header: 'Approved by',
 					render: (row) =>
 						row.approved_by_name ? (
 							<span>
 								<span className="block text-text-primary">{row.approved_by_name}</span>
-								<span className="block text-xs text-text-muted">{formatDate(row.approved_at)}</span>
+								<span className="block text-xs text-text-muted">
+									{roleLabel(row.approved_by_role)}
+									{row.approved_at ? ` · ${formatDate(row.approved_at)}` : ''}
+								</span>
 							</span>
 						) : (
 							'—'
@@ -66,7 +80,17 @@ export default function BorrowHistoryPage({ user }: { user: SchoolUser }) {
 							'—'
 						),
 				},
-				{ header: 'Condition', render: (row) => row.condition_after ?? '—' },
+				{
+					// Both ends of the item's condition: what it was when it went out,
+					// and what it came back as (blank until returned).
+					header: 'Condition',
+					render: (row) => (
+						<span>
+							<span className="block text-text-primary">{row.condition_before ?? '—'}</span>
+							{row.condition_after ? <span className="block text-xs text-text-muted">returned: {row.condition_after}</span> : null}
+						</span>
+					),
+				},
 				{ header: 'Status', render: (row) => <StatusChip tone={statusTone[row.status] ?? 'muted'}>{row.status.replace('_', ' ')}</StatusChip> },
 			]}
 		/>

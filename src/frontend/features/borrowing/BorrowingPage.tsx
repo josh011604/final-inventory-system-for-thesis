@@ -8,12 +8,19 @@ import { useBorrowCandidates } from '@/frontend/features/borrowing/useBorrowCand
 import { statusTone } from '@/frontend/features/borrowing/borrowDisplay'
 import { useBorrowRecords, useCancelBorrowRecord, useRunOverdueCheck, useUpdateBorrowRecordStatus } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
-import type { SchoolUser } from '@/backend/types/school'
+import type { Role, SchoolUser } from '@/backend/types/school'
+import { roleLabels } from '@/backend/lib/rbac'
 import { getErrorMessage } from '@/backend/lib/errors'
 import { borrowPenaltyReason, canApproveBorrow, canReturnBorrow, isSelfBorrowRequest } from '@/backend/lib/borrowing'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
+
+// Stored role value -> the label users see ('staff' displays as "Faculty").
+function roleLabel(role: string | null): string {
+	if (!role) return 'Unknown role'
+	return roleLabels[role as Role] ?? role
+}
 
 export default function BorrowingPage({ user }: { user: SchoolUser }) {
 	const { data, isLoading, error: loadError } = useBorrowRecords()
@@ -155,7 +162,8 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 										) : null}
 									</span>
 									<span className="block text-xs text-text-muted">
-										{row.approved_at ? new Date(row.approved_at).toLocaleDateString() : ''}
+										{roleLabel(row.approved_by_role)}
+										{row.approved_at ? ` · ${new Date(row.approved_at).toLocaleDateString()}` : ''}
 									</span>
 								</span>
 							) : (

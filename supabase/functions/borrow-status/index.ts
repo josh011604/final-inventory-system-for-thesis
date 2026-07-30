@@ -214,12 +214,27 @@ Deno.serve(async (req) => {
 					borrower_id: actorId,
 					created_by: actorId,
 					approved_by: actorId,
+					// This path skips transition_borrow_record, which is what normally
+					// stamps these — so they have to be set here or an auto-approved
+					// borrow would have no recorded approver at all. The UI reads
+					// approved_by_name (not a profiles join, which RLS nulls out for
+					// non-admin viewers), so leaving it null shows the approval as "—".
+					// The name comes from the resolved profile, never from the client.
+					approved_by_name: actor.full_name,
+					approved_by_role: actor.role,
+					approved_at: new Date().toISOString(),
 					department_id: equipment.department_id,
 					expected_return_date: expectedReturn,
 					notes,
 					quantity: requestedQuantity,
 					condition_before: conditionBefore,
-					status: 'confirmed',
+					// Straight to 'borrowed', not 'confirmed': there is no approval step
+					// to wait for and no separate hand-over — the borrower is the
+					// approver, so the item is in their hands the moment this lands.
+					// 'borrowed' is an active status everywhere it matters (stock
+					// deduction, overdue sweep, the Mark Returned action), so the rest
+					// of the lifecycle is unchanged.
+					status: 'borrowed',
 				})
 				.select('*')
 				.single()
@@ -238,8 +253,13 @@ Deno.serve(async (req) => {
 				entity_type: 'borrow_records',
 				entity_id: record.id,
 				old_values: null,
-				new_values: { status: 'confirmed', quantity: requestedQuantity },
-				description: `Borrow request #${record.id} auto-approved for ${actor.full_name} (${requestedQuantity} unit${requestedQuantity === 1 ? '' : 's'} of ${equipment.equipment_name})`,
+				new_values: {
+					status: 'borrowed',
+					quantity: requestedQuantity,
+					approved_by_name: actor.full_name,
+					approved_by_role: actor.role,
+				},
+				description: `Borrow request #${record.id} auto-approved for ${actor.full_name} (${actor.role}) — ${requestedQuantity} unit${requestedQuantity === 1 ? '' : 's'} of ${equipment.equipment_name}`,
 			})
 
 			return json({ data: record }, 200)

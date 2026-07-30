@@ -7,6 +7,8 @@ import type { ChipTone } from '@/components/ui/StatusChip'
 import Skeleton from '@/components/ui/Skeleton'
 import { useBorrowRecords, useMaintenanceRequests } from '@/backend/lib/supabase/queries'
 import type { EquipmentRow } from '@/backend/lib/supabase/queries'
+import { roleLabels } from '@/backend/lib/rbac'
+import type { Role } from '@/backend/types/school'
 
 type EventTone = 'primary' | 'info' | 'success' | 'warning' | 'danger' | 'muted'
 
@@ -46,6 +48,12 @@ const statusTone: Record<string, ChipTone> = {
 	damaged: 'danger',
 	lost: 'danger',
 	disposed: 'muted',
+}
+
+// Stored role value -> the label users see ('staff' displays as "Faculty").
+function roleLabel(role: string | null): string {
+	if (!role) return 'Unknown role'
+	return roleLabels[role as Role] ?? role
 }
 
 function ms(value: string | null | undefined): number | null {
@@ -104,7 +112,7 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 			// Everything the record captures about the moment it went out: who
 			// borrowed, how many units, and the item's condition at that time.
 			const requestDetail = [
-				`By ${who}`,
+				`By ${who}${borrow.borrower_role ? ` (${roleLabel(borrow.borrower_role)})` : ''}`,
 				`${units} unit${units === 1 ? '' : 's'}`,
 				borrow.condition_before ? `condition: ${borrow.condition_before}` : null,
 				borrow.expected_return_date ? `due ${formatDate(borrow.expected_return_date, true)}` : null,
@@ -147,7 +155,9 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 					at: ms(approvedAt),
 					label: formatDate(approvedAt),
 					title: wasAutoApproved ? 'Auto-approved' : 'Approved',
-					detail: wasAutoApproved ? `${borrow.approved_by_name} — own inventory, no approval step` : `By ${borrow.approved_by_name}`,
+					detail: wasAutoApproved
+						? `${borrow.approved_by_name} (${roleLabel(borrow.approved_by_role)}) — own inventory, no approval step`
+						: `By ${borrow.approved_by_name}${borrow.approved_by_role ? ` (${roleLabel(borrow.approved_by_role)})` : ''}`,
 					tone: 'info',
 					icon: CheckCircle2,
 				})

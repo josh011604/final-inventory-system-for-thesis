@@ -67,6 +67,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           approved_by_name: string | null
+          approved_by_role: string | null
           borrowed_date: string
           borrower_id: string
           borrower_name: string | null
@@ -91,6 +92,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           approved_by_name?: string | null
+          approved_by_role?: string | null
           borrowed_date?: string
           borrower_id: string
           borrower_name?: string | null
@@ -115,6 +117,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           approved_by_name?: string | null
+          approved_by_role?: string | null
           borrowed_date?: string
           borrower_id?: string
           borrower_name?: string | null

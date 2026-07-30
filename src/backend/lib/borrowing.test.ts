@@ -211,6 +211,30 @@ describe('canApproveBorrow / canReturnBorrow', () => {
 		expect(canApproveBorrow({ ...staffReq, borrower_id: 'me' }, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
 	})
 
+	// A super admin borrowing a DEPARTMENT's item does not auto-approve (that is
+	// only for Supply Office stock): the request is stamped with the item's
+	// department, so it is that department's admin who clears it — and the super
+	// admin cannot wave through their own request despite outranking everyone.
+	it('routes a super admin’s request for a department item to that department’s admin', () => {
+		const superAdminReq = { department_id: DEPT_A, borrower_id: 'super', borrower_role: 'super_admin' }
+		expect(canApproveBorrow(superAdminReq, { id: 'dept-a-admin', role: 'department_admin', departmentId: DEPT_A })).toBe(true)
+		expect(canApproveBorrow(superAdminReq, { id: 'dept-b-admin', role: 'department_admin', departmentId: DEPT_B })).toBe(false)
+		expect(canApproveBorrow(superAdminReq, { id: 'super', role: 'super_admin', departmentId: null })).toBe(false)
+	})
+
+	// Mirror of the above for a department admin reaching outside their own
+	// department: another department's item goes to that department's admin, and
+	// a Supply Office item goes to the super admin.
+	it('routes a department admin’s outside request to the owning department or the super admin', () => {
+		const otherDeptReq = { department_id: DEPT_B, borrower_id: 'dept-a-admin', borrower_role: 'department_admin' }
+		expect(canApproveBorrow(otherDeptReq, { id: 'dept-b-admin', role: 'department_admin', departmentId: DEPT_B })).toBe(true)
+		expect(canApproveBorrow(otherDeptReq, { id: 'dept-a-admin', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
+
+		const supplyReq = { department_id: null, borrower_id: 'dept-a-admin', borrower_role: 'department_admin' }
+		expect(canApproveBorrow(supplyReq, { id: 'super', role: 'super_admin', departmentId: null })).toBe(true)
+		expect(canApproveBorrow(supplyReq, { id: 'dept-a-admin', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
+	})
+
 	it('allows returning your own (auto-approved) borrow even though approving it is blocked', () => {
 		const own = { department_id: DEPT_A, borrower_id: 'me', borrower_role: 'department_admin' }
 		expect(canApproveBorrow(own, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
