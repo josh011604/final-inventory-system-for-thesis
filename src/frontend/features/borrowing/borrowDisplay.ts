@@ -8,6 +8,9 @@ export const statusTone: Record<string, ChipTone> = {
 	returned: 'success',
 	overdue: 'danger',
 	rejected: 'danger',
+	// Withdrawn by the requester before approval — kept in the history rather
+	// than deleted, so it needs a tone of its own.
+	cancelled: 'muted',
 }
 
 export function formatDate(value: string | null) {

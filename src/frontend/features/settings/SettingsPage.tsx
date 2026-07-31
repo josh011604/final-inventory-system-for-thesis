@@ -140,7 +140,7 @@ function SuppliersCard() {
 				) : data && data.length > 0 ? (
 					<div className="overflow-x-auto rounded-xl border border-border">
 						<table className="min-w-full divide-y divide-border">
-							<thead className="bg-gradient-to-r from-primary-light via-primary-light/60 to-transparent">
+							<thead className="bg-linear-to-r from-primary-light via-primary-light/60 to-transparent">
 								<tr>
 									{['Supplier', 'Contact', 'Phone', 'Email', ''].map((header) => (
 										<th key={header} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary">
@@ -251,7 +251,7 @@ function ProfileCard({ user, onAvatarUpdated }: { user: SchoolUser; onAvatarUpda
 					type="button"
 					onClick={() => fileInputRef.current?.click()}
 					disabled={uploadAvatar.isPending}
-					className="group relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary-hover text-xl font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+					className="group relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-primary to-primary-hover text-xl font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
 					aria-label="Change profile picture"
 				>
 					{avatarSrc ? <img src={avatarSrc} alt={user.fullName} className="h-full w-full object-cover" /> : user.profilePicture}
@@ -301,7 +301,7 @@ export default function SettingsPage({ user, onAvatarUpdated }: { user: SchoolUs
 
 	const tabClass = (active: boolean) =>
 		`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-			active ? 'bg-gradient-to-r from-primary to-primary-hover text-white shadow-sm' : 'text-text-muted hover:text-primary'
+			active ? 'bg-linear-to-r from-primary to-primary-hover text-white shadow-sm' : 'text-text-muted hover:text-primary'
 		}`
 
 	return (

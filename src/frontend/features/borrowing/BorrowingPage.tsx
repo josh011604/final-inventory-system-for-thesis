@@ -134,11 +134,12 @@ export default function BorrowingPage({ user }: { user: SchoolUser }) {
 						header: 'Item',
 						render: (row) => (
 							<div>
-								<p className="font-medium text-text-primary">
-									{row.equipment?.equipment_name ?? mainSupplyNameById.get(row.equipment_id) ?? '—'}
-									{(row.quantity ?? 1) > 1 ? <span className="ml-1.5 text-xs font-semibold text-text-muted">× {row.quantity}</span> : null}
+								{/* Quantity has its own column, so it is not repeated here. */}
+								<p className="font-medium text-text-primary">{row.equipment?.equipment_name ?? mainSupplyNameById.get(row.equipment_id) ?? '—'}</p>
+								<p className="text-xs text-text-muted">
+									{row.borrower_name ?? '—'}
+									{row.borrower_role ? <span className="ml-1">· {roleLabel(row.borrower_role)}</span> : null}
 								</p>
-								<p className="text-xs text-text-muted">{row.borrower_name ?? '—'}</p>
 							</div>
 						),
 					},

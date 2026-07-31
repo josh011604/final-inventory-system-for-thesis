@@ -15,10 +15,18 @@ function json(body: unknown, status: number) {
 	})
 }
 
-// Creates a student account. Only super_admin (any department) or
-// department_admin (their own department only) may call this. Password
-// hashing is handled by Supabase Auth itself (auth.admin.createUser never
-// stores a plaintext password); this function never sees or logs it.
+// Creates a departmental account — student, faculty ('staff') or department
+// admin. Endpoint name is historical: it only made students originally.
+//
+// Who may create what:
+//   * super_admin       — any of the three roles, in any department;
+//   * department_admin  — students only, and only in their own department.
+// 'super_admin' is deliberately not creatable here; promoting someone to it
+// stays a deliberate edit on the Users screen.
+//
+// Password hashing is handled by Supabase Auth itself (auth.admin.createUser
+// never stores a plaintext password); this function never sees or logs it.
+const CREATABLE_ROLES = ['student', 'staff', 'department_admin']
 Deno.serve(async (req) => {
 	if (req.method === 'OPTIONS') {
 		return new Response('ok', { headers: corsHeaders })
@@ -38,6 +46,8 @@ Deno.serve(async (req) => {
 		password?: unknown
 		department_id?: unknown
 		student_id?: unknown
+		employee_id?: unknown
+		role?: unknown
 	}
 	try {
 		body = await req.json()
@@ -50,12 +60,17 @@ Deno.serve(async (req) => {
 	const password = typeof body.password === 'string' ? body.password : ''
 	const departmentId = typeof body.department_id === 'string' ? body.department_id.trim() : ''
 	const studentId = typeof body.student_id === 'string' && body.student_id.trim() ? body.student_id.trim() : null
+	const employeeId = typeof body.employee_id === 'string' && body.employee_id.trim() ? body.employee_id.trim() : null
+	// Defaults to 'student' so callers written before roles were selectable keep
+	// working unchanged.
+	const role = typeof body.role === 'string' && body.role ? body.role : 'student'
 
 	const errors: string[] = []
 	if (!fullName) errors.push('full_name is required')
 	if (!email || !EMAIL_RE.test(email)) errors.push('A valid email is required')
 	if (!password || password.length < 8) errors.push('password must be at least 8 characters')
-	if (!departmentId) errors.push('department_id is required — every student must belong to exactly one department')
+	if (!departmentId) errors.push('department_id is required — every account created here belongs to exactly one department')
+	if (!CREATABLE_ROLES.includes(role)) errors.push(`role must be one of ${CREATABLE_ROLES.join(', ')}`)
 	if (errors.length > 0) {
 		return json({ error: errors.join('; ') }, 400)
 	}
@@ -85,11 +100,17 @@ Deno.serve(async (req) => {
 		return json({ error: 'Account is not active' }, 403)
 	}
 	if (actor.role !== 'super_admin' && actor.role !== 'department_admin') {
-		return json({ error: 'Only admins may create student accounts' }, 403)
+		return json({ error: 'Only admins may create accounts' }, 403)
 	}
-	// A department admin may only create students inside their own department.
-	if (actor.role === 'department_admin' && departmentId !== actor.department_id) {
-		return json({ error: 'You can only create students in your own department' }, 403)
+	// A department admin may only create students, and only inside their own
+	// department — they cannot mint fellow admins or faculty.
+	if (actor.role === 'department_admin') {
+		if (departmentId !== actor.department_id) {
+			return json({ error: 'You can only create accounts in your own department' }, 403)
+		}
+		if (role !== 'student') {
+			return json({ error: 'Only a Super Administrator can create faculty or department admin accounts' }, 403)
+		}
 	}
 
 	const { data: department, error: departmentError } = await adminClient
@@ -106,11 +127,17 @@ Deno.serve(async (req) => {
 		password,
 		email_confirm: true,
 		user_metadata: {
-			role: 'student',
+			// handle_new_user trusts role/status from metadata only for
+			// service-role callers, which this is — the caller's own authority was
+			// checked above.
+			role,
 			status: 'active',
 			full_name: fullName,
 			department_id: departmentId,
-			student_id: studentId,
+			// The campus ID lands in the column that matches the role, mirroring
+			// self-registration.
+			student_id: role === 'student' ? studentId : null,
+			employee_id: role === 'student' ? null : employeeId,
 		},
 	})
 	if (createError || !created.user) {
@@ -132,12 +159,18 @@ Deno.serve(async (req) => {
 	// session for a service-role Admin API call) — log the real actor here instead.
 	await adminClient.from('audit_logs').insert({
 		actor_id: actorId,
-		action: 'create_student',
+		action: 'create_account',
 		entity_type: 'profiles',
 		entity_id: null,
 		old_values: null,
-		new_values: { id: profile.id, email: profile.email, department_id: profile.department_id, student_id: profile.student_id },
-		description: `Student account ${profile.full_name} (${profile.email}) created by ${actor.role} ${actorId}`,
+		new_values: {
+			id: profile.id,
+			email: profile.email,
+			role: profile.role,
+			department_id: profile.department_id,
+			student_id: profile.student_id,
+		},
+		description: `${profile.role} account ${profile.full_name} (${profile.email}) created by ${actor.role} ${actorId}`,
 	})
 
 	return json({ data: profile }, 201)

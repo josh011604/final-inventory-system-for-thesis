@@ -201,7 +201,7 @@ export default function App() {
 				<Routes>
 					<Route element={<AppShell user={activeUser} theme={theme} onToggleTheme={toggleTheme} onLogout={logout} />}>
 						<Route path="/dashboard" element={<DashboardScreen user={activeUser} />} />
-						<Route path="/departments" element={<DepartmentsPage />} />
+						<Route path="/departments" element={<DepartmentsPage user={activeUser} />} />
 						<Route path="/facilities" element={<FacilitiesPage user={activeUser} />} />
 						<Route path="/inventory" element={<InventoryPage user={activeUser} />} />
 						<Route path="/borrowing" element={<BorrowingPage user={activeUser} />} />

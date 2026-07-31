@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -84,11 +84,42 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 	}, [itemDropdownOpen])
 
 	const searchTerm = itemSearch.trim().toLowerCase()
+	// Picking an item writes its label into the search box, so reopening the list
+	// to change your mind would otherwise filter by that whole label — which
+	// matches no item's name or code, leaving an empty dropdown. Treat "the box
+	// still holds exactly what I picked" as not-searching, so browsing back opens
+	// the full grouped list. Typing anything else resumes normal filtering.
+	const browsingSelection = selectedCandidate != null && searchTerm === candidateLabel(selectedCandidate).toLowerCase()
 	const matchesSearch = (item: BorrowCandidate) =>
-		!searchTerm || item.equipment_name.toLowerCase().includes(searchTerm) || item.equipment_code.toLowerCase().includes(searchTerm)
+		!searchTerm || browsingSelection || item.equipment_name.toLowerCase().includes(searchTerm) || item.equipment_code.toLowerCase().includes(searchTerm)
 	const filteredSupply = supply.filter(matchesSearch)
 	const filteredDepartment = department.filter(matchesSearch)
 	const hasSearchResults = filteredSupply.length + filteredDepartment.length > 0
+
+	// Departmental stock is grouped by its owning department rather than listed
+	// as one long mixed run — with every department's items offered here, a flat
+	// list makes finding another department's item needlessly hard. Your own
+	// department comes first (the common case), the rest follow alphabetically,
+	// and Supply Office is rendered separately below as the extra pool that
+	// faculty, department admins and the super admin get on top. Students see
+	// department groups only: useBorrowCandidates never gives them a supply list.
+	const departmentGroups = useMemo(() => {
+		const groups = new Map<string, BorrowCandidate[]>()
+		for (const item of filteredDepartment) {
+			const name = item.departmentName?.trim() || 'Other department'
+			const existing = groups.get(name)
+			if (existing) existing.push(item)
+			else groups.set(name, [item])
+		}
+		const ownDepartment = user.department?.trim()
+		return [...groups.entries()].sort(([a], [b]) => {
+			if (ownDepartment) {
+				if (a === ownDepartment) return -1
+				if (b === ownDepartment) return 1
+			}
+			return a.localeCompare(b)
+		})
+	}, [filteredDepartment, user.department])
 
 	const selectItem = (item: BorrowCandidate) => {
 		setEquipmentId(String(item.id))
@@ -174,9 +205,31 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 									<p className="px-3 py-2 text-sm text-text-muted">No items match your search</p>
 								) : (
 									<>
+										{/* One block per owning department. The header names the
+										    department, so the rows below it do not repeat it. */}
+										{departmentGroups.map(([departmentName, items]) => (
+											<div key={`dept-group-${departmentName}`}>
+												<p className="sticky top-0 bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+													{departmentName}
+													{departmentName === user.department?.trim() ? ' (yours)' : ''} · {items.length} available
+												</p>
+												{items.map((item) => (
+													<button
+														key={`dept-${item.id}`}
+														type="button"
+														onClick={() => selectItem(item)}
+														className="block w-full px-3 py-2 text-left text-sm text-text-primary transition hover:bg-primary-light"
+													>
+														{item.equipment_name} ({item.equipment_code}) · {item.freeUnits} of {item.quantity} free
+													</button>
+												))}
+											</div>
+										))}
+										{/* Last, and only for those who get it: students never receive a
+										    supply list, so this block simply never renders for them. */}
 										{filteredSupply.length > 0 ? (
 											<div>
-												<p className="bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+												<p className="sticky top-0 bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
 													Supply Office · {filteredSupply.length} available
 												</p>
 												{filteredSupply.map((item) => (
@@ -187,26 +240,6 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 														className="block w-full px-3 py-2 text-left text-sm text-text-primary transition hover:bg-primary-light"
 													>
 														{item.equipment_name} ({item.equipment_code}) · {item.freeUnits} of {item.quantity} free
-													</button>
-												))}
-											</div>
-										) : null}
-										{filteredDepartment.length > 0 ? (
-											<div>
-												<p className="bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
-													{/* Faculty and students both draw from every department here, so the
-													    group is labelled generically and each row names its own department. */}
-													{user.role === 'staff' || user.role === 'student' ? 'Departments' : user.department || 'My Department'} ·{' '}
-													{filteredDepartment.length} available
-												</p>
-												{filteredDepartment.map((item) => (
-													<button
-														key={`dept-${item.id}`}
-														type="button"
-														onClick={() => selectItem(item)}
-														className="block w-full px-3 py-2 text-left text-sm text-text-primary transition hover:bg-primary-light"
-													>
-														{item.equipment_name} ({item.equipment_code}){item.departmentName ? ` · ${item.departmentName}` : ''} · {item.freeUnits} of {item.quantity} free
 													</button>
 												))}
 											</div>

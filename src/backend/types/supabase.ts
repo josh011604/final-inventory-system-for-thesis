@@ -756,6 +756,7 @@ export type Database = {
       email_for_username: { Args: { lookup_username: string }; Returns: string }
       is_department_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      notify_password_changed: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

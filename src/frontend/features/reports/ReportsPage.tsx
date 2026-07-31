@@ -11,6 +11,9 @@ import {
 } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow, MaintenanceRequestRow } from '@/backend/lib/supabase/queries'
 import type { SchoolUser } from '@/backend/types/school'
+// Aliased: this module already has a `totalUnits` figure of its own (the summed
+// campus-wide total), so the per-item helper keeps a distinct name.
+import { freeUnits, totalUnits as itemTotalUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 
 // ---------- shared visual tokens (reuse the app design system) ----------
 
@@ -239,10 +242,17 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 		[equipment, isSuperAdmin, user.departmentId],
 	)
 
+	// equipment.quantity is the ON-HAND stock — the database subtracts units when
+	// a borrow is approved. An asset report must count what the campus OWNS, so
+	// every unit total here goes through totalUnits(), which adds the units
+	// currently out on loan back on. Summing the raw column would quietly write
+	// borrowed items out of the inventory and undervalue it.
+	const unitsOut = useMemo(() => unitsOutByEquipmentId(borrowRecords ?? []), [borrowRecords])
+
 	const totals = useMemo(() => {
 		const items = scopedEquipment
-		const totalUnits = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0)
-		const totalValue = items.reduce((sum, item) => sum + (item.value ?? 0) * (item.quantity ?? 1), 0)
+		const totalUnits = items.reduce((sum, item) => sum + itemTotalUnits(item, unitsOut), 0)
+		const totalValue = items.reduce((sum, item) => sum + (item.value ?? 0) * itemTotalUnits(item, unitsOut), 0)
 		const available = items.filter((item) => item.status === 'available').length
 		const activeBorrows = (borrowRecords ?? []).filter(
 			(row) => row.status === 'confirmed' || row.status === 'borrowed' || row.status === 'return_requested',
@@ -250,7 +260,7 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 		const overdue = (borrowRecords ?? []).filter(isOverdue).length
 		const pendingMaintenance = (maintenance ?? []).filter((row) => row.status === 'pending').length
 		return { count: items.length, totalUnits, totalValue, available, activeBorrows, overdue, pendingMaintenance }
-	}, [scopedEquipment, borrowRecords, maintenance])
+	}, [scopedEquipment, borrowRecords, maintenance, unitsOut])
 
 	const byStatus = useMemo(() => tallyByStatus(scopedEquipment, equipmentStatusTone), [scopedEquipment])
 	const byCategory = useMemo(() => rankBy(scopedEquipment, (item) => item.category?.trim() || 'Uncategorized'), [scopedEquipment])
@@ -281,7 +291,9 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 		const stamp = new Date().toISOString().slice(0, 10)
 		downloadCsv(
 			`inventory-report-${stamp}.csv`,
-			['Code', 'Name', 'Category', 'Status', 'Department', 'Location', 'Quantity', 'Unit Value', 'Total Value', 'Condition', 'Purchase Date'],
+			// Owned/On hand/On loan are split out so the export reconciles: a reader
+			// can see why the owned total exceeds what is physically on the shelf.
+			['Code', 'Name', 'Category', 'Status', 'Department', 'Location', 'Quantity Owned', 'On Hand', 'On Loan', 'Unit Value', 'Total Value', 'Condition', 'Purchase Date'],
 			scopedEquipment.map((item) => [
 				item.equipment_code,
 				item.equipment_name,
@@ -289,9 +301,11 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 				item.status,
 				item.departments?.name ?? '',
 				item.location ?? '',
-				item.quantity ?? 1,
+				itemTotalUnits(item, unitsOut),
+				freeUnits(item),
+				unitsOut.get(item.id) ?? 0,
 				item.value ?? 0,
-				(item.value ?? 0) * (item.quantity ?? 1),
+				(item.value ?? 0) * itemTotalUnits(item, unitsOut),
 				item.condition ?? '',
 				item.purchase_date ?? '',
 			]),
@@ -303,7 +317,7 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 		if (!win) return
 		const summary = [
 			['Inventory Items', totals.count.toLocaleString()],
-			['Total Units', totals.totalUnits.toLocaleString()],
+			['Units Owned', totals.totalUnits.toLocaleString()],
 			['Total Asset Value', peso.format(totals.totalValue)],
 			['Available', totals.available.toLocaleString()],
 			['Active Borrows', totals.activeBorrows.toLocaleString()],
@@ -375,7 +389,7 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 			</Card>
 
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-				<StatTile label="Inventory Items" value={totals.count.toLocaleString()} detail={`${totals.totalUnits.toLocaleString()} total units`} tone="accent" icon={Package} isLoading={equipmentLoading} />
+				<StatTile label="Inventory Items" value={totals.count.toLocaleString()} detail={`${totals.totalUnits.toLocaleString()} units owned`} tone="accent" icon={Package} isLoading={equipmentLoading} />
 				<StatTile label="Asset Value" value={peso.format(totals.totalValue)} detail="Estimated total worth" tone="primary" icon={Coins} isLoading={equipmentLoading} />
 				<StatTile label="Available" value={totals.available.toLocaleString()} detail="Ready for use" tone="success" icon={CheckCircle2} isLoading={equipmentLoading} />
 				<StatTile label="Active Borrows" value={totals.activeBorrows.toLocaleString()} detail="Currently checked out" tone="info" icon={Clock} isLoading={borrowLoading} />

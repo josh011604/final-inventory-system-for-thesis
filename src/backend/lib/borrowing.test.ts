@@ -19,6 +19,8 @@ describe('unitsOutByEquipmentId', () => {
 			{ equipment_id: 1, status: 'pending' },
 			{ equipment_id: 1, status: 'returned' },
 			{ equipment_id: 1, status: 'rejected' },
+			// Withdrawn before approval — retained in history, holds nothing.
+			{ equipment_id: 1, status: 'cancelled' },
 		])
 		expect(counts.get(1)).toBe(4)
 	})
@@ -327,9 +329,12 @@ describe('isBorrowOverdue / borrowPenaltyReason', () => {
 		expect(isBorrowOverdue({ status: 'confirmed', expected_return_date: FUTURE }, NOW)).toBe(false)
 	})
 
-	it('does not treat a returned or pending record as overdue', () => {
+	it('does not treat a returned, pending or cancelled record as overdue', () => {
 		expect(isBorrowOverdue({ status: 'returned', expected_return_date: PAST }, NOW)).toBe(false)
 		expect(isBorrowOverdue({ status: 'pending', expected_return_date: PAST }, NOW)).toBe(false)
+		// A cancelled request stays in the history forever; it must never start
+		// reporting itself as overdue once its old due date passes.
+		expect(isBorrowOverdue({ status: 'cancelled', expected_return_date: PAST }, NOW)).toBe(false)
 	})
 
 	it('blocks a student/faculty/dept-admin who holds an overdue item', () => {

@@ -188,6 +188,20 @@ export default function AuthScreen() {
 			setRegisterMessage({ tone: 'error', text: 'Passwords do not match.' })
 			return
 		}
+		// Every student must belong to exactly one department — the
+		// profiles_student_requires_department constraint rejects the row
+		// otherwise, and the failure would surface only as an opaque
+		// "Database error saving new user".
+		if (!departmentId) {
+			setRegisterMessage({
+				tone: 'error',
+				text:
+					accountType === 'student'
+						? 'Select a department. Every student account must belong to one.'
+						: 'Select a department.',
+			})
+			return
+		}
 
 		setRegisterBusy(true)
 		setRegisterMessage(null)
@@ -198,7 +212,8 @@ export default function AuthScreen() {
 			fullName,
 			username: regUsername,
 			departmentId,
-			employeeId,
+			idNumber: employeeId,
+			accountType,
 		})
 
 		setRegisterBusy(false)
@@ -208,7 +223,16 @@ export default function AuthScreen() {
 			return
 		}
 
-		setRegisterMessage({ tone: 'success', text: 'Account created. A Super Administrator must activate it before you can sign in.' })
+		// Two different gates, and confusing them is why "the admin approved me but
+		// I still cannot log in" happens: the email link proves the address is
+		// real, the admin activation grants access. Only mention the one that is
+		// actually outstanding.
+		setRegisterMessage({
+			tone: 'success',
+			text: result.needsEmailConfirmation
+				? 'Account created. Confirm your email using the link we just sent, then wait for an administrator to activate the account before signing in.'
+				: 'Account created. An administrator must activate it before you can sign in.',
+		})
 		setIdentifier(regUsername)
 		resetRegisterForm()
 		setTab('login')
@@ -217,7 +241,7 @@ export default function AuthScreen() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
 			<div className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] shadow-2xl shadow-black/10 lg:grid-cols-2">
-				<section className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-primary via-primary to-primary-hover px-10 py-12 text-white">
+				<section className="relative flex flex-col justify-center overflow-hidden bg-linear-to-br from-primary via-primary to-primary-hover px-10 py-12 text-white">
 					<div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
 					<div className="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
 

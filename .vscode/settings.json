@@ -1,0 +1,31 @@
+{
+  // Tailwind v4 directives (@import 'tailwindcss', @theme, @layer, @apply) are
+  // not part of standard CSS, so VS Code's built-in CSS/SCSS/LESS validator
+  // reports them as "Unknown at rule". Silence that lint so those false
+  // positives stop showing in the Problems panel — the Tailwind plugin still
+  // compiles the file correctly at build time.
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+
+  // supabase/functions are Deno edge functions, not part of the Vite app:
+  // they import via 'npm:'/'https:' specifiers and use the global `Deno`.
+  // tsconfig.app.json only includes "src", so VS Code's built-in TypeScript
+  // service analyses them with browser assumptions and reports false errors
+  // ("Cannot find module 'npm:@supabase/supabase-js@2'", "Cannot find name
+  // 'Deno'"). Handing just that folder to the Deno language server resolves
+  // those specifiers properly and clears the Problems panel.
+  //
+  // enablePaths, NOT "deno.enable": true — enabling Deno for the whole
+  // workspace would point the Deno LSP at src/ as well and fill the React app
+  // with bogus diagnostics instead. Requires the denoland.vscode-deno
+  // extension (see extensions.json).
+  //
+  // supabase/functions/deno.json is the config root the LSP anchors on. Keep it
+  // to schema-valid keys only: deno.json is validated against Deno's config
+  // schema, which rejects unknown properties — including the "//" pseudo-comment
+  // key — so any explanation of it belongs here rather than in that file.
+  "deno.enablePaths": ["./supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": false
+}

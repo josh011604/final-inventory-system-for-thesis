@@ -112,6 +112,19 @@ body[data-theme='dark'] ::selection {
 }
 
 @layer components {
+  /* Horizontal filter rails (e.g. the Inventory department pills) scroll instead
+     of wrapping onto extra rows. A visible scrollbar under a single row of pills
+     is pure noise, so it is hidden — the row still scrolls by wheel, trackpad,
+     touch, and keyboard focus, so nothing becomes unreachable. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Fixed campus photo sitting behind the main content. The sidebar and header
      paint over it with their own translucent surfaces. */
   .app-backdrop {

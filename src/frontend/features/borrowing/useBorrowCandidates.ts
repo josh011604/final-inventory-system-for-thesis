@@ -1,5 +1,5 @@
 import { useBorrowRecords, useEquipment, useMainSupplyEquipment } from '@/backend/lib/supabase/queries'
-import { freeUnits, isBorrowable, OUT_OF_SERVICE_STATUSES, totalUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { borrowScopeReason, freeUnits, isBorrowable, OUT_OF_SERVICE_STATUSES, totalUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 
 // One item the signed-in user may request, normalized across the two sources it
@@ -47,19 +47,25 @@ export function useBorrowCandidates(user: SchoolUser) {
 	// only used to reconstruct each item's full stock for the "x of y" label.
 	//
 	// This picker is deliberately wider than the Inventory screen, which shows
-	// only your own department. Faculty AND students may request any
-	// department's stock — the request is routed to that item's department for
-	// approval — so both draw from every department's inventory. Department
-	// admins stay scoped to their own department; the super admin borrows from
-	// the Supply Office only. (Students get no `supply` list at all: the
-	// main-supply function returns nothing for them.)
+	// only your own department. EVERY role may request any department's stock —
+	// the request carries the item's department and is routed to that
+	// department's admin for approval — so the source is simply every
+	// departmental item the caller can read.
+	//
+	// Scoping this by the borrower's own department (as it once did) made two of
+	// the product's approval rules unreachable: a super admin has no department
+	// at all, so they were offered nothing but the Supply Office, and a
+	// department admin could never request another department's item even though
+	// the server routes exactly that case to the owning department's admin.
+	//
+	// The one remaining role difference is that students may not touch Supply
+	// Office stock. That is enforced server-side three times over (equipment RLS,
+	// the borrow-status create path, the enforce_borrow_department_scope trigger);
+	// borrowScopeReason is the client mirror, applied here so the picker can never
+	// offer an item the server would reject.
 	const unitsOut = unitsOutByEquipmentId(records ?? [])
-	const departmentSource =
-		user.role === 'staff' || user.role === 'student'
-			? (equipment ?? []).filter((item) => item.department_id !== null)
-			: user.departmentId
-				? (equipment ?? []).filter((item) => item.department_id === user.departmentId)
-				: []
+	const borrower = { role: user.role, departmentId: user.departmentId }
+	const departmentSource = (equipment ?? []).filter((item) => item.department_id !== null && borrowScopeReason(item, borrower) === null)
 	const department: BorrowCandidate[] = departmentSource
 		.filter((item) => isBorrowable(item))
 		.map((item) => ({

@@ -124,7 +124,7 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 
 	return (
 		<div className="space-y-6">
-			<div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary via-primary to-primary-hover p-6 text-white shadow-sm">
+			<div className="relative overflow-hidden rounded-2xl border border-border bg-linear-to-br from-primary via-primary to-primary-hover p-6 text-white shadow-sm">
 					<div
 						className="pointer-events-none absolute inset-0 opacity-[0.08]"
 						style={{

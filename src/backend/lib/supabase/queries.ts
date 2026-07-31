@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/backend/lib/supabase/client'
-import type { Tables, TablesInsert } from '@/backend/types/supabase'
+import type { Tables, TablesInsert, TablesUpdate } from '@/backend/types/supabase'
 
 // ---------- Departments ----------
 
@@ -23,6 +23,44 @@ export function useCreateDepartment() {
 			if (error) throw error
 		},
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['departments'] }),
+	})
+}
+
+// Renaming a department changes text that other lists show through a joined
+// `departments(name)` — the Inventory tabs, facility rows, user rows — so those
+// caches have to be refreshed too, not just the departments list itself.
+function invalidateDepartmentDependents(queryClient: ReturnType<typeof useQueryClient>) {
+	queryClient.invalidateQueries({ queryKey: ['departments'] })
+	queryClient.invalidateQueries({ queryKey: ['equipment'] })
+	queryClient.invalidateQueries({ queryKey: ['facilities'] })
+	queryClient.invalidateQueries({ queryKey: ['profiles'] })
+	queryClient.invalidateQueries({ queryKey: ['borrow_records'] })
+}
+
+export function useUpdateDepartment() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ id, updates }: { id: string; updates: TablesUpdate<'departments'> }) => {
+			const { error } = await supabase.from('departments').update(updates).eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => invalidateDepartmentDependents(queryClient),
+	})
+}
+
+export function useDeleteDepartment() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (id: string) => {
+			// Every foreign key onto departments is ON DELETE SET NULL, so this does
+			// not cascade away equipment, facilities or accounts — it detaches them.
+			// The exception is student profiles: profiles_student_requires_department
+			// forbids a student with no department, so the database refuses the
+			// delete outright while any student still belongs to it.
+			const { error } = await supabase.from('departments').delete().eq('id', id)
+			if (error) throw error
+		},
+		onSuccess: () => invalidateDepartmentDependents(queryClient),
 	})
 }
 
@@ -87,15 +125,31 @@ export function useUploadAvatar() {
 	})
 }
 
-// Admin-only: creates a student account (role='student', department_id
-// required). Routed through an edge function because it needs the
-// service-role key to call auth.admin.createUser — never exposed to the client.
-export function useCreateStudent() {
+// Admin-only: creates a departmental account. A super admin may create any of
+// student / staff (Faculty) / department_admin; a department admin may create
+// students in their own department only. Routed through an edge function
+// because it needs the service-role key to call auth.admin.createUser — never
+// exposed to the client. The endpoint is still named create-student for
+// historical reasons; it creates any of the three roles.
+export function useCreateUser() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: async (input: { full_name: string; email: string; password: string; department_id: string; student_id?: string }) => {
+		mutationFn: async (input: {
+			full_name: string
+			email: string
+			password: string
+			department_id: string
+			role: 'student' | 'staff' | 'department_admin'
+			student_id?: string
+			employee_id?: string
+		}) => {
 			const { data, error } = await supabase.functions.invoke('create-student', { body: input })
-			if (error) throw error
+			if (error) {
+				// Edge functions report a non-2xx as a generic FunctionsHttpError; the
+				// real reason is in the response body.
+				const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+				throw new Error(body?.error ?? error.message)
+			}
 			return data
 		},
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),

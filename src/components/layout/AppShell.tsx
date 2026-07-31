@@ -89,7 +89,7 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 								to={item.path}
 								className={`group flex items-center justify-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium transition md:justify-start ${
 									active
-										? 'border-accent bg-gradient-to-r from-primary-light to-transparent text-primary shadow-sm'
+										? 'border-accent bg-linear-to-r from-primary-light to-transparent text-primary shadow-sm'
 										: 'border-transparent text-text-muted hover:border-accent/40 hover:bg-primary-light hover:text-primary'
 								}`}
 								title={item.label}
@@ -148,7 +148,7 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 								onClick={() => setProfileMenuOpen((current) => !current)}
 								className="flex items-center gap-2 rounded-lg border border-border py-1.5 pl-1.5 pr-3 transition hover:border-primary hover:shadow-sm"
 							>
-								<span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-primary to-primary-hover text-xs font-semibold text-white shadow-sm">
+								<span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-md bg-linear-to-br from-primary to-primary-hover text-xs font-semibold text-white shadow-sm">
 									{user.avatarUrl ? (
 										<img src={user.avatarUrl} alt={user.fullName} className="h-full w-full object-cover" />
 									) : (

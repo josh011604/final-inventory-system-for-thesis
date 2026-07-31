@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "bradlc.vscode-tailwindcss",
+    // Type-checks supabase/functions (Deno edge functions) correctly; without it
+    // their 'npm:' imports and the `Deno` global show as false errors. Scoped to
+    // that folder by deno.enablePaths in settings.json.
+    "denoland.vscode-deno"
+  ]
+}

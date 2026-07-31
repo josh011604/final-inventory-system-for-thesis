@@ -327,8 +327,17 @@ Deno.serve(async (req) => {
 		if (record.borrower_id !== actorId) return json({ error: 'You can only cancel your own request' }, 403)
 		if (record.status !== 'pending') return json({ error: 'Only pending requests can be cancelled' }, 400)
 
-		const { error: deleteError } = await adminClient.from('borrow_records').delete().eq('id', recordId)
-		if (deleteError) return json({ error: deleteError.message }, 400)
+		// Marked cancelled, not deleted: every borrowing transaction has to stay in
+		// the history, and a deleted row left no trace outside the super-admin-only
+		// audit log. 'cancelled' holds no units (a pending request never did), so
+		// no stock moves and the item is immediately requestable again — the
+		// duplicate-request guard only looks at status = 'pending'.
+		const { error: cancelError } = await adminClient
+			.from('borrow_records')
+			.update({ status: 'cancelled' })
+			.eq('id', recordId)
+			.eq('status', 'pending')
+		if (cancelError) return json({ error: cancelError.message }, 400)
 
 		await adminClient.from('audit_logs').insert({
 			actor_id: actorId,
@@ -336,7 +345,7 @@ Deno.serve(async (req) => {
 			entity_type: 'borrow_records',
 			entity_id: recordId,
 			old_values: { status: 'pending' },
-			new_values: null,
+			new_values: { status: 'cancelled' },
 			description: `Borrow request #${recordId} cancelled by the requester`,
 		})
 

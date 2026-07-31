@@ -21,6 +21,11 @@ type EntityTablePageProps<T> = {
 	columns: Column<T>[]
 	searchKeys: (keyof T)[]
 	action?: ReactNode
+	// Filter controls shown on their own row between the header and the table.
+	// Passing this also moves the search box down onto that row, so filters and
+	// search read as one toolbar; pages that omit it keep the search in the
+	// header exactly as before.
+	toolbar?: ReactNode
 	emptyMessage?: string
 	emptyAction?: ReactNode
 	pageSize?: number
@@ -36,6 +41,7 @@ export default function EntityTablePage<T extends object>({
 	columns,
 	searchKeys,
 	action,
+	toolbar,
 	emptyMessage = 'No records found yet.',
 	emptyAction,
 	pageSize = 8,
@@ -57,28 +63,39 @@ export default function EntityTablePage<T extends object>({
 	const pageRows = filteredRows.slice((page - 1) * pageSize, page * pageSize)
 	const isEmpty = !isLoading && !error && filteredRows.length === 0 && !query
 
+	const searchBox = (
+		<label className="relative block w-full sm:w-auto">
+			<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+			<input
+				value={query}
+				onChange={(event) => {
+					setQuery(event.target.value)
+					setPage(1)
+				}}
+				placeholder="Search..."
+				aria-label={`Search ${title.toLowerCase()}`}
+				className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 sm:w-56"
+			/>
+		</label>
+	)
+
 	return (
 		<Card
 			title={title}
 			subtitle={subtitle}
-			action={
-				<div className="flex flex-wrap items-center gap-2">
-					<label className="relative">
-						<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-						<input
-							value={query}
-							onChange={(event) => {
-								setQuery(event.target.value)
-								setPage(1)
-							}}
-							placeholder="Search..."
-							className="rounded-lg border border-border bg-bg py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-						/>
-					</label>
-					{action}
-				</div>
-			}
+			// With a toolbar the search moves down beside it; without one it stays
+			// in the header, so every page that does not pass a toolbar is unchanged.
+			action={toolbar ? action : <div className="flex flex-wrap items-center gap-2">{searchBox}{action}</div>}
 		>
+			{toolbar ? (
+				// Filters left, search right, sharing one row while it fits. Both are
+				// flex items that may wrap, so on a narrow screen the search drops
+				// onto its own line below the filters rather than squeezing them.
+				<div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+					<div className="min-w-0 flex-1">{toolbar}</div>
+					<div className="w-full sm:w-auto">{searchBox}</div>
+				</div>
+			) : null}
 			{error ? (
 				<div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-6 text-center">
 					<p className="text-sm font-medium text-danger">This list could not be loaded.</p>
@@ -93,7 +110,7 @@ export default function EntityTablePage<T extends object>({
 				<>
 					<div className="overflow-x-auto rounded-xl border border-border">
 						<table className="min-w-full divide-y divide-border">
-							<thead className="bg-gradient-to-r from-primary-light/80 via-primary-light/50 to-transparent">
+							<thead className="bg-linear-to-r from-primary-light/80 via-primary-light/50 to-transparent">
 								<tr>
 									{columns.map((column) => (
 										<th key={column.header} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary">
@@ -167,7 +184,7 @@ export default function EntityTablePage<T extends object>({
 								>
 									Previous
 								</button>
-								<span className="rounded-lg bg-gradient-to-r from-primary to-primary-hover px-3 py-1.5 font-semibold text-white shadow-sm">
+								<span className="rounded-lg bg-linear-to-r from-primary to-primary-hover px-3 py-1.5 font-semibold text-white shadow-sm">
 									{page} / {totalPages}
 								</span>
 								<button

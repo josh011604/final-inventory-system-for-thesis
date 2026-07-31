@@ -139,7 +139,17 @@ export default function EquipmentHistoryModal({ item, onClose }: { item: Equipme
 			// department's item) is stamped with their own id; say so explicitly
 			// instead of showing it as an ordinary approval.
 			const wasAutoApproved = borrow.approved_by != null && borrow.approved_by === borrow.borrower_id
-			if (borrow.status === 'rejected') {
+			if (borrow.status === 'cancelled') {
+				list.push({
+					id: `borrow-can-${borrow.id}`,
+					at: ms(borrow.updated_at),
+					label: formatDate(borrow.updated_at),
+					title: 'Borrow request cancelled',
+					detail: `Withdrawn by ${who}`,
+					tone: 'muted',
+					icon: Clock,
+				})
+			} else if (borrow.status === 'rejected') {
 				list.push({
 					id: `borrow-rej-${borrow.id}`,
 					at: ms(approvedAt),
