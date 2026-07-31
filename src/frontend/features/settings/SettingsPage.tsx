@@ -187,7 +187,7 @@ function SuppliersCard() {
 						<label className={labelClass} htmlFor="sup-contact">Contact Person</label>
 						<input id="sup-contact" value={contact} onChange={(event) => setContact(event.target.value)} className={inputClass} placeholder="Optional" />
 					</div>
-					<div className="grid grid-cols-2 gap-3">
+					<div className="grid gap-3 sm:grid-cols-2">
 						<div>
 							<label className={labelClass} htmlFor="sup-phone">Phone</label>
 							<input id="sup-phone" value={phone} onChange={(event) => setPhone(event.target.value)} className={inputClass} placeholder="Optional" />

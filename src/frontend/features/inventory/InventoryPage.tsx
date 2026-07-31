@@ -54,7 +54,7 @@ function StepIndicator({ current }: { current: number }) {
 						>
 							{index < current ? '✓' : index + 1}
 						</div>
-						<span className={`whitespace-nowrap text-xs ${index === current ? 'font-semibold text-text-primary' : 'text-text-muted'}`}>{step}</span>
+						<span className={`hidden whitespace-nowrap text-xs sm:block ${index === current ? 'font-semibold text-text-primary' : 'text-text-muted'}`}>{step}</span>
 					</div>
 					{index < steps.length - 1 ? <div className={`mx-2 h-0.5 flex-1 ${index < current ? 'bg-accent' : 'bg-border'}`} /> : null}
 				</div>

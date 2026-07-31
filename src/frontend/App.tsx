@@ -113,6 +113,12 @@ export default function App() {
 	}, [theme])
 
 	useEffect(() => {
+		if (!sessionMessage) return
+		const timer = setTimeout(() => setSessionMessage(null), 4000)
+		return () => clearTimeout(timer)
+	}, [sessionMessage])
+
+	useEffect(() => {
 		let cancelled = false
 
 		supabase.auth.getSession().then(async ({ data }) => {

@@ -46,17 +46,26 @@ Use that migration after linking your Supabase project with the CLI.
 
 These are real Supabase auth users (not UI mockups). Create or repair them with `npm run seed:demo` (requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`), then confirm they work end to end with `npm run verify:demo`.
 
-- `superadmin` / `Super123!`
-- `bscs.admin` / `Admin123!` · `bscs.staff` / `Staff123!` (BS Computer Science)
-- `bsit.admin` / `Admin123!` · `bsit.staff` / `Staff123!` (BS Industrial Technology, major in Electricity)
-- `bsf.admin` / `Admin123!` · `bsf.staff` / `Staff123!` (BS Fisheries, major in Inland Fisheries)
-- `cte.admin` / `Admin123!` · `cte.staff` / `Staff123!` (College of Teacher Education)
-- `midwifery.admin` / `Admin123!` · `midwifery.staff` / `Staff123!` (Midwifery)
-- `bscs.student` / `Student123!` (BS Computer Science)
+The login screen no longer shows a Demo Accounts picker — sign in manually with the username (or email) and password below.
+
+| Role | Department | Username | Email | Password |
+| --- | --- | --- | --- | --- |
+| Super Admin | Institution-wide | `superadmin` | `superadmin@example.com` | `Super123!` |
+| Dept Admin | BSCS | `bscs.admin` | `bscs.admin@example.com` | `Admin123!` |
+| Faculty | BSCS | `bscs.staff` | `bscs.staff@example.com` | `Staff123!` |
+| Student | BSCS | `bscs.student` | `bscs.student@example.com` | `Student123!` |
+| Dept Admin | BSIT Electricity | `bsit.admin` | `bsit.admin@example.com` | `Admin123!` |
+| Faculty | BSIT Electricity | `bsit.staff` | `bsit.staff@example.com` | `Staff123!` |
+| Dept Admin | Inland Fisheries | `bsf.admin` | `bsf.admin@example.com` | `Admin123!` |
+| Faculty | Inland Fisheries | `bsf.staff` | `bsf.staff@example.com` | `Staff123!` |
+| Dept Admin | Teacher Education | `cte.admin` | `cte.admin@example.com` | `Admin123!` |
+| Faculty | Teacher Education | `cte.staff` | `cte.staff@example.com` | `Staff123!` |
+| Dept Admin | Midwifery | `midwifery.admin` | `midwifery.admin@example.com` | `Admin123!` |
+| Faculty | Midwifery | `midwifery.staff` | `midwifery.staff@example.com` | `Staff123!` |
 
 Rebuild the account set from scratch with `node scripts/prune-accounts.mjs` (deletes every non–super-admin account) followed by `npm run seed:demo`. Department names must match the `20260713130000_reconfigure_departments` migration.
 
-The Demo Accounts panel on the login screen is intentionally kept so evaluators can sign in with one click. These are shared, publicly listed credentials — when you switch this instance over to real production data, rotate the passwords (or deactivate the accounts) and consider hiding the panel in `src/frontend/features/auth/AuthScreen.tsx`.
+These are shared, publicly listed credentials for local/dev use — when you switch this instance over to real production data, rotate the passwords (or deactivate the accounts).
 
 ## Scripts
 

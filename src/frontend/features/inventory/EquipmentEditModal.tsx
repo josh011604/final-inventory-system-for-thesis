@@ -91,7 +91,7 @@ export default function EquipmentEditModal({
 					<input id="edit-name" value={name} onChange={(event) => setName(event.target.value)} className={inputClass} required />
 				</div>
 
-				<div className="grid grid-cols-2 gap-3">
+				<div className="grid gap-3 sm:grid-cols-2">
 					<div>
 						<label className={labelClass} htmlFor="edit-category">
 							Category
@@ -110,7 +110,7 @@ export default function EquipmentEditModal({
 					</div>
 				</div>
 
-				<div className="grid grid-cols-2 gap-3">
+				<div className="grid gap-3 sm:grid-cols-2">
 					<div>
 						<label className={labelClass} htmlFor="edit-condition">
 							Condition
