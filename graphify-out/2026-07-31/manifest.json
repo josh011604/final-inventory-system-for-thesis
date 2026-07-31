@@ -30,9 +30,9 @@
     "semantic_hash": "40e7fe754df6060ed568d03ffc6d1f46"
   },
   "scripts/seed-demo-accounts.mjs": {
-    "mtime": 1785499831.8932166,
-    "ast_hash": "3b1da0ef1d1c721705b04902839d54f5",
-    "semantic_hash": ""
+    "mtime": 1784728475.9004653,
+    "ast_hash": "54a16f98ce1fcc174420c990e8b1198d",
+    "semantic_hash": "54a16f98ce1fcc174420c990e8b1198d"
   },
   "scripts/seed-sample-data.mjs": {
     "mtime": 1785414000.5506108,
@@ -170,8 +170,8 @@
     "semantic_hash": "c506989987e1b44eb7dababdae925eb3"
   },
   "src/frontend/App.tsx": {
-    "mtime": 1785499129.8257408,
-    "ast_hash": "101674f7ee398dc505ccdd40cffdcd87",
+    "mtime": 1785414000.5684078,
+    "ast_hash": "478bd7a1560a130ee012511a2082316f",
     "semantic_hash": ""
   },
   "src/frontend/config/navigation.ts": {
@@ -185,9 +185,9 @@
     "semantic_hash": "9fd23ca5e593f08a4c27a3630f5b31f6"
   },
   "src/frontend/features/auth/AuthScreen.tsx": {
-    "mtime": 1785499812.2568395,
-    "ast_hash": "9ca6dbe9f006b4d2cb69f7833902fdf0",
-    "semantic_hash": ""
+    "mtime": 1785414000.5704622,
+    "ast_hash": "611e0521353bc2c99e084a040b613a02",
+    "semantic_hash": "611e0521353bc2c99e084a040b613a02"
   },
   "src/frontend/features/backup/BackupPage.tsx": {
     "mtime": 1784081729.8483732,
@@ -280,7 +280,7 @@
     "semantic_hash": "715612cbcb1cd99f8a8e45a4112aca0d"
   },
   "src/frontend/features/settings/SettingsPage.tsx": {
-    "mtime": 1785416667.6193037,
+    "mtime": 1785415735.3076673,
     "ast_hash": "3e809fafc5624d072c896c306038418a",
     "semantic_hash": ""
   },
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1785499825.740446,
-    "ast_hash": "6c41c34c01506c15d38242e5b7532135",
+    "mtime": 1785414000.5305448,
+    "ast_hash": "34fc88f528610551666015d005337222",
     "semantic_hash": ""
   },
   "index.html": {
@@ -775,13 +775,13 @@
     "semantic_hash": ""
   },
   "src/frontend/features/settings/AboutCard.tsx": {
-    "mtime": 1785416667.6173973,
-    "ast_hash": "028287beead7cf8334f6812b066b200f",
+    "mtime": 1785415673.057883,
+    "ast_hash": "b057ae5704281382eae601f800516485",
     "semantic_hash": ""
   },
   "src/frontend/features/settings/HelpGuideCard.tsx": {
-    "mtime": 1785416667.6173973,
-    "ast_hash": "a759452063a8d205e2b62e079074f9b1",
+    "mtime": 1785415679.097254,
+    "ast_hash": "b8e30ca221abaff908e0c2dfbf29dea2",
     "semantic_hash": ""
   }
 }

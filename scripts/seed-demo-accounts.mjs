@@ -38,10 +38,10 @@ if (!url || !serviceRoleKey) {
 
 const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } })
 
-// Passwords must stay in sync with the Demo Accounts panel in
-// src/frontend/features/auth/AuthScreen.tsx and README.md. Department names must
-// match the departments created by the 20260713130000_reconfigure_departments
-// migration. Run scripts/prune-accounts.mjs first for a clean slate.
+// Passwords must stay in sync with the Demo Accounts table in README.md.
+// Department names must match the departments created by the
+// 20260713130000_reconfigure_departments migration. Run scripts/prune-accounts.mjs
+// first for a clean slate.
 const BSCS = 'Bachelor of Science in Computer Science (BSCS)'
 const BSIT = 'Bachelor of Science in Industrial Technology, major in Electricity'
 const BSF = 'Bachelor of Science in Fisheries, major in Inland Fisheries'

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { AtSign, GraduationCap, History, PackageCheck, Repeat, ShieldCheck, UserCircle2, Users } from 'lucide-react'
+import { AtSign, GraduationCap, History, PackageCheck, Repeat, ShieldCheck, UserCircle2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { signIn, signUp } from '@/backend/lib/supabase/auth'
 import { supabase } from '@/backend/lib/supabase/client'
@@ -17,21 +17,6 @@ const features: { label: string; icon: LucideIcon }[] = [
 	{ label: 'Real-time Status Updates', icon: PackageCheck },
 	{ label: 'Complete Inventory Control', icon: ShieldCheck },
 	{ label: 'Detailed History Tracking', icon: History },
-]
-
-const demoAccounts = [
-	{ label: 'Super Admin', department: 'Institution-wide', username: 'superadmin', password: 'Super123!', icon: ShieldCheck },
-	{ label: 'Dept Admin', department: 'BSCS', username: 'bscs.admin', password: 'Admin123!', icon: Users },
-	{ label: 'Dept Admin', department: 'BSIT Electricity', username: 'bsit.admin', password: 'Admin123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Inland Fisheries', username: 'bsf.admin', password: 'Admin123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Teacher Education', username: 'cte.admin', password: 'Admin123!', icon: Users },
-	{ label: 'Dept Admin', department: 'Midwifery', username: 'midwifery.admin', password: 'Admin123!', icon: Users },
-	{ label: 'Faculty', department: 'BSCS', username: 'bscs.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Faculty', department: 'BSIT Electricity', username: 'bsit.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Faculty', department: 'Inland Fisheries', username: 'bsf.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Faculty', department: 'Teacher Education', username: 'cte.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Faculty', department: 'Midwifery', username: 'midwifery.staff', password: 'Staff123!', icon: UserCircle2 },
-	{ label: 'Student', department: 'BSCS', username: 'bscs.student', password: 'Student123!', icon: GraduationCap },
 ]
 
 const inputClass =
@@ -151,12 +136,6 @@ export default function AuthScreen() {
 				setDepartmentId((current) => current || options[0]?.id || '')
 			})
 	}, [])
-
-	const fillDemoAccount = (account: (typeof demoAccounts)[number]) => {
-		setIdentifier(account.username)
-		setPassword(account.password)
-		setLoginError(null)
-	}
 
 	const resetRegisterForm = () => {
 		setAccountType('employee')
@@ -303,27 +282,6 @@ export default function AuthScreen() {
 							<Button type="submit" className="w-full" disabled={loginBusy}>
 								{loginBusy ? 'Signing in…' : 'Login'}
 							</Button>
-
-							<div className="pt-2">
-								<p className="text-center text-xs uppercase tracking-[0.25em] text-text-muted">Demo Accounts</p>
-								<div className="mt-3 grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
-									{demoAccounts.map((account) => (
-										<button
-											key={account.username}
-											type="button"
-											onClick={() => fillDemoAccount(account)}
-											className="group rounded-xl border border-border bg-bg px-3 py-2.5 text-left transition hover:border-primary hover:bg-primary-light"
-										>
-											<div className="flex items-center gap-1.5">
-												<account.icon className="h-3.5 w-3.5 shrink-0 text-text-muted transition group-hover:text-primary" />
-												<p className="truncate text-xs font-semibold text-text-primary">{account.label}</p>
-											</div>
-											<p className="mt-1 truncate text-[11px] text-text-muted">{account.department}</p>
-											<p className="mt-0.5 text-[11px] font-medium text-primary">{account.username}</p>
-										</button>
-									))}
-								</div>
-							</div>
 						</form>
 					) : (
 						<form className="mt-8 space-y-4" onSubmit={handleRegister}>

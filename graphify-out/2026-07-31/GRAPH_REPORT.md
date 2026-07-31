@@ -1,16 +1,16 @@
-# Graph Report - react_invy_projects  (2026-07-31)
+# Graph Report - react_invy_projects  (2026-07-30)
 
 ## Corpus Check
-- 154 files · ~78,852 words
+- 154 files · ~78,986 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 656 nodes · 620 edges · 115 communities (55 shown, 60 thin omitted)
+- 657 nodes · 621 edges · 115 communities (56 shown, 59 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `afa00639`
+- Built from commit: `cfb754ed`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -132,7 +132,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (115 total, 60 thin omitted)
+## Communities (115 total, 59 thin omitted)
 
 ### Community 0 - "queries.ts"
 Cohesion: 0.05
@@ -193,6 +193,10 @@ Nodes (9): chipClass, dotClass, EquipmentHistoryModal(), EventTone, formatDate()
 ### Community 14 - "verify-demo-accounts.mjs"
 Cohesion: 0.32
 Nodes (6): demoAccounts, env, main(), root, verifyAccount(), withRetry()
+
+### Community 15 - "AuthScreen.tsx"
+Cohesion: 0.25
+Nodes (3): demoAccounts, DepartmentOption, features
 
 ### Community 16 - "backfill-profile-pii.mjs"
 Cohesion: 0.29
@@ -287,9 +291,9 @@ Cohesion: 0.40
 Nodes (3): ActivityEntry, ActivityType, ALL_STATUSES
 
 ## Knowledge Gaps
-- **299 isolated node(s):** `supabase`, `github`, `name`, `private`, `version` (+294 more)
+- **300 isolated node(s):** `supabase`, `github`, `name`, `private`, `version` (+295 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **59 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -297,7 +301,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `devDependencies` connect `devDependencies` to `scripts`?**
   _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `supabase`, `github`, `name` to the rest of the system?**
-  _299 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _300 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `queries.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._
 - **Should `scripts` be split into smaller, more focused modules?**

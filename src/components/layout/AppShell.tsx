@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, LogOut, Search, Sun, Moon, UserRoundPen } from 'lucide-react'
+import { Bell, LogOut, Menu, Search, Sun, Moon, UserRoundPen, X } from 'lucide-react'
 import { isRouteAllowed, navItemsForRole } from '@/frontend/config/navigation'
 import { getRoleLabel } from '@/backend/lib/rbac'
 import { useNotifications } from '@/backend/lib/supabase/queries'
@@ -18,14 +18,14 @@ function Breadcrumbs({ path }: { path: string }) {
 	const label = (segment: string) => segment.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 
 	return (
-		<nav className="flex items-center gap-2 text-sm text-text-muted">
-			<Link to="/dashboard" className="hover:text-primary">
+		<nav className="flex min-w-0 items-center gap-2 text-sm text-text-muted">
+			<Link to="/dashboard" className="hidden hover:text-primary sm:inline">
 				BISU FIMS
 			</Link>
 			{segments.map((segment, index) => (
-				<span key={segment} className="flex items-center gap-2">
-					<span>/</span>
-					<span className={index === segments.length - 1 ? 'font-semibold text-text-primary' : ''}>{label(segment)}</span>
+				<span key={segment} className="flex min-w-0 items-center gap-2">
+					<span className="hidden sm:inline">/</span>
+					<span className={`truncate ${index === segments.length - 1 ? 'font-semibold text-text-primary' : ''}`}>{label(segment)}</span>
 				</span>
 			))}
 		</nav>
@@ -35,6 +35,7 @@ function Breadcrumbs({ path }: { path: string }) {
 export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppShellProps) {
 	const location = useLocation()
 	const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+	const [mobileNavOpen, setMobileNavOpen] = useState(false)
 	const profileMenuRef = useRef<HTMLDivElement>(null)
 	const items = navItemsForRole(user.role)
 	const { data: notifications } = useNotifications()
@@ -42,6 +43,7 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 
 	useEffect(() => {
 		setProfileMenuOpen(false)
+		setMobileNavOpen(false)
 	}, [location.pathname])
 
 	useEffect(() => {
@@ -64,11 +66,28 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 		}
 	}, [profileMenuOpen])
 
+	useEffect(() => {
+		if (!mobileNavOpen) return
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setMobileNavOpen(false)
+		}
+
+		document.addEventListener('keydown', handleKeyDown)
+		return () => {
+			document.removeEventListener('keydown', handleKeyDown)
+		}
+	}, [mobileNavOpen])
+
 	return (
 		<div className="flex min-h-screen bg-bg text-text-primary">
 			<div className="app-backdrop" aria-hidden="true" />
 
-			<aside className="fixed inset-y-0 left-0 z-30 flex w-16 flex-col border-r border-border bg-surface md:w-64">
+			<aside
+				className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border bg-surface transition-transform duration-200 md:translate-x-0 ${
+					mobileNavOpen ? 'translate-x-0' : '-translate-x-full'
+				}`}
+			>
 				<div className="flex h-16 items-center justify-center gap-3 border-b border-border px-2 md:justify-start md:px-5">
 					<img src="/bisu-logo.png" alt="BISU seal" className="h-9 w-9 shrink-0 md:h-10 md:w-10" />
 					<div className="hidden md:block">
@@ -87,7 +106,9 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 							<NavLink
 								key={item.path}
 								to={item.path}
-								className={`group flex items-center justify-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium transition md:justify-start ${
+								className={`group flex items-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium transition md:justify-start ${
+									mobileNavOpen ? 'justify-start' : 'justify-center'
+								} ${
 									active
 										? 'border-accent bg-gradient-to-r from-primary-light to-transparent text-primary shadow-sm'
 										: 'border-transparent text-text-muted hover:border-accent/40 hover:bg-primary-light hover:text-primary'
@@ -95,15 +116,32 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 								title={item.label}
 							>
 								<Icon className={`h-5 w-5 shrink-0 transition group-hover:scale-110 ${active ? 'text-accent' : ''}`} />
-								<span className="hidden md:inline">{item.label}</span>
+								<span className={`${mobileNavOpen ? 'inline' : 'hidden'} md:inline`}>{item.label}</span>
 							</NavLink>
 						)
 					})}
 				</nav>
 			</aside>
 
-			<div className="flex min-h-screen flex-1 flex-col pl-16 md:pl-64">
+			{mobileNavOpen ? (
+				<div
+					className="fixed inset-0 z-20 bg-black/40 md:hidden"
+					aria-hidden="true"
+					onClick={() => setMobileNavOpen(false)}
+				/>
+			) : null}
+
+			<div className="flex min-h-screen min-w-0 flex-1 flex-col pl-0 md:pl-64">
 				<header className="glass-panel-strong sticky top-0 z-20 flex h-16 items-center gap-4 border-b px-4 sm:px-6">
+					<button
+						type="button"
+						onClick={() => setMobileNavOpen((current) => !current)}
+						className="rounded-lg border border-border p-2 text-text-muted transition hover:border-primary hover:text-primary md:hidden"
+						aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+					>
+						{mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+					</button>
+
 					<Breadcrumbs path={location.pathname} />
 
 					<div className="ml-auto flex items-center gap-2 sm:gap-3">
