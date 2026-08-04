@@ -83,18 +83,24 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 		<div className="flex min-h-screen bg-bg text-text-primary">
 			<div className="app-backdrop" aria-hidden="true" />
 
+			{/* Navy rather than bg-surface, carrying the login hero's left panel
+			    through into the app. Every foreground colour in here is set against
+			    that fill instead of inherited: the shared text-text-primary /
+			    text-text-muted tokens are near-black on the light theme and would
+			    vanish. Separators are white alphas for the same reason — border-border
+			    is a light-grey hairline that reads as a scratch on dark navy. */}
 			<aside
-				className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border bg-surface transition-transform duration-200 md:translate-x-0 ${
+				className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-white/10 bg-sidebar transition-transform duration-200 md:translate-x-0 ${
 					mobileNavOpen ? 'translate-x-0' : '-translate-x-full'
 				}`}
 			>
-				<div className="flex h-16 items-center justify-center gap-3 border-b border-border px-2 md:justify-start md:px-5">
+				<div className="flex h-16 items-center justify-center gap-3 border-b border-white/10 px-2 md:justify-start md:px-5">
 					<img src="/bisu-logo.png" alt="BISU seal" className="h-9 w-9 shrink-0 md:h-10 md:w-10" />
 					<div className="hidden md:block">
-						<p className="font-serif text-base leading-tight text-text-primary">
-							<span className="font-semibold">BISU</span> <span className="font-normal text-text-muted">FIMS</span>
+						<p className="font-serif text-base leading-tight text-white">
+							<span className="font-semibold">BISU</span> <span className="font-normal text-white/60">FIMS</span>
 						</p>
-						<p className="text-xs text-text-muted">Facilities &amp; Inventory</p>
+						<p className="text-xs text-white/60">Facilities &amp; Inventory</p>
 					</div>
 				</div>
 
@@ -109,9 +115,13 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 								className={`group flex items-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium transition md:justify-start ${
 									mobileNavOpen ? 'justify-start' : 'justify-center'
 								} ${
+									// The old active state faded primary-light (a pale lilac) to
+									// transparent, which is invisible on navy. A white wash reads
+									// on the dark fill and keeps the gold accent rail as the thing
+									// that marks the current page.
 									active
-										? 'border-accent bg-linear-to-r from-primary-light to-transparent text-primary shadow-sm'
-										: 'border-transparent text-text-muted hover:border-accent/40 hover:bg-primary-light hover:text-primary'
+										? 'border-accent bg-linear-to-r from-white/15 to-transparent text-white shadow-sm'
+										: 'border-transparent text-white/65 hover:border-accent/40 hover:bg-white/8 hover:text-white'
 								}`}
 								title={item.label}
 							>

@@ -143,7 +143,14 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 			setError(`Only ${maxUnits} unit${maxUnits === 1 ? '' : 's'} of this item ${maxUnits === 1 ? 'is' : 'are'} available.`)
 			return
 		}
-		if (expectedReturnDate && expectedReturnDate < today) {
+		// Required for every borrower, whatever their role: without a due date
+		// nothing can go overdue, so the overdue sweep, the borrow penalty and the
+		// "still out" reports all have nothing to measure against.
+		if (!expectedReturnDate) {
+			setError('Please choose an expected return date. A borrow request cannot be submitted without one.')
+			return
+		}
+		if (expectedReturnDate < today) {
 			setError('The expected return date cannot be in the past. Please choose today or a future date.')
 			return
 		}
@@ -154,7 +161,7 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 			await createBorrowRecord.mutateAsync({
 				equipment_id: Number(equipmentId),
 				quantity: requestedQuantity,
-				expected_return_date: expectedReturnDate || null,
+				expected_return_date: expectedReturnDate,
 				notes: notes || null,
 			})
 			onSubmitted?.()
@@ -280,9 +287,18 @@ export default function BorrowRequestModal({ open, onClose, user, presetItem = n
 
 				<div>
 					<label className={labelClass} htmlFor="borrow-due">
-						Expected Return Date
+						Expected Return Date <span className="text-danger">*</span>
 					</label>
-					<input id="borrow-due" type="date" min={today} value={expectedReturnDate} onChange={(event) => setExpectedReturnDate(event.target.value)} className={inputClass} />
+					<input
+						id="borrow-due"
+						type="date"
+						min={today}
+						value={expectedReturnDate}
+						onChange={(event) => setExpectedReturnDate(event.target.value)}
+						className={inputClass}
+						required
+						aria-required="true"
+					/>
 				</div>
 				<div>
 					<label className={labelClass} htmlFor="borrow-notes">

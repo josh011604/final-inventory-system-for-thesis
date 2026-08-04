@@ -146,10 +146,20 @@ export function hasBorrowAuthority(record: ApprovableBorrow, actor: BorrowApprov
 	return false
 }
 
-// Approve / reject: authority AND not the actor's own request (an approver may
-// never rubber-stamp themselves — matches transition_borrow_record).
+// Approve / reject: authority, not the actor's own request (an approver may
+// never rubber-stamp themselves), AND the item's owning department decides.
+//
+// The super admin clause is narrower here than in hasBorrowAuthority: approval
+// is owned by whoever owns the stock, and the super admin owns exactly one
+// pool — the Supply Office (department_id === null). A BSCS item borrowed by
+// BSCS faculty is BSCS's call, so it goes to that department's admin (or its
+// faculty, when the borrower is one of its students). Mirrors the authority
+// check in transition_borrow_record (migration 20260803120000); keep the two in
+// step or the UI offers a button the database rejects.
 export function canApproveBorrow(record: ApprovableBorrow, actor: BorrowApprover): boolean {
-	return record.borrower_id !== actor.id && hasBorrowAuthority(record, actor)
+	if (record.borrower_id === actor.id) return false
+	if (actor.role === 'super_admin') return record.department_id === null
+	return hasBorrowAuthority(record, actor)
 }
 
 // Mark returned: authority is enough — returning your own (auto-approved) borrow

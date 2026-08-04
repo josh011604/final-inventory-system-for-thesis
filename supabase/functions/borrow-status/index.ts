@@ -89,7 +89,14 @@ Deno.serve(async (req) => {
 		if (!Number.isInteger(equipmentId)) {
 			return json({ error: 'equipment_id is required' }, 400)
 		}
+		// Required, not optional: a record with no due date can never go overdue,
+		// so it escapes the overdue sweep, the borrow penalty and every "still
+		// out" report. The client blocks submission too, but this is the
+		// authority — the endpoint is reachable without going through the modal.
 		const expectedReturn = typeof body.expected_return_date === 'string' && body.expected_return_date ? body.expected_return_date : null
+		if (!expectedReturn) {
+			return json({ error: 'An expected return date is required to borrow an item' }, 400)
+		}
 		const notes = typeof body.notes === 'string' && body.notes ? body.notes : null
 
 		// How many units this request is for. Defaults to 1; must be a positive
@@ -122,8 +129,9 @@ Deno.serve(async (req) => {
 			}
 		}
 
-		// Rule: the return date must be today..+MAX_BORROW_DAYS.
-		if (expectedReturn) {
+		// Rule: the return date must be today..+MAX_BORROW_DAYS. Unconditional now
+		// that expectedReturn is guaranteed present by the check above.
+		{
 			const due = new Date(expectedReturn)
 			if (Number.isNaN(due.getTime())) return json({ error: 'Invalid expected return date' }, 400)
 			const today = new Date()

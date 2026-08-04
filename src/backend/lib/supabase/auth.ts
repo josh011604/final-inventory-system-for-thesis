@@ -97,6 +97,20 @@ export async function signOut() {
 	await supabase.auth.signOut()
 }
 
+// Password reset. Takes the same "username or email" the login box does, so a
+// user who only knows their username can still recover the account.
+export async function sendPasswordReset(identifier: string) {
+	const email = await resolveEmail(identifier)
+	if (!email) {
+		return { error: 'Enter your username or email above first, then choose Forgot password.' }
+	}
+	const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+	if (error) {
+		return { error: error.message }
+	}
+	return { error: null }
+}
+
 export async function changePassword(email: string, currentPassword: string, newPassword: string): Promise<{ error: string | null }> {
 	const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: currentPassword })
 	if (verifyError) {

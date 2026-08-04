@@ -213,6 +213,29 @@ describe('canApproveBorrow / canReturnBorrow', () => {
 		expect(canApproveBorrow({ ...staffReq, borrower_id: 'me' }, { id: 'me', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
 	})
 
+	// The department that owns the stock decides. A BSCS faculty member borrowing
+	// a BSCS item is BSCS's call: its admin approves, and the super admin — who
+	// owns only the Supply Office — cannot, even though they outrank everyone.
+	it('keeps the super admin out of approvals for a department’s own item', () => {
+		expect(canApproveBorrow(staffReq, { id: 'dept-a-admin', role: 'department_admin', departmentId: DEPT_A })).toBe(true)
+		expect(canApproveBorrow(staffReq, { id: 'super', role: 'super_admin', departmentId: null })).toBe(false)
+	})
+
+	it('still lets the super admin approve Supply Office (department-less) requests', () => {
+		const supplyReq = { department_id: null, borrower_id: 'fac', borrower_role: 'staff' }
+		expect(canApproveBorrow(supplyReq, { id: 'super', role: 'super_admin', departmentId: null })).toBe(true)
+		// and no department admin can reach Supply Office stock
+		expect(canApproveBorrow(supplyReq, { id: 'dept-a-admin', role: 'department_admin', departmentId: DEPT_A })).toBe(false)
+	})
+
+	// Approving is scoped to the owning department; recording a physical
+	// hand-back is not, so the super admin keeps Mark Returned system-wide.
+	// Losing that would strand departmental records whenever an admin is away.
+	it('leaves the super admin able to return a department item they cannot approve', () => {
+		expect(canApproveBorrow(staffReq, { id: 'super', role: 'super_admin', departmentId: null })).toBe(false)
+		expect(canReturnBorrow(staffReq, { id: 'super', role: 'super_admin', departmentId: null })).toBe(true)
+	})
+
 	// A super admin borrowing a DEPARTMENT's item does not auto-approve (that is
 	// only for Supply Office stock): the request is stamped with the item's
 	// department, so it is that department's admin who clears it — and the super

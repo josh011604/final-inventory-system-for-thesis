@@ -142,6 +142,35 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 		return data.filter((item) => item.department_id === effectiveTab)
 	}, [data, effectiveTab])
 
+	// In the All view a name on its own can be ambiguous — several departments
+	// each keep a "Chair". Only names that exist under more than ONE owner need
+	// disambiguating, so those are the ones tagged with their department; a name
+	// unique to one department stays clean. Two chairs within the same department
+	// are not tagged, because naming the department would not tell them apart —
+	// their asset codes already do.
+	const ambiguousNames = useMemo(() => {
+		const ownersByName = new Map<string, Set<string>>()
+		for (const item of data ?? []) {
+			const key = item.equipment_name.trim().toLowerCase()
+			const owner = item.department_id ?? SUPPLY_TAB
+			const owners = ownersByName.get(key)
+			if (owners) owners.add(owner)
+			else ownersByName.set(key, new Set([owner]))
+		}
+		return new Set(
+			[...ownersByName.entries()].filter(([, owners]) => owners.size > 1).map(([key]) => key),
+		)
+	}, [data])
+
+	// Empty unless we are in All and this name is actually shared: inside a
+	// department's own tab the owner is already implied by the tab.
+	const departmentSuffix = (row: EquipmentRow) => {
+		if (effectiveTab !== ALL_TAB) return ''
+		if (!ambiguousNames.has(row.equipment_name.trim().toLowerCase())) return ''
+		if (row.department_id === null) return 'Supply Office'
+		return departmentTabs.departments.find(([id]) => id === row.department_id)?.[1].short ?? ''
+	}
+
 	// The subtitle has room for the department's full name even though the tab
 	// itself is abbreviated.
 	const activeTabLabel =
@@ -335,12 +364,18 @@ export default function InventoryPage({ user }: { user: SchoolUser }) {
 				columns={[
 					{
 						header: 'Asset',
-						render: (row) => (
-							<div>
-								<p className="font-medium text-text-primary">{row.equipment_code}</p>
-								<p className="text-xs text-text-muted">{row.equipment_name}</p>
-							</div>
-						),
+						render: (row) => {
+							const owner = departmentSuffix(row)
+							return (
+								<div>
+									<p className="font-medium text-text-primary">{row.equipment_code}</p>
+									<p className="text-xs text-text-muted">
+										{row.equipment_name}
+										{owner ? <span className="ml-1 font-semibold text-primary">({owner})</span> : null}
+									</p>
+								</div>
+							)
+						},
 					},
 					{ header: 'Department', render: (row) => row.departments?.name ?? 'Main Supply' },
 					{ header: 'Facility', render: (row) => row.facilities?.name ?? '—' },
