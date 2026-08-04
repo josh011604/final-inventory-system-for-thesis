@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { KeyRound } from 'lucide-react'
+import { Eye, EyeOff, KeyRound } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { changePassword } from '@/backend/lib/supabase/auth'
@@ -9,6 +9,46 @@ const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
 
 const NEW_PASSWORD_PATTERN = /^(?=.*\d).{8,}$/
+
+function PasswordInput({
+	id,
+	label,
+	value,
+	onChange,
+}: {
+	id: string
+	label: string
+	value: string
+	onChange: (value: string) => void
+}) {
+	const [visible, setVisible] = useState(false)
+
+	return (
+		<div>
+			<label className={labelClass} htmlFor={id}>
+				{label}
+			</label>
+			<div className="relative">
+				<input
+					id={id}
+					type={visible ? 'text' : 'password'}
+					value={value}
+					onChange={(event) => onChange(event.target.value)}
+					className={`${inputClass} pr-10`}
+					required
+				/>
+				<button
+					type="button"
+					onClick={() => setVisible((current) => !current)}
+					className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-muted transition hover:bg-border hover:text-text-primary"
+					aria-label={visible ? 'Hide password' : 'Show password'}
+				>
+					{visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+				</button>
+			</div>
+		</div>
+	)
+}
 
 // Takes no props: the account to re-authenticate is read from the live auth
 // session inside changePassword, not passed in from the profile row.
@@ -66,39 +106,9 @@ export default function ChangePasswordCard() {
 			<form className="space-y-4" onSubmit={handleSubmit}>
 				{error ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div> : null}
 				{success ? <div className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">{success}</div> : null}
-				<div>
-					<label className={labelClass} htmlFor="current-password">Current Password</label>
-					<input
-						id="current-password"
-						type="password"
-						value={currentPassword}
-						onChange={(event) => setCurrentPassword(event.target.value)}
-						className={inputClass}
-						required
-					/>
-				</div>
-				<div>
-					<label className={labelClass} htmlFor="new-password">New Password</label>
-					<input
-						id="new-password"
-						type="password"
-						value={newPassword}
-						onChange={(event) => setNewPassword(event.target.value)}
-						className={inputClass}
-						required
-					/>
-				</div>
-				<div>
-					<label className={labelClass} htmlFor="confirm-new-password">Confirm New Password</label>
-					<input
-						id="confirm-new-password"
-						type="password"
-						value={confirmPassword}
-						onChange={(event) => setConfirmPassword(event.target.value)}
-						className={inputClass}
-						required
-					/>
-				</div>
+				<PasswordInput id="current-password" label="Current Password" value={currentPassword} onChange={setCurrentPassword} />
+				<PasswordInput id="new-password" label="New Password" value={newPassword} onChange={setNewPassword} />
+				<PasswordInput id="confirm-new-password" label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} />
 				<Button type="submit" disabled={pending || !canSubmit}>
 					{pending ? 'Updating…' : 'Update Password'}
 				</Button>
