@@ -5,6 +5,8 @@ import {
 	ArrowRightLeft,
 	Wrench,
 	History,
+	Info,
+	HelpCircle,
 	Users,
 	FileBarChart2,
 	ScrollText,
@@ -30,6 +32,8 @@ export const NAV_ITEMS: NavItem[] = [
 	// record of what they borrowed, in place of the Borrowing workqueue.
 	{ label: 'History', icon: History, path: '/history', roles: ['student'] },
 	{ label: 'Maintenance', icon: Wrench, path: '/maintenance', roles: ['super_admin', 'department_admin', 'staff'] },
+	{ label: 'About Us', icon: Info, path: '/about-us', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
+	{ label: 'Help & Guide', icon: HelpCircle, path: '/help-guide', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
 	{ label: 'Users', icon: Users, path: '/users', roles: ['super_admin', 'department_admin'] },
 	{ label: 'Reports', icon: FileBarChart2, path: '/reports', roles: ['super_admin', 'department_admin'] },
 	{ label: 'Audit Logs', icon: ScrollText, path: '/audit-logs', roles: ['super_admin'] },

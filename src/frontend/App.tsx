@@ -10,6 +10,8 @@ import InventoryPage from '@/frontend/features/inventory/InventoryPage'
 import BorrowingPage from '@/frontend/features/borrowing/BorrowingPage'
 import BorrowHistoryPage from '@/frontend/features/borrowing/BorrowHistoryPage'
 import MaintenancePage from '@/frontend/features/maintenance/MaintenancePage'
+import AboutCard from '@/frontend/features/settings/AboutCard'
+import HelpGuideCard from '@/frontend/features/settings/HelpGuideCard'
 import UsersPage from '@/frontend/features/users/UsersPage'
 import ReportsPage from '@/frontend/features/reports/ReportsPage'
 import NotificationsPage from '@/frontend/features/notifications/NotificationsPage'
@@ -213,6 +215,8 @@ export default function App() {
 						<Route path="/borrowing" element={<BorrowingPage user={activeUser} />} />
 						<Route path="/history" element={<BorrowHistoryPage user={activeUser} />} />
 						<Route path="/maintenance" element={<MaintenancePage user={activeUser} />} />
+						<Route path="/about-us" element={<AboutCard />} />
+						<Route path="/help-guide" element={<HelpGuideCard />} />
 						<Route path="/users" element={<UsersPage user={activeUser} />} />
 						<Route path="/reports" element={<ReportsPage user={activeUser} />} />
 						<Route path="/notifications" element={<NotificationsPage />} />
