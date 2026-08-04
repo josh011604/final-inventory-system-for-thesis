@@ -64,9 +64,18 @@
   --glass-blur: 16px;
   /* Wash applied over the photo so body text keeps AA contrast. The top is
      lighter (campus visible behind the hero), the bottom denser for tables. */
-  --backdrop-veil-top: rgba(246, 245, 248, 0.46);
-  --backdrop-veil: rgba(246, 245, 248, 0.64);
-  --backdrop-veil-bottom: rgba(246, 245, 248, 0.78);
+  /* Thinned so the campus reads through the way it does on the login page.
+     Measured against the photo's dark decile (rgb(0,21,70)) with body text
+     #1f1a29: 0.60 gives 6.1:1, 0.46 gives 4.1:1, 0.32 gives 2.5:1.
+     Only the bottom band clears 4.5:1 on its own, which is deliberate and was
+     already true at the old 0.46 top — every piece of text in the app sits on a
+     glass-panel (0.82 white) or an opaque card, never straight on the backdrop,
+     and a panel over even the darkest part of this photo measures ~12:1.
+     The constraint that buys: new UI must keep text on a panel. Text dropped
+     directly onto the page background will not pass in the upper two thirds. */
+  --backdrop-veil-top: rgba(246, 245, 248, 0.32);
+  --backdrop-veil: rgba(246, 245, 248, 0.46);
+  --backdrop-veil-bottom: rgba(246, 245, 248, 0.6);
 }
 
 :root[data-theme='dark'] {
@@ -92,9 +101,12 @@
   --glass-bg: rgba(30, 26, 41, 0.78);
   --glass-bg-strong: rgba(30, 26, 41, 0.9);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --backdrop-veil-top: rgba(20, 17, 28, 0.68);
-  --backdrop-veil: rgba(20, 17, 28, 0.82);
-  --backdrop-veil-bottom: rgba(20, 17, 28, 0.9);
+  /* Thinned by the same amount as the light theme. This veil darkens rather
+     than lightens, so it works with the theme's pale text instead of against
+     it, and the photo's bright sky is what it has to hold down. */
+  --backdrop-veil-top: rgba(20, 17, 28, 0.54);
+  --backdrop-veil: rgba(20, 17, 28, 0.68);
+  --backdrop-veil-bottom: rgba(20, 17, 28, 0.8);
 
   color: var(--color-text-primary);
   background: var(--color-bg);
@@ -116,7 +128,7 @@ body[data-theme='dark'] {
 }
 
 ::selection {
-  background: rgba(75, 42, 123, 0.22);
+  background: rgba(18, 62, 175, 0.22);
   color: var(--color-text-primary);
 }
 
@@ -214,17 +226,23 @@ body[data-theme='dark'] ::selection {
      paint over it with their own translucent surfaces. */
   .app-backdrop {
     position: fixed;
-    /* Bleed past the edges so the blur below never reveals a transparent halo. */
-    inset: -24px;
+    inset: 0;
     z-index: 0;
     pointer-events: none;
-    background-image: url('/bisucal.webp');
+    /* A 1536x1024 photograph of the campus gate, with the real BISU seal
+       composited over the building's painted one — the photo's own upper arc is
+       AI garble ("BOH ISLAND STAT E EVERSITS"), while its lower arc happens to
+       read correctly.
+       Resolution is the point of this source. It replaced a 686x1024 crop of
+       the login hero, which cover magnified ~2.8x on a 1920px viewport; there
+       was not enough detail to carry that, so the gate lettering and the seal
+       arrived soft. At 1536 wide cover is ~1.25x and both stay legible. Before
+       that it was bisucal.webp at 474x355 — a ~4x upscale, which is why
+       blur(3px) and scale(1.05) used to sit here to hide the mush. Both gone. */
+    background-image: url('/campus-backdrop.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    /* Softens the low-res source and unifies it with the frosted panels. */
-    filter: blur(3px);
-    transform: scale(1.05);
   }
 
   /* Gradient veil painted over the photo: lighter at the top so the campus
@@ -235,7 +253,7 @@ body[data-theme='dark'] ::selection {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(120% 80% at 70% 0%, rgba(75, 42, 123, 0.12), transparent 60%),
+      radial-gradient(120% 80% at 70% 0%, rgba(18, 62, 175, 0.12), transparent 60%),
       linear-gradient(to bottom, var(--backdrop-veil-top), var(--backdrop-veil) 55%, var(--backdrop-veil-bottom));
   }
 

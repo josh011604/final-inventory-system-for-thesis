@@ -325,7 +325,7 @@ export default function SettingsPage({ user, onAvatarUpdated }: { user: SchoolUs
 			{tab === 'profile' ? (
 				<>
 					<ProfileCard user={user} onAvatarUpdated={onAvatarUpdated} />
-					<ChangePasswordCard user={user} />
+					<ChangePasswordCard />
 					<ActivityHistoryCard user={user} />
 				</>
 			) : tab === 'general' && isSuperAdmin ? (

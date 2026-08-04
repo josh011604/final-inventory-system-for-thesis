@@ -111,7 +111,23 @@ export async function sendPasswordReset(identifier: string) {
 	return { error: null }
 }
 
-export async function changePassword(email: string, currentPassword: string, newPassword: string): Promise<{ error: string | null }> {
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ error: string | null }> {
+	// Re-authenticate against the address on the AUTH account, read from the
+	// live session — NOT the one the caller holds in profiles.email.
+	//
+	// The two match for anyone who registered through this app, because signUp
+	// writes the same address to both. They do not have to: profiles.email is an
+	// ordinary editable column, it is blank on rows seeded or created by the
+	// create-student function, and nothing keeps it in step with auth.users.
+	// Signing in with the wrong address fails, and the failure was reported as
+	// "Current password is incorrect." — so a correct password looked wrong and
+	// the form could never be completed.
+	const { data: userData, error: userError } = await supabase.auth.getUser()
+	const email = userData?.user?.email
+	if (userError || !email) {
+		return { error: 'Your session has expired. Log in again and retry.' }
+	}
+
 	const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: currentPassword })
 	if (verifyError) {
 		return { error: 'Current password is incorrect.' }
@@ -119,14 +135,27 @@ export async function changePassword(email: string, currentPassword: string, new
 
 	const { error } = await supabase.auth.updateUser({ password: newPassword })
 	if (error) {
+		// Supabase phrases this one as a raw API string; the rest already read
+		// like sentences.
+		if (/should be different/i.test(error.message)) {
+			return { error: 'The new password must be different from your current one.' }
+		}
 		return { error: error.message }
 	}
 
 	// Record it in the user's own notifications so a password change they did not
-	// make is visible to them. Deliberately not fatal — the returned error is
-	// ignored: the password HAS already changed by this point, so surfacing a
-	// failure here would tell the user their change did not work when it did.
-	await supabase.rpc('notify_password_changed')
+	// make is visible to them. Deliberately not fatal — the password HAS already
+	// changed by this point, so a failure here must not be reported as one.
+	//
+	// Wrapped as well as ignored: notify_password_changed ships in migration
+	// 20260729230000, so on a database where that has not been applied the call
+	// rejects, and an unhandled rejection here would take the whole function
+	// down after the password was already updated.
+	try {
+		await supabase.rpc('notify_password_changed')
+	} catch {
+		// intentionally swallowed — see above
+	}
 
 	return { error: null }
 }

@@ -4,14 +4,15 @@ import { KeyRound } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { changePassword } from '@/backend/lib/supabase/auth'
-import type { SchoolUser } from '@/backend/types/school'
 
 const inputClass = 'w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition focus:border-primary'
 const labelClass = 'mb-1.5 block text-sm font-medium text-text-primary'
 
 const NEW_PASSWORD_PATTERN = /^(?=.*\d).{8,}$/
 
-export default function ChangePasswordCard({ user }: { user: SchoolUser }) {
+// Takes no props: the account to re-authenticate is read from the live auth
+// session inside changePassword, not passed in from the profile row.
+export default function ChangePasswordCard() {
 	const [currentPassword, setCurrentPassword] = useState('')
 	const [newPassword, setNewPassword] = useState('')
 	const [confirmPassword, setConfirmPassword] = useState('')
@@ -37,18 +38,27 @@ export default function ChangePasswordCard({ user }: { user: SchoolUser }) {
 		}
 
 		setPending(true)
-		const result = await changePassword(user.email, currentPassword, newPassword)
-		setPending(false)
+		// try/finally so the button cannot stick on "Updating…". Without it any
+		// rejection — a dropped connection mid-request, say — skips setPending(false)
+		// and leaves the form permanently disabled with no error shown, which
+		// reads exactly like the feature being broken.
+		try {
+			const result = await changePassword(currentPassword, newPassword)
 
-		if (result.error) {
-			setError(result.error)
-			return
+			if (result.error) {
+				setError(result.error)
+				return
+			}
+
+			setCurrentPassword('')
+			setNewPassword('')
+			setConfirmPassword('')
+			setSuccess('Password updated successfully.')
+		} catch (cause) {
+			setError(cause instanceof Error ? cause.message : 'Could not update the password. Try again.')
+		} finally {
+			setPending(false)
 		}
-
-		setCurrentPassword('')
-		setNewPassword('')
-		setConfirmPassword('')
-		setSuccess('Password updated successfully.')
 	}
 
 	return (
