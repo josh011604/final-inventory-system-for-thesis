@@ -5,6 +5,8 @@ import { isRouteAllowed, navItemsForRole } from '@/frontend/config/navigation'
 import { getRoleLabel } from '@/backend/lib/rbac'
 import { useNotifications } from '@/backend/lib/supabase/queries'
 import type { SchoolUser, ThemeMode } from '@/backend/types/school'
+import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
 
 type AppShellProps = {
 	user: SchoolUser
@@ -36,6 +38,7 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 	const location = useLocation()
 	const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 	const [mobileNavOpen, setMobileNavOpen] = useState(false)
+	const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
 	const profileMenuRef = useRef<HTMLDivElement>(null)
 	const items = navItemsForRole(user.role)
 	const { data: notifications } = useNotifications()
@@ -229,7 +232,10 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 									</Link>
 									<button
 										type="button"
-										onClick={onLogout}
+										onClick={() => {
+											setProfileMenuOpen(false)
+											setConfirmLogoutOpen(true)
+										}}
 										className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-danger transition hover:bg-danger/10"
 									>
 										<LogOut className="h-4 w-4" />
@@ -245,6 +251,26 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 					{isRouteAllowed(location.pathname, user.role) ? <Outlet /> : <Navigate to="/dashboard" replace />}
 				</main>
 			</div>
+
+			{confirmLogoutOpen ? (
+				<Modal open onClose={() => setConfirmLogoutOpen(false)} title="Log Out">
+					<p className="text-sm text-text-muted">Are you sure you want to logout?</p>
+					<div className="mt-5 flex justify-end gap-2">
+						<Button variant="secondary" onClick={() => setConfirmLogoutOpen(false)}>
+							No
+						</Button>
+						<Button
+							variant="danger"
+							onClick={() => {
+								setConfirmLogoutOpen(false)
+								onLogout()
+							}}
+						>
+							Yes
+						</Button>
+					</div>
+				</Modal>
+			) : null}
 		</div>
 	)
 }
