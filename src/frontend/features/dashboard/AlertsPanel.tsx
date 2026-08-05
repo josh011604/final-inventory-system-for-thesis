@@ -5,6 +5,7 @@ import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
 import { useBorrowRecords, useEquipment, useMaintenanceRequests } from '@/backend/lib/supabase/queries'
 import type { BorrowRecordRow } from '@/backend/lib/supabase/queries'
+import { canApproveBorrow, canReturnBorrow } from '@/backend/lib/borrowing'
 import type { SchoolUser } from '@/backend/types/school'
 
 type AlertTone = 'danger' | 'warning' | 'info'
@@ -41,10 +42,11 @@ export default function AlertsPanel({ user }: { user: SchoolUser }) {
 	const isLoading = equipmentLoading || borrowLoading || maintenanceLoading
 	const canApprove = user.role === 'super_admin' || user.role === 'department_admin'
 
+	const approver = { id: user.id, role: user.role, departmentId: user.departmentId }
 	const overdue = (borrowRecords ?? []).filter(isOverdue).length
 	const damagedLost = (equipment ?? []).filter((item) => item.status === 'damaged' || item.status === 'lost').length
-	const pendingBorrow = (borrowRecords ?? []).filter((row) => row.status === 'pending').length
-	const returnRequests = (borrowRecords ?? []).filter((row) => row.status === 'return_requested').length
+	const pendingBorrow = (borrowRecords ?? []).filter((row) => row.status === 'pending' && canApproveBorrow(row, approver)).length
+	const returnRequests = (borrowRecords ?? []).filter((row) => row.status === 'return_requested' && canReturnBorrow(row, approver)).length
 	const pendingMaintenance = (maintenance ?? []).filter((row) => row.status === 'pending').length
 	const inMaintenance = (maintenance ?? []).filter((row) => row.status === 'in_progress').length
 

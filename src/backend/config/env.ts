@@ -1,4 +1,4 @@
-const appName = import.meta.env.VITE_APP_NAME ?? 'React Invy Projects'
+const appName = import.meta.env.VITE_APP_NAME ?? 'BISU FIMS'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 

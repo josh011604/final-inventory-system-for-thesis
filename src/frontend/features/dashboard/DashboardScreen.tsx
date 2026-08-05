@@ -1,6 +1,7 @@
 import { Building2, CheckCircle2, Clock, MapPin, Package, ShieldCheck, Sparkles, Users, Wrench } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getRoleLabel } from '@/backend/lib/rbac'
+import { canApproveBorrow } from '@/backend/lib/borrowing'
 import Card from '@/components/ui/Card'
 import StatusChip from '@/components/ui/StatusChip'
 import Skeleton from '@/components/ui/Skeleton'
@@ -101,7 +102,8 @@ export default function DashboardScreen({ user }: DashboardScreenProps) {
 	const borrowedCount = scopedEquipment.filter((item) => item.status === 'borrowed').length
 	const underMaintenanceCount = scopedEquipment.filter((item) => item.status === 'maintenance').length
 	const otherCount = Math.max(totalEquipment - availableCount - borrowedCount - underMaintenanceCount, 0)
-	const pendingBorrow = borrowRecords?.filter((row) => row.status === 'pending').length ?? 0
+	const approver = { id: user.id, role: user.role, departmentId: user.departmentId }
+	const pendingBorrow = borrowRecords?.filter((row) => row.status === 'pending' && canApproveBorrow(row, approver)).length ?? 0
 	const pendingMaintenance = maintenanceRequests?.filter((row) => row.status === 'pending').length ?? 0
 
 	const stats: { label: string; value: number; detail: string; isLoading: boolean; icon: LucideIcon; tone: MetricTone }[] =

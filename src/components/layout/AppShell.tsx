@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, LogOut, Menu, Search, Sun, Moon, UserRoundPen, X } from 'lucide-react'
+import { Bell, LogOut, Menu, Sun, Moon, UserRoundPen, X } from 'lucide-react'
 import { isRouteAllowed, navItemsForRole } from '@/frontend/config/navigation'
 import { getRoleLabel } from '@/backend/lib/rbac'
 import { useNotifications } from '@/backend/lib/supabase/queries'
@@ -158,15 +158,6 @@ export default function AppShell({ user, theme, onToggleTheme, onLogout }: AppSh
 					<Breadcrumbs path={location.pathname} />
 
 					<div className="ml-auto flex items-center gap-2 sm:gap-3">
-						<label className="relative hidden sm:block">
-							<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-							<input
-								type="search"
-								placeholder="Search..."
-								className="w-48 rounded-lg border border-border bg-bg py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:bg-surface md:w-64"
-							/>
-						</label>
-
 						<button
 							type="button"
 							onClick={onToggleTheme}

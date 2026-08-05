@@ -146,7 +146,7 @@ function StatTile({
 				</div>
 			</div>
 			<div className="mt-3">
-				{isLoading ? <Skeleton className="h-8 w-20" /> : <h3 className={`text-2xl font-semibold ${palette.value}`}>{value}</h3>}
+				{isLoading ? <Skeleton className="h-8 w-20" /> : <h3 className={`break-all text-2xl font-semibold ${palette.value}`}>{value}</h3>}
 			</div>
 			<p className="mt-2 text-sm text-text-muted">{detail}</p>
 		</article>
