@@ -16,6 +16,7 @@ import UsersPage from '@/frontend/features/users/UsersPage'
 import ReportsPage from '@/frontend/features/reports/ReportsPage'
 import NotificationsPage from '@/frontend/features/notifications/NotificationsPage'
 import AuditLogsPage from '@/frontend/features/audit-logs/AuditLogsPage'
+import ItemLogsPage from '@/frontend/features/audit-logs/ItemLogsPage'
 import SettingsPage from '@/frontend/features/settings/SettingsPage'
 import { supabase } from '@/backend/lib/supabase/client'
 import { signOut } from '@/backend/lib/supabase/auth'
@@ -220,6 +221,7 @@ export default function App() {
 						<Route path="/users" element={<UsersPage user={activeUser} />} />
 						<Route path="/reports" element={<ReportsPage user={activeUser} />} />
 						<Route path="/notifications" element={<NotificationsPage />} />
+						<Route path="/item-logs" element={<ItemLogsPage />} />
 						<Route path="/audit-logs" element={<AuditLogsPage />} />
 						<Route path="/settings" element={<SettingsPage user={activeUser} onAvatarUpdated={updateActiveUserAvatar} />} />
 						<Route path="*" element={<Navigate to="/dashboard" replace />} />

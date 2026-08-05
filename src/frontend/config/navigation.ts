@@ -34,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
 	{ label: 'Maintenance', icon: Wrench, path: '/maintenance', roles: ['super_admin', 'department_admin', 'staff'] },
 	{ label: 'Users', icon: Users, path: '/users', roles: ['super_admin', 'department_admin'] },
 	{ label: 'Reports', icon: FileBarChart2, path: '/reports', roles: ['super_admin', 'department_admin'] },
+	{ label: 'Item Logs', icon: Package, path: '/item-logs', roles: ['department_admin'] },
 	{ label: 'Audit Logs', icon: ScrollText, path: '/audit-logs', roles: ['super_admin'] },
 	{ label: 'System Settings', icon: Settings, path: '/settings', roles: ['super_admin'] },
 	{ label: 'About Us', icon: Info, path: '/about-us', roles: ['super_admin', 'department_admin', 'staff', 'student'] },
