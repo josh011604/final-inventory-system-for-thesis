@@ -14,6 +14,7 @@ import type { SchoolUser } from '@/backend/types/school'
 // Aliased: this module already has a `totalUnits` figure of its own (the summed
 // campus-wide total), so the per-item helper keeps a distinct name.
 import { freeUnits, totalUnits as itemTotalUnits, unitsOutByEquipmentId } from '@/backend/lib/borrowing'
+import { getRoleLabel } from '@/backend/lib/rbac'
 
 // ---------- shared visual tokens (reuse the app design system) ----------
 
@@ -364,6 +365,133 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 		setTimeout(() => win.print(), 350)
 	}
 
+	const handlePrintInventoryFormat = () => {
+		const win = window.open('', '_blank', 'width=1100,height=750')
+		if (!win) return
+
+		const groups = new Map<string, typeof scopedEquipment>()
+		for (const item of scopedEquipment) {
+			const key = item.category?.trim() || 'Uncategorized'
+			if (!groups.has(key)) groups.set(key, [])
+			groups.get(key)!.push(item)
+		}
+		const sortedCategories = [...groups.keys()].sort((a, b) => a.localeCompare(b))
+
+		const asOfDate = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+
+		let grandQty = 0
+		let grandValue = 0
+
+		const sections = sortedCategories
+			.map((category) => {
+				const items = [...groups.get(category)!].sort((a, b) => a.equipment_name.localeCompare(b.equipment_name))
+				let sectionQty = 0
+				let sectionValue = 0
+				const rows = items
+					.map((item) => {
+						const qty = itemTotalUnits(item, unitsOut)
+						const unitValue = item.value ?? 0
+						const value = unitValue * qty
+						sectionQty += qty
+						sectionValue += value
+						const whereabouts = [item.departments?.name || 'Main Supply', item.assigned_room || item.location].filter(Boolean).join(' · ')
+						const acquired = item.purchase_date ? new Date(item.purchase_date).toLocaleDateString('en-PH') : '—'
+						return `<tr>
+							<td>${item.equipment_name}</td>
+							<td>${item.equipment_code}</td>
+							<td>${acquired}</td>
+							<td>${item.unit || 'pc(s)'}</td>
+							<td class="num">${peso.format(unitValue)}</td>
+							<td class="num">${qty}</td>
+							<td class="num">${peso.format(value)}</td>
+							<td class="num">${qty}</td>
+							<td class="num">${peso.format(value)}</td>
+							<td class="num">None</td>
+							<td class="num">None</td>
+							<td class="num">None</td>
+							<td class="num">None</td>
+							<td>${whereabouts || '—'}</td>
+							<td>${item.condition || '—'}</td>
+						</tr>`
+					})
+					.join('')
+				grandQty += sectionQty
+				grandValue += sectionValue
+				return `<tr class="section"><td colspan="15">${category.toUpperCase()}</td></tr>${rows}<tr class="subtotal"><td colspan="5">Subtotal — ${category}</td><td class="num">${sectionQty}</td><td class="num">${peso.format(sectionValue)}</td><td class="num">${sectionQty}</td><td class="num">${peso.format(sectionValue)}</td><td colspan="6"></td></tr>`
+			})
+			.join('')
+
+		win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BISU Calape Campus — Inventory of Properties, Plant and Equipment (STF)</title>
+<style>
+	*{box-sizing:border-box}
+	body{font-family:'Segoe UI',system-ui,sans-serif;color:#1f2937;margin:24px;font-size:11px}
+	h1{font-size:15px;margin:0;text-align:center;letter-spacing:.02em}
+	h2{font-size:11px;margin:2px 0 0;text-align:center;font-weight:400;color:#4b5563}
+	.asof{text-align:center;margin:2px 0 14px;font-size:11px}
+	.signblock{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1f2937;padding-bottom:4px;margin-bottom:2px}
+	.signblock div{text-align:center;min-width:160px}
+	.signblock .agency{text-align:left;min-width:220px}
+	.signblock strong{display:block;font-size:12px}
+	.labels{display:flex;justify-content:space-between;font-size:9px;color:#6b7280;font-style:italic;margin-bottom:14px}
+	.labels div{text-align:center;min-width:160px}
+	.labels .agency{text-align:left;min-width:220px}
+	table{width:100%;border-collapse:collapse}
+	th,td{border:1px solid #cbd5e1;padding:3px 5px;text-align:left;vertical-align:middle}
+	th{background:#f1f5f9;font-size:9px;text-transform:uppercase;letter-spacing:.03em;color:#334155;text-align:center}
+	td.num,th.num{text-align:right}
+	tr.section td{background:#e2e8f0;font-weight:700;letter-spacing:.03em}
+	tr.subtotal td{background:#f8fafc;font-weight:600;font-style:italic}
+	tr.grandtotal td{background:#1d4ed8;color:#fff;font-weight:700}
+	@media print{body{margin:10mm}}
+</style></head><body>
+	<h1>Inventory of Properties, Plant and Equipment (STF)</h1>
+	<h2>(Office Supplies or Equipment but not both)</h2>
+	<p class="asof">As of ${asOfDate}</p>
+	<div class="signblock">
+		<div class="agency"><strong>BISU Calape Campus</strong></div>
+		<div><strong>${user.fullName}</strong></div>
+		<div><strong>${getRoleLabel(user.role)}</strong></div>
+		<div><strong>Page 1</strong></div>
+	</div>
+	<div class="labels">
+		<div class="agency">(Agency)</div>
+		<div>(Name of Accountable Officer)</div>
+		<div>(Designation)</div>
+		<div>&nbsp;</div>
+	</div>
+	<table>
+		<thead>
+			<tr>
+				<th rowspan="2">Article</th>
+				<th rowspan="2">Prop. No.</th>
+				<th rowspan="2">Date Acquired</th>
+				<th rowspan="2">Unit</th>
+				<th rowspan="2">Unit Value</th>
+				<th colspan="2">Balance per Stock Card</th>
+				<th colspan="2">On Hand per Count</th>
+				<th colspan="2">Short</th>
+				<th colspan="2">Over</th>
+				<th rowspan="2">Whereabouts</th>
+				<th rowspan="2">Condition</th>
+			</tr>
+			<tr>
+				<th class="num">Qty</th><th class="num">Value</th>
+				<th class="num">Qty</th><th class="num">Value</th>
+				<th class="num">Qty</th><th class="num">Value</th>
+				<th class="num">Qty</th><th class="num">Value</th>
+			</tr>
+		</thead>
+		<tbody>
+			${sections || '<tr><td colspan="15">No inventory items in scope.</td></tr>'}
+			<tr class="grandtotal"><td colspan="5">GRAND TOTAL</td><td class="num">${grandQty}</td><td class="num">${peso.format(grandValue)}</td><td class="num">${grandQty}</td><td class="num">${peso.format(grandValue)}</td><td colspan="6"></td></tr>
+		</tbody>
+	</table>
+</body></html>`)
+		win.document.close()
+		win.focus()
+		setTimeout(() => win.print(), 350)
+	}
+
 	return (
 		<div className="space-y-6">
 			<Card
@@ -450,12 +578,21 @@ export default function ReportsPage({ user }: { user: SchoolUser }) {
 				)}
 			</Card>
 
-			<Card title="Inventory Reports" subtitle="Printable format">
+			<Card
+				title="Inventory Reports"
+				subtitle="Printable format"
+				action={
+					<Button size="sm" onClick={handlePrintInventoryFormat} disabled={anyLoading || scopedEquipment.length === 0}>
+						<Printer className="h-4 w-4" />
+						Print
+					</Button>
+				}
+			>
 				<div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-bg/50 p-8 text-center">
 					<Package className="h-8 w-8 text-text-muted" />
-					<p className="text-sm font-medium text-text-primary">Inventory report format goes here</p>
+					<p className="text-sm font-medium text-text-primary">Inventory of Properties, Plant and Equipment (STF)</p>
 					<p className="max-w-md text-xs text-text-muted">
-						Reserved for the printable Excel inventory report format — to be added.
+						Generates BISU's official inventory report format — grouped by category, with unit values, quantities, and condition — ready to print or save as PDF.
 					</p>
 				</div>
 			</Card>
